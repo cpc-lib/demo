@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  clickhouse:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/clickhouse-server:24.3
+    container_name: clickhouse
+    ports:
+      - "8123:8123"   # HTTP/JDBC
+      - "9000:9000"   # Native
+    environment:
+      - CLICKHOUSE_DB=demo
+      - CLICKHOUSE_USER=demo
+      - CLICKHOUSE_PASSWORD=demo123
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - ch_data:/var/lib/clickhouse
+      - ./clickhouse/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8123/ping | grep -q Ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  ch_data:

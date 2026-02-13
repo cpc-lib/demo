@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cc.ivera.userdemo.repo.UserEmailIndexMapper">
+
+  <insert id="upsert" parameterType="map">
+    INSERT INTO ${table} (tenant_id, email_lower, uid, updated_at)
+    VALUES (#{tenantId}, #{emailLower}, #{uid}, NOW())
+    ON DUPLICATE KEY UPDATE uid = VALUES(uid), updated_at = NOW()
+  </insert>
+
+  <select id="selectByEmail" parameterType="map" resultType="cc.ivera.userdemo.domain.UserIndex">
+    SELECT tenant_id AS tenantId, email_lower AS `key`, uid, updated_at AS updatedAt
+    FROM ${table}
+    WHERE tenant_id = #{tenantId} AND email_lower = #{emailLower}
+    LIMIT 1
+  </select>
+
+  <select id="selectUidByEmail" parameterType="map" resultType="java.lang.Long">
+    SELECT uid
+    FROM ${table}
+    WHERE tenant_id = #{tenantId}
+      AND email_lower = #{emailLower}
+      LIMIT 1
+  </select>
+
+</mapper>

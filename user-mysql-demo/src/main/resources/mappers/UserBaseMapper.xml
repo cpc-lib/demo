@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cc.ivera.userdemo.repo.UserBaseMapper">
+
+  <insert id="insert" parameterType="map">
+    INSERT INTO ${table}
+    (uid, tenant_id, phone, email, nickname, gender, status, deleted, version, password_hash, created_at, updated_at)
+    VALUES
+    (#{uid}, #{tenantId}, #{phone}, #{email}, #{nickname}, #{gender}, #{status}, #{deleted}, #{version}, #{passwordHash}, NOW(), NOW())
+  </insert>
+
+  <select id="selectAuthByUid" parameterType="map" resultType="cc.ivera.userdemo.domain.UserBase">
+    SELECT uid, tenant_id AS tenantId, nickname, status, deleted, version, password_hash AS passwordHash, updated_at AS updatedAt
+    FROM ${table}
+    WHERE tenant_id = #{tenantId} AND uid = #{uid}
+    LIMIT 1
+  </select>
+
+  <select id="selectByUid" parameterType="map" resultType="cc.ivera.userdemo.domain.UserBase">
+    SELECT uid, tenant_id AS tenantId, phone, email, nickname, gender, status, deleted, version, created_at AS createdAt, updated_at AS updatedAt
+    FROM ${table}
+    WHERE tenant_id = #{tenantId} AND uid = #{uid}
+    LIMIT 1
+  </select>
+
+  <update id="updateProfile" parameterType="map">
+    UPDATE ${table}
+    SET nickname=#{nickname}, gender=#{gender}, status=#{status}, deleted=#{deleted},
+        version = version + 1,
+        updated_at = NOW()
+    WHERE tenant_id = #{tenantId} AND uid = #{uid}
+  </update>
+
+</mapper>

@@ -1,0 +1,1 @@
+[atguigu@hadoop102 hadoop-3.1.3]$ yarn jar YarnDemo.jar cc.ivera.yarn.WordCountDriver wordcount /input /output

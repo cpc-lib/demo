@@ -1,0 +1,62 @@
+server:
+  port: 8080
+
+spring:
+  redis:
+    host: 192.168.220.102
+    port: 6379
+    timeout: 200ms
+  application:
+    name: hbase-user-10b-demo
+
+  kafka:
+    bootstrap-servers: 192.168.220.102:9092
+    consumer:
+      group-id: user-es-indexer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 50
+      properties:
+        max.poll.interval.ms: 300000
+    listener:
+      ack-mode: manual
+    producer:
+      acks: all
+      retries: 10
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+
+  data:
+    mongodb:
+      uri: mongodb://192.168.220.102:27017/user_demo
+
+app:
+  kafka:
+    topic-user-upserted: user-upserted
+    topic:
+      cache-warm: user-cache-warm
+    group:
+      cache-warm: cache-warm-worker
+  profile-cache:
+    ttl-minutes: 30
+    warm-lock-seconds: 10
+  hbase:
+    zookeeper-quorum: 192.168.220.102,192.168.220.103,192.168.220.104
+    zookeeper-port: 2181
+    znode-parent: /hbase
+    init: true
+  es:
+    hosts: 192.168.220.102:9200
+    index: user_profile
+    init: true
+  retry:
+    max-retries: 3
+    # 重试扫描频率
+    scan-interval-ms: 5000
+
+logging:
+  level:
+    root: INFO
+    org.apache.hadoop: WARN
+    org.apache.hbase: WARN

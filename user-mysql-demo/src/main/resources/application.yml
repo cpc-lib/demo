@@ -1,0 +1,63 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: user-platform-demo
+
+  datasource:
+    url: jdbc:mysql://192.168.220.200:3306/user_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 5
+      connection-timeout: 1000
+      validation-timeout: 1000
+      max-lifetime: 600000
+
+  redis:
+    host: 192.168.220.200
+    port: 6379
+    lettuce:
+      pool:
+        max-active: 50
+        max-idle: 20
+        min-idle: 5
+    timeout: 800ms
+
+  data:
+    mongodb:
+      uri: mongodb://192.168.220.200:27017/user_demo
+
+  kafka:
+    bootstrap-servers: 192.168.220.200:9092
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 1
+        linger.ms: 5
+        batch.size: 32768
+        compression.type: lz4
+    consumer:
+      group-id: user-es-indexer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        max.poll.records: 200
+
+mybatis:
+  mapper-locations: classpath*:mappers/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+app:
+  shard:
+    table-count: 4
+  kafka:
+    topic: user-change-v1
+  es:
+    hosts: http://192.168.220.200:9200
+    index: user_search_v1

@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mysql:5.7.44
+    container_name: mysql5744
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: testdb
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/conf/my.cnf:/etc/mysql/my.cnf:ro
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+      - ./mysql_data:/var/lib/mysql
+    command:
+      - "--default-authentication-plugin=mysql_native_password"
+
+  canal:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/canal-server:v1.1.2
+    container_name: canal112
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "11111:11111"
+    environment:
+      TZ: Asia/Shanghai
+      canal.auto.scan: "false"
+      canal.destinations: "example"
+      canal.instance.master.address: "mysql:3306"
+      canal.instance.dbUsername: "canal"
+      canal.instance.dbPassword: "canal123456"
+      canal.instance.connectionCharset: "UTF-8"
+      canal.instance.tsdb.enable: "true"
+      canal.instance.gtidon: "false"
+      canal.instance.defaultDatabaseName: "testdb"
+      canal.instance.filter.regex: "testdb\\..*"
+
+volumes:
+  mysql_data:

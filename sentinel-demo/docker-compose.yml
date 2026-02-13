@@ -1,0 +1,24 @@
+version: "3.8"
+services:
+  nacos:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/nacos-server:v2.3.2
+    container_name: nacos
+    environment:
+      - MODE=standalone
+      - JVM_XMS=256m
+      - JVM_XMX=256m
+      - JVM_XMN=128m
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    restart: unless-stopped
+
+  sentinel-dashboard:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/sentinel-dashboard:1.8.8
+    container_name: sentinel-dashboard
+    ports:
+      - "8858:8858"
+    environment:
+      - JAVA_OPTS=-Dserver.port=8858
+    restart: unless-stopped

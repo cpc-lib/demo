@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+
+
+canal:
+  mode: simple
+  server: 192.168.220.200:11111
+  destination: example
+  user-name: canal
+  password: canal123456
+  batch-size: 1
+  timeout: 1
+  filter: "testdb\\.t_user"   # 可选：只订阅某张表
+  async: true               # 默认 true

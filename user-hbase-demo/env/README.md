@@ -1,0 +1,2 @@
+不推荐使用docker部署hbase,仅作了解如何自建docker镜像.
+下载zookeeper,hbase的官方包分别放到zookeepr,hbase目录下。

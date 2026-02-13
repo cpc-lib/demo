@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    mongodb:
+      # Host mode (ports mapped 27017/27018/27019)
+      uri: mongodb://root:root123456@mongo1:27017,mongo2:27018,mongo3:27019/demo?replicaSet=rs0&authSource=admin
+
+app:
+  paging:
+    max-page-size: 200
+    default-page-size: 20

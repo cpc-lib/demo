@@ -1,0 +1,88 @@
+version: "3.8"
+services:
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mysql:8.0.33
+    container_name: userdemo-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: user_demo
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+00:00
+    volumes:
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  redis:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/redis:7.2
+    container_name: userdemo-redis
+    ports:
+      - "6379:6379"
+    command: [ "redis-server","--appendonly","no" ]
+
+  mongo:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mongo:6
+    container_name: userdemo-mongo
+    ports:
+      - "27017:27017"
+
+  elasticsearch:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/elasticsearch:7.17.18
+    container_name: userdemo-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  kibana:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/kibana:7.17.18
+    container_name: userdemo-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+
+  zookeeper:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+
+      # ---- ZK 配置 ----
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      # ---- 广播地址（外部访问用 localhost:9092）----
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://192.168.220.200:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+
+      # ---- 单节点必须全部为 1 ----
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # 是否允许自动创建 topic（建议 true）
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+      # JVM 内存可按需调整
+      KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"

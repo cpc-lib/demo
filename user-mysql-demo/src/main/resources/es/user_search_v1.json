@@ -1,0 +1,42 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "normalizer": {
+        "lowercase_norm": { "type": "custom", "filter": ["lowercase"] }
+      },
+      "filter": {
+        "edge_1_12": { "type": "edge_ngram", "min_gram": 1, "max_gram": 12 }
+      },
+      "analyzer": {
+        "phone_edge": { "tokenizer": "keyword", "filter": ["edge_1_12"] },
+        "email_edge": { "tokenizer": "keyword", "filter": ["lowercase", "edge_1_12"] }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "false",
+    "properties": {
+      "tenantId": { "type": "keyword" },
+      "uid": { "type": "keyword" },
+
+      "phone": { "type": "keyword" },
+      "phone_ngram": { "type": "text", "analyzer": "phone_edge", "search_analyzer": "keyword" },
+
+      "email": { "type": "keyword", "normalizer": "lowercase_norm" },
+      "email_ngram": { "type": "text", "analyzer": "email_edge", "search_analyzer": "keyword" },
+
+      "nickname": {
+        "type": "text",
+        "fields": { "kw": { "type": "keyword", "ignore_above": 256 } }
+      },
+
+      "gender": { "type": "keyword" },
+      "status": { "type": "keyword" },
+      "deleted": { "type": "boolean" },
+      "updatedAt": { "type": "date" },
+      "version": { "type": "long" }
+    }
+  }
+}

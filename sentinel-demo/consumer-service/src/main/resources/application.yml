@@ -1,0 +1,36 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: consumer-service
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.220.200:8848
+
+    sentinel:
+      transport:
+        dashboard: 192.168.220.200:8858
+        port: 8719
+
+      datasource:
+        flow:
+          nacos:
+            server-addr: 192.168.220.200:8848
+            data-id: consumer-service-flow-rules
+            group-id: DEFAULT_GROUP
+            data-type: json
+            rule-type: flow
+        degrade:
+          nacos:
+            server-addr: 192.168.220.200:8848
+            data-id: consumer-service-degrade-rules
+            group-id: DEFAULT_GROUP
+            data-type: json
+            rule-type: degrade
+
+feign:
+  sentinel:
+    enabled: true

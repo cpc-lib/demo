@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  hbase:
+    image: dqops/apache-hbase-standalone:2.5.4
+    container_name: studentdemo-hbase
+    ports:
+      - "16010:16010"   # HBase master UI
+      - "2182:2181"     # ZooKeeper (host 2182)
+      - "16020:16020"   # RegionServer
+      - "16000:16000"   # Master
+    environment:
+      - HBASE_MANAGES_ZK=true
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "echo status | hbase shell -n 2>/dev/null | grep -q 'ACTIVE'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30

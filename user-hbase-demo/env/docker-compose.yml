@@ -1,0 +1,118 @@
+version: "3.8"
+
+services:
+  elasticsearch:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/elasticsearch:7.17.18
+    container_name: es
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  kibana:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/kibana:7.17.18
+    container_name: kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+
+  redis:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/redis:7.2
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: [ "redis-server", "--appendonly", "no" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mongo:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mongo:6
+    container_name: mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+
+
+  #下面的推荐使用传统方式tar.gz解压之后进行配置部署
+  zookeeper:
+    build:
+      context: ./zookeeper
+      args:
+        ZK_VERSION: "3.9.2"
+    image: g2plus/zookeeper:3.9.2
+    container_name: zookeeper
+    restart: unless-stopped
+    environment:
+      - ZOO_MAX_CLIENT_CNXNS=60
+      - ZK_JVM_OPTS="-Xms2g -Xmx4g"  # 设置 JVM 堆内存大小（最小1GB，最大2GB）
+    ports:
+      - "2181:2181"
+    volumes:
+      - ./zk_data:/data
+      - ./zk_datalog:/datalog
+      # 你想覆盖 zoo.cfg 也可以打开下面这一行
+      - ./zookeeper/conf/zoo.cfg:/opt/zookeeper/conf/zoo.cfg:ro
+
+  kafka:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/cp-kafka:7.5.0
+    container_name: kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      # ---- ZK 配置 ----
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # ---- 广播地址（外部访问用 localhost:9092）----
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://192.168.220.200:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      # ---- 单节点必须全部为 1 ----
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # 是否允许自动创建 topic（建议 true）
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # JVM 内存可按需调整
+      KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"
+
+  hbase:
+    build:
+      context: ./hbase
+      args:
+        HBASE_VERSION: "2.5.13"
+    image: g2plus/hbase:2.5.13
+    container_name: hbase
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    environment:
+      ZK_QUORUM: "zookeeper"
+      ZK_PORT: "2181"
+      HBASE_MASTER_OPTS: "-Xms2g -Xmx4g"
+    ports:
+      - "16010:16010"
+      - "16000:16000"
+      - "16020:16020"
+      - "16030:16030"
+    volumes:
+      - ./hbase_data:/data/hbase
+      - ./hbase/conf/hbase-site.xml:/opt/hbase/conf/hbase-site.xml:ro
+      - ./hbase/conf/hbase-env.sh:/opt/hbase/conf/hbase-env.sh:ro
+      - ./logs:/opt/hbase/logs
+      - ./hbase_wal:/data/hbase-wal
+

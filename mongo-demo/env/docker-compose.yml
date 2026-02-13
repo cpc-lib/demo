@@ -1,0 +1,66 @@
+services:
+  mongo1:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mongo:6.0
+    container_name: mongo1
+    hostname: mongo1
+    user: "0:0"
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./keyfile:/etc/mongo-keyfile
+      - mongo1_data:/data/db
+      - ./scripts:/scripts
+    command: >
+      bash -lc "
+      chmod 600 /etc/mongo-keyfile &&
+      exec mongod --replSet rs0 --bind_ip_all --port 27017
+                  --keyFile /etc/mongo-keyfile
+                  --auth
+      "
+    networks: [mongo-net]
+
+  mongo2:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mongo:6.0
+    container_name: mongo2
+    hostname: mongo2
+    user: "0:0"
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./keyfile:/etc/mongo-keyfile
+      - mongo2_data:/data/db
+    command: >
+      bash -lc "
+      chmod 600 /etc/mongo-keyfile &&
+      exec mongod --replSet rs0 --bind_ip_all --port 27017
+                  --keyFile /etc/mongo-keyfile
+                  --auth
+      "
+    networks: [mongo-net]
+
+  mongo3:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mongo:6.0
+    container_name: mongo3
+    hostname: mongo3
+    user: "0:0"
+    ports:
+      - "27019:27017"
+    volumes:
+      - ./keyfile:/etc/mongo-keyfile
+      - mongo3_data:/data/db
+    command: >
+      bash -lc "
+      chmod 600 /etc/mongo-keyfile &&
+      exec mongod --replSet rs0 --bind_ip_all --port 27017
+                  --keyFile /etc/mongo-keyfile
+                  --auth
+      "
+    networks: [mongo-net]
+
+networks:
+  mongo-net:
+
+volumes:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
