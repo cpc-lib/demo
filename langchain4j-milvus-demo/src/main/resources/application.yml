@@ -9,6 +9,23 @@ spring:
   profiles:
     active: prod
 
+app:
+  dashscope:
+    base-url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    api-key: "sk-b8f000fc24f34b67ba142e4f35372327"
+    model: "qwen-plus"
+  tavily:
+    api-key: "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"
+    max-results: 20
+    base-url: https://api.tavily.com
+  milvus:
+    uri: "http://192.168.220.200:19530"
+    collection: "kb_documents"
+    dimension: 384
+    # minScore in [0,1], higher => stricter retrieval
+    min-score: 0.60
+    max-results: 5
+
 logging:
   level:
     root: INFO
