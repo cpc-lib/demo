@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB      # 单个文件最大
+      max-request-size: 100MB  # 单次请求总大小（多文件+表单）
+      enabled: true
+  mvc:
+    async:
+      request-timeout: 0
+  profiles:
+    active: prod
+
