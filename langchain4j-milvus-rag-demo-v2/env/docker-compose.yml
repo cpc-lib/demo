@@ -1,0 +1,68 @@
+version: "3.5"
+
+services:
+  redis:
+    image: registry.cn-hangzhou.aliyuncs.com/zhengqing/redis:7.0.5                    # 镜像'redis:7.0.5'
+    container_name: redis                                                             # 容器名为'redis'
+    restart: unless-stopped                                                                   # 指定容器退出后的重启策略为始终重启，但是不考虑在Docker守护进程启动时就已经停止了的容器
+    command: redis-server /etc/redis/redis.conf --requirepass cpc!23#@ --appendonly no # 启动redis服务并添加密码为：123456,默认不开启redis-aof方式持久化配置
+    #    command: redis-server --requirepass 123456 --appendonly yes # 启动redis服务并添加密码为：123456,并开启redis持久化配置
+    environment: # 设置环境变量,相当于docker run命令中的-e
+      TZ: Asia/Shanghai
+      LANG: en_US.UTF-8
+    volumes: # 数据卷挂载路径设置,将本机目录映射到容器目录
+      - "./redis/data:/data"
+      - "./redis/config/redis.conf:/etc/redis/redis.conf"  # `redis.conf`文件内容`http://download.redis.io/redis-stable/redis.conf`
+    ports: # 映射端口
+      - "6379:6379"
+
+  etcd:
+    container_name: milvus-etcd
+    image: rancher/etcd:v3.4.3
+    command: >
+      etcd
+      -advertise-client-urls=http://0.0.0.0:2379
+      -listen-client-urls=http://0.0.0.0:2379
+      -listen-peer-urls=http://0.0.0.0:2380
+      -initial-advertise-peer-urls=http://0.0.0.0:2380
+      -initial-cluster=default=http://0.0.0.0:2380
+      -initial-cluster-token=milvus-etcd
+      -initial-cluster-state=new
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+
+  minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2023-01-02T09-40-09Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    command: minio server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  milvus:
+    container_name: milvus
+    image: milvusdb/milvus:v2.3.7
+    command: [ "milvus", "run", "standalone" ]
+    environment:
+      ETCD_ENDPOINTS: "etcd:2379"
+      MINIO_ADDRESS: "minio:9000"
+    depends_on:
+      - etcd
+      - minio
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+
+  attu:
+    container_name: milvus-attu
+    image: zilliz/attu:v2.6
+    environment:
+      - MILVUS_URL=milvus:19530
+    ports:
+      - "8000:3000"
+    depends_on:
+      - milvus

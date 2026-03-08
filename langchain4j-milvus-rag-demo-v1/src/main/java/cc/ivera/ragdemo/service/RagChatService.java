@@ -6,6 +6,7 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.rag.content.Content;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -19,12 +20,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RagChatService {
 
     private final Retriever retriever;
     private final PromptBuilder promptBuilder;
     private final StreamingChatLanguageModel streamingChatModel;
     private final ChatLanguageModel chatModel;
+    private final WebSearchService webSearchService;
 
     private final ExecutorService sseExecutor = Executors.newCachedThreadPool();
 
@@ -52,6 +55,35 @@ public class RagChatService {
         return null;
     }
 
+//    public SseEmitter streamAnswer(String question) {
+//        SseEmitter emitter = new SseEmitter(0L);
+//
+//        // 客户端关闭/超时，尽快结束
+//        emitter.onTimeout(emitter::complete);
+//        emitter.onCompletion(() -> {
+//        });
+//
+//        sseExecutor.execute(() -> {
+//            try {
+//                List<Content> contents = retriever.retrieve(question);
+//
+//                List<String> chunks = contents.stream()
+//                        .map(this::contentToText)
+//                        .collect(Collectors.toList());
+//
+//                String prompt = promptBuilder.build(question, chunks);
+//
+//                streamGenerate(prompt, emitter);
+//
+//            } catch (Exception e) {
+//                send(emitter, "error", e.getMessage());
+//                emitter.completeWithError(e);
+//            }
+//        });
+//
+//        return emitter;
+//    }
+
     public SseEmitter streamAnswer(String question) {
         SseEmitter emitter = new SseEmitter(0L);
 
@@ -68,7 +100,30 @@ public class RagChatService {
                         .map(this::contentToText)
                         .collect(Collectors.toList());
 
-                String prompt = promptBuilder.build(question, chunks);
+                String prompt;
+
+                // 1. 知识库命中
+                if (chunks != null && !chunks.isEmpty()) {
+
+                    log.info("RAG knowledge hit, size={}", chunks.size());
+                    prompt = promptBuilder.build(question, chunks);
+
+                } else {
+                    log.info("RAG miss, using web search...");
+                    // 2. 未命中 → 联网搜索
+                    String webResult = webSearchService.search(question);
+
+                    prompt = """
+                            用户问题：
+                            %s
+                            
+                            以下是互联网搜索结果：
+                            
+                            %s
+                            
+                            请根据搜索结果回答用户问题。
+                            """.formatted(question, webResult);
+                }
 
                 streamGenerate(prompt, emitter);
 
@@ -82,16 +137,53 @@ public class RagChatService {
     }
 
 
+//    public String answer(String question) {
+//        List<Content> contents = retriever.retrieve(question);
+//
+//        List<String> chunks = contents.stream()
+//                .map(this::contentToText)
+//                .collect(Collectors.toList());
+//
+//        String prompt = promptBuilder.build(question, chunks);
+//
+//        // ✅ 同步阻塞返回
+//        return chatModel.generate(prompt);
+//    }
+
+
     public String answer(String question) {
+
         List<Content> contents = retriever.retrieve(question);
 
         List<String> chunks = contents.stream()
                 .map(this::contentToText)
                 .collect(Collectors.toList());
 
-        String prompt = promptBuilder.build(question, chunks);
+        String prompt;
 
-        // ✅ 同步阻塞返回
+        // 1. 知识库命中
+        if (chunks != null && !chunks.isEmpty()) {
+
+            log.info("RAG knowledge hit, size={}", chunks.size());
+            prompt = promptBuilder.build(question, chunks);
+
+        } else {
+            log.info("RAG miss, using web search...");
+            // 2. 未命中 → AI联网搜索
+            String webResult = webSearchService.search(question);
+
+            prompt = """
+                    用户问题：
+                    %s
+                    
+                    以下是互联网搜索结果：
+                    
+                    %s
+                    
+                    请根据搜索结果回答用户问题。
+                    """.formatted(question, webResult);
+        }
+
         return chatModel.generate(prompt);
     }
 
