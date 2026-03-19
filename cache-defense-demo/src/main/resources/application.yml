@@ -1,0 +1,19 @@
+
+spring:
+  datasource:
+    url: jdbc:mysql://192.168.220.200:3308/db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: cpc!23#@
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: 192.168.220.200
+      port: 6379
+
+server:
+  port: 8080
+
+app:
+  sentinel:
+    order-query-key-qps: 5
