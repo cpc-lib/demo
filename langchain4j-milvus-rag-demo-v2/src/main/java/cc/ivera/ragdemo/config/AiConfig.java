@@ -2,6 +2,7 @@ package cc.ivera.ragdemo.config;
 
 import cc.ivera.ragdemo.agent.AgentAssistant;
 import cc.ivera.ragdemo.service.tool.KnowledgeTool;
+import cc.ivera.ragdemo.service.tool.TicketTool;
 import cc.ivera.ragdemo.service.tool.WebSearchTool;
 import cc.ivera.ragdemo.service.tool.WeatherTool;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -60,11 +61,13 @@ public class AiConfig {
     public AgentAssistant agentAssistant(ChatLanguageModel chatLanguageModel,
                                          KnowledgeTool knowledgeTool,
                                          WebSearchTool webSearchTool,
-                                         WeatherTool weatherTool) {
+                                         WeatherTool weatherTool,
+                                         TicketTool ticketTool) {
         return AiServices.builder(AgentAssistant.class)
                 .chatLanguageModel(chatLanguageModel)
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(props.getAgent().getMemoryMaxMessages()))
-                .tools(knowledgeTool, webSearchTool, weatherTool)
+                .chatMemoryProvider(memoryId ->
+                        MessageWindowChatMemory.withMaxMessages(props.getAgent().getMemoryMaxMessages()))
+                .tools(ticketTool, knowledgeTool, webSearchTool, weatherTool)
                 .build();
     }
 
