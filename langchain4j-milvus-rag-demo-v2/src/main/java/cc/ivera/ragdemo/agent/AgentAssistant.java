@@ -20,6 +20,7 @@ public interface AgentAssistant {
             4. 对于业务知识、项目知识、私有文档知识、技术实现类问题，优先调用 knowledgeSearch 工具。
             5. 当 knowledgeSearch 返回未命中、信息不足、或用户问题明确需要最新互联网信息时，再调用 webSearch 工具。
             6. 当用户询问天气、气温、降雨、风力、未来天气时，调用 weatherForecast 工具。
+            6.1 当用户要求“生成图片/画图/出图/文生图/海报/插画”等视觉内容时，调用 textToImage 工具。
             7. 回答时优先基于工具返回内容，不要编造不存在的事实。
             8. 如果工单工具返回了 totalCount 和状态分布，回答时要用自然中文总结：
                - 总工单数

@@ -3,6 +3,7 @@ package cc.ivera.ragdemo.config;
 import cc.ivera.ragdemo.agent.AgentAssistant;
 import cc.ivera.ragdemo.service.tool.KnowledgeTool;
 import cc.ivera.ragdemo.service.tool.TicketTool;
+import cc.ivera.ragdemo.service.tool.TextToImageTool;
 import cc.ivera.ragdemo.service.tool.WebSearchTool;
 import cc.ivera.ragdemo.service.tool.WeatherTool;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -16,13 +17,21 @@ import dev.langchain4j.service.AiServices;
 import io.milvus.v2.client.ConnectConfig;
 import io.milvus.v2.client.MilvusClientV2;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 @Configuration
 @EnableConfigurationProperties(RagProperties.class)
 @RequiredArgsConstructor
+@Slf4j
 public class AiConfig {
 
     private final RagProperties props;
@@ -62,13 +71,66 @@ public class AiConfig {
                                          KnowledgeTool knowledgeTool,
                                          WebSearchTool webSearchTool,
                                          WeatherTool weatherTool,
-                                         TicketTool ticketTool) {
+                                         TicketTool ticketTool,
+                                         TextToImageTool textToImageTool) {
+        List<Object> configuredTools = resolveAgentTools(knowledgeTool, webSearchTool, weatherTool, ticketTool, textToImageTool);
         return AiServices.builder(AgentAssistant.class)
                 .chatLanguageModel(chatLanguageModel)
                 .chatMemoryProvider(memoryId ->
                         MessageWindowChatMemory.withMaxMessages(props.getAgent().getMemoryMaxMessages()))
-                .tools(ticketTool, knowledgeTool, webSearchTool, weatherTool)
+                .tools(configuredTools.toArray())
                 .build();
+    }
+
+    private List<Object> resolveAgentTools(KnowledgeTool knowledgeTool,
+                                           WebSearchTool webSearchTool,
+                                           WeatherTool weatherTool,
+                                           TicketTool ticketTool,
+                                           TextToImageTool textToImageTool) {
+        Map<String, Object> availableTools = new LinkedHashMap<>();
+        availableTools.put("ticket", ticketTool);
+        availableTools.put("knowledge", knowledgeTool);
+        if (props.getWebSearch().isEnabled()) {
+            availableTools.put("web-search", webSearchTool);
+        }
+        if (props.getWeather().isEnabled()) {
+            availableTools.put("weather", weatherTool);
+        }
+        if (props.getImage().isEnabled()) {
+            availableTools.put("text-to-image", textToImageTool);
+        }
+
+        List<Object> resolved = new ArrayList<>();
+        for (String rawName : props.getAgent().getTools()) {
+            String name = normalizeToolName(rawName);
+            Object tool = availableTools.get(name);
+            if (tool == null) {
+                throw new IllegalArgumentException("Unknown or disabled tool configured: " + rawName);
+            }
+            resolved.add(tool);
+        }
+
+        if (resolved.isEmpty()) {
+            throw new IllegalArgumentException("No tools configured for rag.agent.tools");
+        }
+
+        log.info("Agent tools loaded from yml: {}", props.getAgent().getTools());
+        return resolved;
+    }
+
+    private String normalizeToolName(String toolName) {
+        if (toolName == null) {
+            return "";
+        }
+        String normalized = toolName.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "ticket", "tickettool", "ticket-analysis", "ticketanalysis" -> "ticket";
+            case "knowledge", "knowledgetool", "knowledge-search", "knowledgesearch" -> "knowledge";
+            case "web-search", "websearch", "web-search-tool", "websearchtool" -> "web-search";
+            case "weather", "weathertool", "weather-forecast", "weatherforecast" -> "weather";
+            case "text-to-image", "texttoimage", "image", "image-generation", "imagetool" -> "text-to-image";
+            default -> normalized;
+        };
     }
 
     @Bean

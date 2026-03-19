@@ -6,6 +6,9 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @Validated
 @ConfigurationProperties(prefix = "rag")
@@ -18,6 +21,7 @@ public class RagProperties {
     private final Agent agent = new Agent();
     private final WebSearch webSearch = new WebSearch();
     private final Weather weather = new Weather();
+    private final Image image = new Image();
 
     @Data
     public static class Llm {
@@ -73,6 +77,7 @@ public class RagProperties {
         private int memoryMaxMessages = 20;
         private boolean appendSourceBlock = true;
         private boolean appendToolTrace = true;
+        private List<String> tools = new ArrayList<>(List.of("ticket", "knowledge", "web-search", "weather", "text-to-image"));
     }
 
     @Data
@@ -93,5 +98,17 @@ public class RagProperties {
         private String forecastBaseUrl = "https://api.open-meteo.com";
         private String defaultTimezone = "Asia/Shanghai";
         private Integer timeoutSeconds = 20;
+    }
+
+    @Data
+    public static class Image {
+        private boolean enabled = true;
+        private String baseUrl;
+        private String apiKey;
+        private String model = "gpt-image-1";
+        private String size = "1024x1024";
+        private String quality = "standard";
+        private Integer timeoutSeconds = 60;
+        private Integer pollIntervalMillis = 2000;
     }
 }
