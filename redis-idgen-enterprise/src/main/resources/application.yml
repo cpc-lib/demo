@@ -1,0 +1,39 @@
+server:
+  port: 8081
+
+spring:
+  redis:
+    host: 192.168.220.200
+    port: 6379
+    timeout: 2s
+    password: cpc!23#@
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+idgen:
+  # DO NOT change after go-live
+  epoch-seconds: 1735689600   # 2025-01-01 00:00:00 UTC
+  # bit allocation (sum=64)
+  time-bits: 30
+  tenant-bits: 12
+  biz-bits: 8
+  seq-bits: 14
+
+  redis-prefix: "idgen:"
+  step: 2000
+  prefetch-threshold: 0.2
+  fetch-timeout: 1500ms
+
+  emergency-segments: 2
+  fail-fast: true
+  # node-id is used ONLY by test tools for hard-fallback simulation; not used in financial-grade runtime path.
+  node-id: 1
+
+  biz-map:
+    order: 1
+    refund: 2
+    user: 3

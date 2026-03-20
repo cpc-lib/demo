@@ -1,0 +1,9 @@
+ai:
+  dashscope:
+    api-key: sk-b8f000fc24f34b67ba142e4f35372327
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  qwen:
+    chat-model: qwen-plus
+    embedding-model: text-embedding-v1
+    enable-search: true       # 开启联网（模型自行决定是否搜索）
+    forced-search: true      # 是否强制每次都搜（需要再打开）

@@ -1,0 +1,19 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  kafka:
+    bootstrap-servers: 192.168.220.200:9092
+    consumer:
+      group-id: demo-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 1
+      properties:
+        max.poll.interval.ms: 60000
+    listener:
+      ack-mode: manual

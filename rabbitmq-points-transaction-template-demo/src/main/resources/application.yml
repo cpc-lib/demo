@@ -1,0 +1,24 @@
+server:
+  port: 56081
+
+spring:
+  datasource:
+    url: jdbc:mysql://192.168.220.200:3306/points_demo_2?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: cpc!23#@
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  rabbitmq:
+    host: 192.168.220.200
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        acknowledge-mode: manual
+    publisher-confirm-type: correlated
+    publisher-returns: true
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true

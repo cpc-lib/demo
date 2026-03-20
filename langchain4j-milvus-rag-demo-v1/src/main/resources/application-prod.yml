@@ -1,0 +1,39 @@
+rag:
+  llm:
+    base-url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    api-key: "sk-b8f000fc24f34b67ba142e4f35372327"
+    model: "qwen-plus"
+    temperature: 0.2
+
+  embedding:
+    base-url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    api-key: "sk-b8f000fc24f34b67ba142e4f35372327"
+    model: "text-embedding-v4"
+    dimension: 1024
+
+  milvus:
+    username: ${MILVUS_USERNAME:}
+    password: ${MILVUS_PASSWORD:}
+    default-alias: "default"
+    host: "192.168.220.200"
+    port: 19530
+    collection: "demo_kb"
+    top-k: 6
+    min-score: 0.55
+
+  splitter:
+    chunk-size: 900
+    overlap: 120
+
+tavily:
+  api:
+    key: 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
+
+spring:
+  data:
+    redis:
+      host: "192.168.220.200"
+      port: 6379
+      database: 0
+      timeout: 5s
+      password: cpc!23#@

@@ -1,0 +1,145 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: enterprise-order-demo
+
+  # Redis
+  redis:
+    host: 192.168.220.200
+    port: 6379
+    timeout: 2s
+    password: cpc!23#@
+
+  # Kafka
+  kafka:
+    bootstrap-servers: 192.168.220.200:9092
+    producer:
+      acks: all
+      retries: 10
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        delivery.timeout.ms: 120000
+        request.timeout.ms: 30000
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 50
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+# MyBatis-Plus
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: INPUT
+
+# ShardingSphere 分库分表
+spring.shardingsphere:
+  props:
+    sql-show: true
+
+  datasource:
+    names: ds0,ds1
+
+    ds0:
+      type: com.zaxxer.hikari.HikariDataSource
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://192.168.220.200:3306/order_ds_0?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+      username: root
+      password: cpc!23#@
+      hikari:
+        maximum-pool-size: 20
+
+    ds1:
+      type: com.zaxxer.hikari.HikariDataSource
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://192.168.220.200:3306/order_ds_1?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+      username: root
+      password: cpc!23#@
+      hikari:
+        maximum-pool-size: 20
+
+  rules:
+    sharding:
+      tables:
+        t_order:
+          actual-data-nodes: ds$->{0..1}.t_order_$->{0..1}
+          table-strategy:
+            standard:
+              sharding-column: id
+              sharding-algorithm-name: order_table_inline
+          database-strategy:
+            standard:
+              sharding-column: user_id
+              sharding-algorithm-name: db_inline
+
+        t_order_item:
+          actual-data-nodes: ds$->{0..1}.t_order_item_$->{0..1}
+          table-strategy:
+            standard:
+              sharding-column: order_id
+              sharding-algorithm-name: order_item_table_inline
+          database-strategy:
+            standard:
+              sharding-column: user_id
+              sharding-algorithm-name: db_inline
+
+        t_outbox_event:
+          actual-data-nodes: ds$->{0..1}.t_outbox_event_$->{0..1}
+          table-strategy:
+            standard:
+              sharding-column: aggregate_id
+              sharding-algorithm-name: outbox_table_inline
+          database-strategy:
+            standard:
+              sharding-column: aggregate_id
+              sharding-algorithm-name: outbox_db_inline
+
+        # user 表：为了 demo 简化，做成广播表（每库都有一份）
+        t_user:
+          actual-data-nodes: ds$->{0..1}.t_user
+
+      sharding-algorithms:
+        db_inline:
+          type: INLINE
+          props:
+            algorithm-expression: ds$->{user_id % 2}
+
+        outbox_db_inline:
+          type: INLINE
+          props:
+            algorithm-expression: ds$->{aggregate_id % 2}
+
+        order_table_inline:
+          type: INLINE
+          props:
+            algorithm-expression: t_order_$->{id % 2}
+
+        order_item_table_inline:
+          type: INLINE
+          props:
+            algorithm-expression: t_order_item_$->{order_id % 2}
+
+        outbox_table_inline:
+          type: INLINE
+          props:
+            algorithm-expression: t_outbox_event_$->{aggregate_id % 2}
+
+# ES
+app:
+  es:
+    hosts: 192.168.220.200:9200
+    index: order_v1
+
+  kafka:
+    topic: order.events.v1
+
+  cache:
+    order-detail-ttl-seconds: 600

@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # 1. NameServer 服务
+  namesrv:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/rocketmq:5.3.4
+    container_name: rmqnamesrv
+    ports:
+      - "9876:9876"
+    networks:
+      - rocketmq
+    command: sh mqnamesrv
+    environment:
+      # 调整 JVM 内存，避免占用过大
+      - JAVA_OPT_EXT=-Xms256m -Xmx256m -Xmn128m
+
+  # 2. Broker 服务 (开启 Proxy 支持 gRPC)
+  broker:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/rocketmq:5.3.4
+    container_name: rmqbroker
+    ports:
+      - "10911:10911" # Broker Remoting Server VIP 端口
+      - "10909:10909" # Broker VIP 端口
+      - "8081:8081"   # RocketMQ 5.x Proxy gRPC 端口
+    networks:
+      - rocketmq
+    depends_on:
+      - namesrv
+    # 启动命令：
+    # -c 指定配置文件
+    # --enable-proxy 开启 5.x 的 Proxy 功能
+    command: sh mqbroker -n namesrv:9876 -c /home/rocketmq/rocketmq-5.3.4/conf/broker.conf --enable-proxy autoCreateTopicEnable=true
+    environment:
+      - NAMESRV_ADDR=namesrv:9876
+      # 调整 JVM 内存
+      - JAVA_OPT_EXT=-Xms512m -Xmx512m -Xmn256m
+    volumes:
+      - ./conf/broker.conf:/home/rocketmq/rocketmq-5.3.4/conf/broker.conf
+      - ./logs/broker:/home/rocketmq/logs
+      - ./store/broker:/home/rocketmq/store
+
+  # 3. Dashboard 可视化控制台
+  dashboard:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/rocketmq-dashboard:2.1.0
+    container_name: rmqdashboard
+    ports:
+      - "8082:8082"
+    networks:
+      - rocketmq
+    depends_on:
+      - namesrv
+    environment:
+      - JAVA_OPTS=-Drocketmq.namesrv.addr=namesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false
+
+networks:
+  rocketmq:
+    driver: bridge

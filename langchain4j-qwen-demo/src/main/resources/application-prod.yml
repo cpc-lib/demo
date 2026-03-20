@@ -1,0 +1,11 @@
+ai:
+  dashscope:
+    api-key: sk-b8f000fc24f34b67ba142e4f35372327
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    chat-model: qwen-plus
+    embedding-model: text-embedding-v4
+    image-model: qwen-image-plus
+
+  tavily:
+    api-key: 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
+    base-url: https://api.tavily.com

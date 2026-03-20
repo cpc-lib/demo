@@ -1,0 +1,14 @@
+spring:
+  data:
+    redis:
+      host: 192.168.220.200
+      port: 6379
+      database: 0
+      password: cpc!23#@
+
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://192.168.220.200:6379"
+      password: "cpc!23#
+      database: 0

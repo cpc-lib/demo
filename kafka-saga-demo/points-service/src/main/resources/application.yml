@@ -1,0 +1,27 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: points-service
+  datasource:
+    url: jdbc:mysql://192.168.220.200:3306/points_db?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+    username: root
+    password: cpc!23#@
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  kafka:
+    bootstrap-servers: 192.168.220.200:9092
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: points-service-group
+    listener:
+      ack-mode: record
+      missing-topics-fatal: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true

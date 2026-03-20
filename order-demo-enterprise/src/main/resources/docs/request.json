@@ -1,0 +1,17 @@
+{
+  "userId": 1001,
+  "items": [
+    {
+      "skuId": 9001001,
+      "title": "iPhone 15 Pro 256G",
+      "price": 799900,
+      "quantity": 1
+    },
+    {
+      "skuId": 9002002,
+      "title": "AirPods Pro 2",
+      "price": 199900,
+      "quantity": 2
+    }
+  ]
+}

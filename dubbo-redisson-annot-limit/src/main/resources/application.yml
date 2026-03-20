@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    redis:
+      host: 192.168.220.200
+      port: 6379
+      password: cpc!23#@
+      database: 0
+
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://192.168.220.200:6379"
+      password: "cpc!23#@"
+      database: 0
+
+dubbo:
+  application:
+    name: dubbo-limit-demo
+  protocol:
+    name: dubbo
+    port: 20880
+    host: 127.0.0.1
+  registry:
+    #address: N/A
+    address: nacos://127.0.0.1:8848
+    username: nacos
+    password: nacos

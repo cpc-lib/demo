@@ -1,0 +1,15 @@
+package cc.ivera.entity.vo;
+
+import lombok.Getter;
+import lombok.Setter;
+import mybatis.mate.encrypt.entity.User;
+import mybatis.mate.encrypt.entity.UserInfo;
+
+import java.util.List;
+
+@Getter
+@Setter
+public class UserVO extends User {
+    private List<UserInfo> userInfos;
+
+}

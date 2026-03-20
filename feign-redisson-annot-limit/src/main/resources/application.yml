@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: feign-redisson-annot-limit
+  data:
+    redis:
+      port: 6379
+      host: 192.168.220.200
+      password: cpc!23#@
+
+external:
+  api:
+    base-url: http://localhost:8080/api
+
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://127.0.0.1:6379"
+      password: "cpc!23#@"
+      database: 0

@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS user_account;
+
+CREATE TABLE user_account (
+    id BIGINT PRIMARY KEY,
+    username VARCHAR(64) NOT NULL,
+    balance DECIMAL(18,2) NOT NULL DEFAULT 0,
+    version BIGINT NOT NULL DEFAULT 0,
+    update_time TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO user_account(id, username, balance, version)
+VALUES (1, 'Alice', 100.00, 0);

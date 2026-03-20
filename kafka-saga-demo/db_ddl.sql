@@ -1,0 +1,32 @@
+-- user_db.t_user
+CREATE TABLE `t_user` (
+  `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
+  `username` VARCHAR(64) NOT NULL UNIQUE COMMENT '用户名',
+  `phone` VARCHAR(20) UNIQUE COMMENT '手机号',
+  `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1正常，0已回滚/禁用',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- points_db.t_points_account
+CREATE TABLE `t_points_account` (
+  `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `points` INT NOT NULL DEFAULT 0 COMMENT '积分余额',
+  `version` INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分账户表';
+
+-- user_db.t_saga_event_log & points_db.t_saga_event_log (结构相同)
+CREATE TABLE `t_saga_event_log` (
+  `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+  `event_id` VARCHAR(64) NOT NULL COMMENT '事件ID（全局唯一）',
+  `event_type` VARCHAR(64) NOT NULL COMMENT '事件类型',
+  `payload` JSON NOT NULL COMMENT '事件内容',
+  `status` TINYINT NOT NULL DEFAULT 0 COMMENT '0待发送/待处理,1已处理,2失败',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_event_type_id` (`event_id`, `event_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Saga事件日志';

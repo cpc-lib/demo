@@ -1,0 +1,27 @@
+{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "orderId": { "type": "keyword" },
+      "userId": { "type": "keyword" },
+      "status": { "type": "keyword" },
+      "totalAmount": { "type": "long" },
+      "createdAt": { "type": "date" },
+      "updatedAt": { "type": "date" },
+      "items": {
+        "type": "nested",
+        "properties": {
+          "skuId": { "type": "keyword" },
+          "title": { "type": "text" },
+          "price": { "type": "long" },
+          "quantity": { "type": "integer" }
+        }
+      }
+    }
+  }
+}
+

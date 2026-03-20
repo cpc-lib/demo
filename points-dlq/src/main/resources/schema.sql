@@ -1,0 +1,32 @@
+CREATE TABLE IF NOT EXISTS user_info (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(64) NOT NULL,
+  mobile VARCHAR(32) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_points (
+  user_id BIGINT PRIMARY KEY,
+  points INT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS points_log (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  business_id VARCHAR(64) NOT NULL,
+  points INT NOT NULL,
+  status TINYINT NOT NULL,
+  retry_count INT NOT NULL,
+  err_msg VARCHAR(255),
+  create_time DATETIME,
+  update_time DATETIME,
+  UNIQUE KEY uk_business_id (business_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS manual_process (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  business_id VARCHAR(64) NOT NULL,
+  user_id BIGINT,
+  err_msg VARCHAR(255),
+  status TINYINT NOT NULL,
+  create_time DATETIME
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -1,0 +1,27 @@
+server:
+  port: 56081
+
+spring:
+  application:
+    name: rabbitmq-points-demo
+  datasource:
+    url: jdbc:mysql://192.168.220.200:3306/points_demo?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    username: root
+    password: cpc!23#@
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  rabbitmq:
+    host: 192.168.220.200
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath*:mapper/**/*.xml
+
+logging:
+  level:
+    com.example.points: debug

@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: limit-queue-tokenbucket-demo
+  data:
+    redis:
+      host: 192.168.220.200
+      port: 6379
+      password: cpc!23#@
+      database: 0
+
+# Redisson 官方 starter 的内嵌配置方式：
+# 这里使用单机版 Redis，如果你是集群 / 哨兵自己改这段即可
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://127.0.0.1:6379"
+      password: "cpc!23#@"
+      database: 0

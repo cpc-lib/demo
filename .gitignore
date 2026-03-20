@@ -71,7 +71,6 @@ selenium-debug.log
 *.njsproj
 *.sln
 *.local
-application-prod.yml
 
 **/package-lock.json
 **/yarn.lock

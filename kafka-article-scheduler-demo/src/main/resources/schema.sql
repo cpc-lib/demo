@@ -1,0 +1,12 @@
+CREATE DATABASE IF NOT EXISTS article_demo DEFAULT CHARSET utf8mb4;
+USE article_demo;
+
+CREATE TABLE IF NOT EXISTS t_article (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(255) NOT NULL,
+  content TEXT,
+  publish_time DATETIME NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL
+);

@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: order-demo-basic
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.220.200:3306/order_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: cpc!23#@
+  redis:
+    host: 192.168.220.200
+    port: 6379
+    database: 0
+    password: cpc!23#@
+    timeout: 2s
+    lettuce:
+      pool:
+        max-active: 16
+        max-idle: 8
+        min-idle: 0
+        max-wait: 1s
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+
+
+order:
+  no:
+    strategy: SNOWFLAKE   # SNOWFLAKE | SEGMENT | LEAF（本次用 SNOWFLAKE）
+    prefix: OD
+    snowflake:
+      worker-id: 1        # 多节点：每个实例必须不同
+      datacenter-id: 1    # 多机房：可按机房/集群区分
+  cache:
+  # 订单详情缓存 TTL（秒）
+    detail-ttl-seconds: 300
+    # 版本号 key TTL（秒）建议更长
+    version-ttl-seconds: 86400
+    # 缓存击穿锁 TTL（毫秒）
+    lock-ttl-ms: 3000
+logging:
+  level:
+    com.example.orderdemo: INFO
+    com.baomidou.mybatisplus: WARN
+
+
+
+
+
