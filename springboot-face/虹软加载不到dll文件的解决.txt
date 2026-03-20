@@ -1,0 +1,6 @@
+问题：
+Caused by: java.lang.UnsatisfiedLinkError: D:\gongju\renlian\haha\libs\WIN64\libarcsoft_face.dll: Can't find dependent libraries
+
+
+解决：
+安装vcredist_x64.exe，即可解决。

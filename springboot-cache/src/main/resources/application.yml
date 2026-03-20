@@ -1,0 +1,62 @@
+server:
+  port: 8080
+
+
+mybatis-plus:
+
+  global-config:
+    #二级缓存
+    configuration:
+      map-underscore-to-camel-case: false #禁用自定义驼峰
+      cache-enabled: true #开启二级缓存 默认为关闭状态
+    db-config:
+      logic-not-delete-value: '0'
+      table-prefix: tb_
+      logic-delete-value: '1'
+      id-type: auto
+  type-enums-package: cc.ivera.enums
+  type-aliases-package: cc.ivera.domain
+  mapper-locations: classpath*:mybatis/*.xml
+  config-location: classpath:mybatis-config.xml
+
+spring:
+  application:
+    name: springboot-cache
+  datasource:
+    druid:
+      password: root
+      driver-class-name: com.mysql.jdbc.Driver
+      username: root
+      url: jdbc:mysql://127.0.0.1:3306/mp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true&useSSL=false
+
+# 同一环境只能使用一种缓存
+# --redis--
+#  cache:
+#    type: redis
+#    redis:
+#      use-key-prefix: true
+#      key-prefix: arhi_
+#      cache-null-values: false
+#      time-to-live: 10s
+#
+#  redis:
+#    host: localhost
+#    port: 6379
+
+
+#  cache:
+#    type: ehcache
+#    ehcache:
+#      config: classpath:ehcache.xml
+
+
+
+#--memcached--
+memcached:
+  servers: localhost:11211
+  poolSize: 10
+  opTimeout: 3000
+  prefix: arhi_
+
+
+

@@ -1,0 +1,87 @@
+package cc.ivera.app9;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import cc.ivera.CommonConfiguration;
+import cc.ivera.ConfigProperties;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.AcknowledgingMessageListener;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.KafkaMessageListenerContainer;
+import org.springframework.kafka.support.Acknowledgment;
+
+@SpringBootApplication
+@Import({ CommonConfiguration.class, ConfigProperties.class })
+@EnableKafka
+public class S1pKafkaApplication {
+
+	public static void main(String[] args) throws Exception {
+		ConfigurableApplicationContext context = new SpringApplicationBuilder(S1pKafkaApplication.class)
+			.web(WebApplicationType.NONE)
+			.run(args);
+		TestBean testBean = context.getBean(TestBean.class);
+		testBean.send("foo");
+		context.getBean(Listener.class).latch.await(60, TimeUnit.SECONDS);
+		context.close();
+	}
+
+	@Bean
+	public TestBean test() {
+		return new TestBean();
+	}
+
+	@Bean
+	public Listener listener() {
+		return new Listener();
+	}
+
+	@Bean
+	public KafkaMessageListenerContainer<String, String> container(
+			ConsumerFactory<String, String> consumerFactory,
+			ConfigProperties config) {
+		ContainerProperties containerProperties = new ContainerProperties(config.getTopic());
+		containerProperties.setMessageListener(listener());
+		containerProperties.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+		return new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
+	}
+
+	public static class TestBean {
+
+		@Autowired
+		private ConfigProperties configProperties;
+
+		@Autowired
+		private KafkaTemplate<String, String> template;
+
+		public void send(String foo) {
+			this.template.send(this.configProperties.getTopic(), foo);
+		}
+
+	}
+
+	public static class Listener implements AcknowledgingMessageListener<String, String> {
+
+		private final CountDownLatch latch = new CountDownLatch(1);
+
+		@Override
+		public void onMessage(ConsumerRecord<String, String> record, Acknowledgment acknowledgment) {
+			System.out.println("Received: " + record.value());
+			acknowledgment.acknowledge();//处理完业务逻辑完成偏移量处理。
+			this.latch.countDown();
+		}
+
+	}
+
+}

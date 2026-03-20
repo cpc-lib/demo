@@ -1,0 +1,17 @@
+server:
+  port: 18081
+spring:
+  application:
+    name: user-consumer
+logging:
+  level:
+    cc.ivera: debug
+  pattern:
+    dateformat: HH:mm:ss:SSS
+#配置dubbo服务消费者
+dubbo:
+  registry:
+    address: nacos://127.0.0.1:8848
+  consumer:
+    check: false  #关闭了启动检查
+    retries: 0

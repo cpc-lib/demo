@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <!--MyBatis的DTD约束-->
+    <!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+    <!--configuration 核心根标签-->
+    <configuration>
+
+    <!--引入数据库连接的配置文件-->
+    <properties resource="jdbc.properties"/>
+
+    <!--配置LOG4J-->
+    <settings>
+        <setting name="logImpl" value="log4j"/>
+    </settings>
+
+    <!--给某个包下的所有类起别名-->
+    <typeAliases>
+        <package name="cc.ivera.bean"/>
+    </typeAliases>
+
+    <!--environments配置数据库环境，环境可以有多个。default属性指定使用的是哪个-->
+    <environments default="mysql">
+        <!--environment配置数据库环境  id属性唯一标识-->
+        <environment id="mysql">
+            <!-- transactionManager事务管理。  type属性，采用JDBC默认的事务-->
+            <transactionManager type="JDBC"></transactionManager>
+            <!-- dataSource数据源信息   type属性 连接池-->
+            <dataSource type="POOLED">
+                <!-- property获取数据库连接的配置信息 -->
+                <property name="driver" value="${jdbc.driver}" />
+                <property name="url" value="${jdbc.url}" />
+                <property name="username" value="${jdbc.username}" />
+                <property name="password" value="${jdbc.password}" />
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!-- mappers引入映射配置文件 -->
+    <mappers>
+<!--        <mapper resource="top/arhi/mapper/One2OneMapper.xml"/>-->
+<!--        <mapper resource="top/arhi/mapper/One2ManyMapper.xml"/>-->
+<!--        <mapper resource="top/arhi/mapper/Many2ManyMapper.xml"/>-->
+        <package name="cc.ivera.mapper"/>
+    </mappers>
+
+<!--    &lt;!&ndash; Using classpath relative resources &ndash;&gt;-->
+<!--    <mappers>-->
+<!--        <mapper resource="org/mybatis/builder/AuthorMapper.xml"/>-->
+<!--        <mapper resource="org/mybatis/builder/BlogMapper.xml"/>-->
+<!--        <mapper resource="org/mybatis/builder/PostMapper.xml"/>-->
+<!--    </mappers>-->
+
+<!--    <mappers>-->
+<!--        <mapper class="org.mybatis.builder.AuthorMapper"/>-->
+<!--        <mapper class="org.mybatis.builder.BlogMapper"/>-->
+<!--        <mapper class="org.mybatis.builder.PostMapper"/>-->
+<!--    </mappers>-->
+
+<!--    <mappers>-->
+<!--        <package name="org.mybatis.builder"/>-->
+<!--    </mappers>-->
+
+
+
+</configuration>

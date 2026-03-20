@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.GoodMapper">
+
+    <!--Good-->
+    <resultMap id="baseGoodMap" type="cc.ivera.domain.Good">
+        <id property="goodId" column="good_id"/>
+        <result property="goodName" column="good_name"/>
+        <result property="total" column="total"/>
+        <result property="version" column="version"/>
+    </resultMap>
+
+    <update id="updateGoodTotal" parameterType="map">
+       update tb_good set total=#{total},version=version+1 where good_id=#{goodId} and version=#{version}
+    </update>
+
+    <select id="selectByGoodId" parameterType="string" resultMap="baseGoodMap">
+        select * from tb_good  where good_id=#{goodId} for update
+    </select>
+
+    <!--没有版本控制-->
+    <update id="updateByGood" parameterType="Good">
+        update tb_good set total=#{total} where good_id=#{goodId}
+    </update>
+
+
+</mapper>

@@ -1,0 +1,51 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>app</artifactId>
+  <version>1.0.1</version>
+
+  <properties>
+    <java.version>17</java.version>
+    <spring.boot.version>2.7.18</spring.boot.version>
+  </properties>
+
+  <dependencies>
+
+    <!-- Spring Boot Web -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <version>${spring.boot.version}</version>
+    </dependency>
+
+    <!-- Sleuth（Tracing） -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-sleuth</artifactId>
+      <version>3.1.7</version>
+    </dependency>
+
+    <!-- Logstash Logback Encoder（必须用 6.6 → 兼容 logback 1.2.x） -->
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+      <version>6.6</version>
+    </dependency>
+
+    <!-- ❌ 千万不要再加 logback-classic / logback-core -->
+    <!-- Spring Boot 2.7 自带 logback 1.2.11 且稳定 -->
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring.boot.version}</version>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

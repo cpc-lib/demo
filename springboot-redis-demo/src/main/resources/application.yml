@@ -1,0 +1,35 @@
+# Viewing Automatic Configuration
+# debug: true
+
+server:
+  port: 8082
+
+spring:
+  # redis setting
+  redis:
+    host: 114.132.210.77
+    port: 6379
+    password: cpc!23
+
+  # cache setting
+  cache:
+    redis:
+      time-to-live: 60000 # 60s
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://114.132.210.77:3306/test
+    username: root
+    password: cpc!23#
+
+# mp setting
+mybatis-plus:
+  mapperLocations: classpath*:top/arhi/mapper/*.xml
+  global-config:
+    db-config:
+      table-prefix:
+  configuration:
+    # log of sql
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # hump
+    map-underscore-to-camel-case: true

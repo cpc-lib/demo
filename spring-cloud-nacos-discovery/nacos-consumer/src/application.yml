@@ -1,0 +1,25 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 114.132.210.77:8848
+  application:
+    name: nacos-consumer
+feign:
+  hystrix:
+    enabled: true
+  client:
+    config:
+      default:
+        connectTimeout: 20000
+        readTimeout: 20000
+  httpclient:
+    connection-timeout: 20000
+    connection-timer-repeat: 20000
+    enabled: true
+    max-connections: 200
+    max-connections-per-route: 50
+# 设置Ribbon的超时时间
+ribbon:
+  ConnectTimeout: 1000 # 连接超时时间 默认1s
+  ReadTimeout: 3000 # 逻辑处理的超时时间 默认1s

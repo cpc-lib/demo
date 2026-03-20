@@ -1,0 +1,48 @@
+{
+  "info": {
+    "name": "Micrometer Zipkin ELK Demo v2",
+    "_postman_id": "b1c4f5bb-0000-0000-0000-demo000000002",
+    "description": "order-service 调用 user-service，演示链路追踪。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "查询订单（触发链路追踪）",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8081/orders/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "orders",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "直接查询用户",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/users/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8082",
+          "path": [
+            "users",
+            "1"
+          ]
+        }
+      }
+    }
+  ]
+}

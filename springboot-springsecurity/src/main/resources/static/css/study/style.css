@@ -1,0 +1,815 @@
+@font-face {
+    font-family: 'icomoon';
+    src: url('fonts/icomoon.eot?xhinm9');
+    src: url('fonts/icomoon.eot?xhinm9#iefix') format('embedded-opentype'), url('fonts/icomoon.ttf?xhinm9') format('truetype'), url('fonts/icomoon.woff?xhinm9') format('woff'), url('fonts/icomoon.svg?xhinm9#icomoon') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+li {
+    list-style-type: none;
+}
+
+input {
+    outline: none;
+}
+
+a {
+    text-decoration: none;
+}
+
+.w {
+    width: 1200px;
+    margin: 0 auto;
+}
+
+body {
+    background-color: #f3f5f7;
+}
+
+.box:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.box {
+    width: 100%;
+    float: left;
+    *zoom: 1;
+}
+
+.header {
+    height: 42px;
+    margin: 30px auto;
+    /* background-color: pink; */
+}
+
+.logo {
+    float: left;
+    height: 42px;
+    width: 195px;
+}
+
+.nav {
+    position: relative;
+    float: left;
+    margin-left: 70px;
+}
+
+.list {
+    position: absolute;
+    width: 150px;
+    height: 200px;
+    z-index: 1;
+    top: 44px;
+    display: none;
+}
+
+.triangle {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid orange;
+    border-left: 10px solid transparent;
+    top: -20px;
+    left: 55px;
+    display: none;
+}
+
+.spec {
+    width: 100%;
+    height: 200px;
+    display: none;
+}
+
+.spec li {
+    height: 30px;
+    padding: 5px 0 5px 15px;
+    line-height: 30px;
+    background-color: orange;
+}
+
+.mouseover:hover .triangle {
+    display: block;
+}
+
+.mouseover:hover .spec {
+    display: block;
+}
+
+.mouseover:hover .list {
+    display: block;
+}
+
+.spec li:hover {
+    background-color: white;
+    color: red;
+}
+
+.nav>ul>li span {
+    display: inline-block;
+    font-family: 'icomoon';
+    width: 10px;
+    color: goldenrod;
+    height: 42px;
+    line-height: 42px;
+}
+
+.nav>ul>li {
+    float: left;
+    margin: 0 15px;
+}
+
+.nav>ul>li a {
+    display: inline-block;
+    height: 42px;
+    padding: 0 10px;
+    line-height: 42px;
+    font-size: 18px;
+    color: #050505;
+}
+
+.nav>ul>li a:hover {
+    border-bottom: 1px solid #00a4ff;
+    color: #00a4ff;
+}
+
+.search {
+    float: left;
+    width: 412px;
+    height: 42px;
+    margin-left: 50px;
+    background-color: skyblue;
+}
+
+.search input {
+    float: left;
+    width: 345px;
+    height: 40px;
+    border: 1px solid #00a4ff;
+    border-right: none;
+    color: #cececf;
+    font-size: 14px;
+    padding-left: 15px;
+}
+
+.search button {
+    font-family: 'icomoon';
+    float: left;
+    width: 50px;
+    height: 42px;
+    border: none;
+    background-color: #00a4ff;
+    color: white;
+}
+
+.user {
+    float: left;
+    margin-left: 30px;
+}
+
+.user img {
+    vertical-align: middle;
+    height: 30px;
+    margin: 6px 0;
+}
+
+.user span {
+    vertical-align: middle;
+    padding-left: 5px;
+}
+
+.banner {
+    background-color: #1c036c;
+}
+
+.banner .w {
+    position: relative;
+    height: 420px;
+    background-image: url(images/banner2.jpg);
+    *zoom: 1;
+}
+
+.banner .w .middle {
+    position: absolute;
+    width: 242px;
+    height: 40px;
+    left: 50%;
+    margin-left: -121px;
+    bottom: 20px;
+    /* background-color: pink; */
+}
+
+.banner .w .middle ul li {
+    float: left;
+    width: 10px;
+    height: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border-radius: 50%;
+    margin-left: 26px;
+    cursor: pointer;
+    background-color: whitesmoke;
+}
+
+.banner .w .middle ul li:hover {
+    width: 20px;
+    border-radius: 20%;
+    background-color: thistle;
+}
+
+.banner .w:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.banner .w .left {
+    float: left;
+    height: 420px;
+    width: 190px;
+    background-color: #13024b;
+    overflow: hidden;
+}
+
+.banner .w .left ul {
+    margin: 7.5px 0;
+}
+
+.banner .w .left ul li:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.banner .w .left ul li {
+    padding: 0 15px;
+    /* background-color: pink; */
+    *zoom: 1;
+}
+
+.banner .w .left ul li:hover {
+    background-color: red;
+}
+
+.banner .w .left ul li a {
+    float: left;
+    height: 45px;
+    line-height: 45px;
+    font-size: 14px;
+    color: white;
+}
+
+.banner .w .left ul li span {
+    float: right;
+    height: 45px;
+    line-height: 45px;
+    font-size: 14px;
+    color: white;
+}
+
+.banner .w .right {
+    float: right;
+    width: 230px;
+    height: 300px;
+    margin: 50px 0px;
+    background-color: white;
+}
+
+.banner .w .right ul li h3 {
+    text-align: center;
+    height: 50px;
+    line-height: 50px;
+    font-size: 18px;
+    background-color: #9bceea;
+    color: white;
+}
+
+.banner .w .right ul .content {
+    height: 70px;
+    overflow: hidden;
+    margin: 0 25px;
+    border-bottom: 1px solid #bdbcbc;
+}
+
+.banner .w .right ul .content {
+    height: 60px;
+}
+
+.banner .w .right ul .content .p1 {
+    margin-top: 20px;
+    font-size: 16px;
+    height: 18px;
+    line-height: 18px;
+}
+
+.banner .w .right ul .content .p2 {
+    font-size: 12px;
+    height: 20px;
+    line-height: 20px;
+    margin-bottom: 15px;
+    color: #bdbcbc;
+}
+
+.banner .w .right ul li button {
+    width: 188px;
+    height: 38px;
+    margin: 8px 20px;
+    line-height: 38px;
+    border: 1px solid #22b0ff;
+    font-size: 16px;
+    color: #00a4ff;
+    /*button默认带有边框与背景颜色*/
+    background-color: white;
+}
+
+.favoriate:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.favoriate {
+    *zoom: 1;
+    background-color: white;
+    /* border-bottom: 1px solid gray; */
+}
+
+.favoriate ul {
+    height: 70px;
+    float: left;
+}
+
+.favoriate ul li {
+    float: left;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    height: 20px;
+}
+
+.favoriate ul li a {
+    display: block;
+    padding-left: 35px;
+    padding-right: 35px;
+    height: 20px;
+    line-height: 20px;
+    color: black;
+    text-decoration: none;
+}
+
+.favoriate ul li a:hover {
+    color: #00a4ff;
+}
+
+.favoriate ul .border {
+    border-left: 1px solid gray;
+}
+
+.favoriate button {
+    float: right;
+    margin-top: 20px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
+    height: 30px;
+    line-height: 30px;
+    background-color: white;
+    border: none;
+    color: #00a4ff;
+}
+
+.main .recommend {
+    margin-top: 35px;
+}
+
+.main .recommend .top:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.main .recommend .top {
+    *zoom: 1;
+    background-color: white;
+}
+
+.main .recommend .top span {
+    float: left;
+    display: block;
+    height: 35px;
+    line-height: 35px;
+    margin-left: 10px;
+}
+
+.main .recommend .top button {
+    float: right;
+    height: 35px;
+    margin-right: 10px;
+    background-color: white;
+    border: none;
+    color: #919090;
+}
+
+.main .recommend .top button:hover {
+    color: #00a4ff;
+}
+
+.main .recommend>.bottom {
+    background-color: #f3f5f7;
+}
+
+.main .recommend>.bottom ul:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.main .recommend>.bottom ul {
+    *zoom: 1;
+}
+
+.main .recommend>.bottom ul li {
+    position: relative;
+    float: left;
+    width: 228px;
+    height: 270px;
+    margin-right: 15px;
+    background-color: white;
+}
+
+.main .recommend>.bottom ul li em {
+    position: absolute;
+    top: 4px;
+    right: -4px;
+}
+
+.main .recommend>.bottom ul .last {
+    margin-right: 0;
+}
+
+.main .recommend>.bottom ul .bottom {
+    margin-top: 15px;
+}
+
+.main .recommend>.bottom ul li p {
+    margin: 15px 20px;
+}
+
+.main .recommend>.bottom ul li p a {
+    color: black;
+}
+
+.main .recommend>.bottom ul li p a:hover {
+    color: blue;
+    text-decoration: underline;
+}
+
+.main .recommend>.bottom p span {
+    font-size: 14px;
+}
+
+.main .recommend>.bottom p .level {
+    color: #ff7c2d;
+}
+
+.main .recommend>.bottom p .online {
+    color: #919090;
+}
+
+.main .nb>.top:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.main .nb>.top {
+    margin-top: 35px;
+    background-color: white;
+    *zoom: 1;
+}
+
+.main .nb>.top .left {
+    float: left;
+    width: 228px;
+    height: 35px;
+    line-height: 35px;
+    margin-right: 15px;
+}
+
+.main .nb>.top .left span {
+    margin-left: 10px;
+}
+
+.main .nb>.top .center {
+    float: left;
+    width: 360px;
+    height: 35px;
+    line-height: 35px;
+    padding: 0 177px;
+    margin-right: 15px;
+}
+
+.main .nb>.top .center ul:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.main .nb>.top .center ul {
+    width: 360px;
+    margin: 0 auto;
+    *zoom: 1;
+}
+
+.main .nb>.top .center ul li {
+    height: 35px;
+    float: left;
+    margin-right: 70px;
+}
+
+.main .nb>.top .center ul li a {
+    color: black;
+}
+
+.main .nb>.top .center ul li a:hover {
+    color: #00a4ff;
+}
+
+.main .nb>.top .center ul .first {
+    margin-left: 10.5px;
+}
+
+.main .nb>.top .center ul .last {
+    margin-right: 10.5px;
+}
+
+.main .nb>.top .right {
+    float: right;
+    width: 228px;
+    height: 35px;
+    line-height: 35px;
+}
+
+.main .nb>.top .right button {
+    float: right;
+    height: 35px;
+    line-height: 35px;
+    margin-right: 10px;
+    background-color: white;
+    border: none;
+    color: #919090;
+}
+
+.main .nb>.top .right button:hover {
+    color: #00a4ff;
+}
+
+.main .nb>.bottom:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.main .nb>.bottom {
+    margin-top: 15px;
+    *zoom: 1;
+}
+
+.main .nb>.bottom .left {
+    float: left;
+    margin-right: 15px;
+    width: 228px;
+    height: 392px;
+    background-image: url(images/banner6.jpg);
+}
+
+.main .nb>.bottom .right {
+    float: left;
+}
+
+.main .nb>.bottom .right .top {
+    width: 957px;
+    height: 100px;
+    background-image: url(images/banner7.jpg);
+}
+
+.main .nb>.bottom .right .bottom ul li {
+    float: left;
+    width: 228px;
+    height: 268px;
+    margin-top: 24px;
+    margin-right: 15px;
+    background-color: white;
+}
+
+.main .nb>.bottom .right .bottom ul .last {
+    margin-right: 0;
+}
+
+.main .nb>.bottom .right .bottom ul .bottom {
+    margin-top: 15px;
+}
+
+.main .nb>.bottom .right .bottom ul li p {
+    margin: 15px 20px;
+    height: 40px;
+}
+
+.main .nb>.bottom .right .bottom ul li p a {
+    color: black;
+}
+
+.main .nb>.bottom .right .bottom li p a:hover {
+    color: blue;
+    text-decoration: underline;
+}
+
+.main .nb>.bottom .right .bottom p span {
+    font-size: 14px;
+}
+
+.main .nb>.bottom .right .bottom p .level {
+    color: #ff7c2d;
+}
+
+.main .nb>.bottom .right .bottom p .online {
+    color: #919090;
+}
+
+.main .develop>.bottom ul:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.main .develop>.bottom ul {
+    *zoom: 1;
+}
+
+.main .develop>.bottom ul li {
+    float: left;
+    width: 228px;
+    height: 270px;
+    margin-right: 15px;
+    background-color: white;
+}
+
+.main .develop>.bottom ul .last {
+    margin-right: 0;
+}
+
+.main .develop>.bottom ul .bottom {
+    margin-top: 15px;
+}
+
+.main .develop>.bottom ul li p {
+    margin: 15px 20px;
+}
+
+.main .develop>.bottom ul li p a {
+    color: black;
+}
+
+.main .develop>.bottom ul li p a:hover {
+    color: blue;
+    text-decoration: underline;
+}
+
+.main .develop>.bottom p span {
+    font-size: 14px;
+}
+
+.main .develop>.bottom p .level {
+    color: #ff7c2d;
+}
+
+.main .develop>.bottom p .online {
+    color: #919090;
+}
+
+.footer {
+    margin-top: 40px;
+    background-color: white;
+}
+
+.footer .w:after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    visibility: hidden;
+}
+
+.footer .w {
+    *zoom: 1;
+}
+
+.footer .w .left {
+    float: left;
+    width: 600px;
+    height: 417px;
+}
+
+.footer .w .right {
+    float: right;
+    width: 600px;
+    height: 417px;
+}
+
+.footer .w .left img {
+    margin-top: 30px;
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+.footer .w .left p {
+    margin-left: 20px;
+    font-size: 12px;
+}
+
+.footer .w .left button {
+    background-color: white;
+    width: 118px;
+    height: 33px;
+    border: 1px solid #00a4ff;
+    color: #00a4ff;
+    font-size: 16px;
+    margin-left: 20px;
+    margin-top: 15px;
+}
+
+.footer .w .right dl {
+    float: left;
+    margin-right: 170px;
+}
+
+.footer .w .right .last {
+    float: right;
+    margin-right: 20px;
+}
+
+.footer .w .right dl dt {
+    margin-top: 30px;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.footer .w .right dl dd {
+    margin-bottom: 9px;
+    font-size: 12px;
+}
+
+.lside {
+    position: absolute;
+    right: 50%;
+    margin-right: 620px;
+    top: 880px;
+    width: 210px;
+    height: 440px;
+    background-color: white;
+}
+
+.lside ul li {
+    margin-left: 20px;
+    height: 40px;
+    line-height: 40px;
+}
+
+.lside ul li a {
+    color: black;
+}
+
+.lside ul li a:hover {
+    color: #00a4ff;
+}

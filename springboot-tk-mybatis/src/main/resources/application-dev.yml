@@ -1,0 +1,55 @@
+server:
+  port: 8092
+
+spring:
+  #数据源配置
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource #Druid连接池
+    url: jdbc:mysql://localhost:3306/db?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=UTC
+    username: root  #数据库用户名
+    password: root  #数据库密码
+    driver-class-name: com.mysql.cj.jdbc.Driver #mysql驱动
+    initialSize: 10 #初始化连接池大小
+    minIdle: 10 #初始化最小连接池数量
+    maxActive: 100 #初始化最大连接池数量
+    maxWait: 6000 #配置获取连接等待超时的时间
+    timeBetweenEvictionRunsMills: 6000 #配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+    minEvictableIdleTimeMillis: 30000 #配置一个连接在池中最小生存的时间，单位是毫秒
+    validationQuery: SELECT 'x' #测试连接
+
+#tk-mybatis执行数据库操作的时候打印SQL日志(debug前面的key是mapper文件的包名，一定不能写错，否则打印不出日志)
+logging:
+  level:
+    com.slm.tkmybatis.project.dao: debug
+mybatis:
+  mapper-locations: classpath*:top/arhi/mapper/*.xml
+  configuration:
+    #map-underscore-to-camel-case: false #(Configurations默认设置为false,然后读取配置文件进行再次设置false)
+    map-underscore-to-camel-case: false #开启驼峰配置
+    use-generated-keys: true #配置回显主键的value值
+  #设置为true或则false
+  #出现的问题tk.mybatis代理生成对象的通用mapper方法可实现数据表字段ip_address映射到ipAddress ip_address
+  #字段ip_address,ipAddress都进行了映射（bug）
+  type-aliases-package: cc.ivera.domain
+
+  #xml配置中的方法 开启驼峰配置为true，使用resultMap,可以实现数据库某字段到实体类字段的映射
+  #使用resultType，字段进行驼峰匹配映射。如ip_address,映射到ipAddress.
+
+  #xml配置中的方法 使用sqlMapper且设置mybatis的驼峰映射为true时，使用sqlMapper的selectList(String sql,Class<?> clazz)方法字段遵循驼峰规则
+  #ip_address->ipAddress.
+
+
+  #xml配置中的方法 配置mybatis的驼峰配置为false,字段ip_address->ip_address 单摄
+
+
+  #总结
+  #在项目中，存在多个orm（sqlMapper,mybatis）框架时，推荐设置不做map-underscore-to-camel-case的设置(mybatis的默认值为fasle)
+  #实体类字段采用下划线
+
+  #在项目中，存在mybatisplus，mybatis，tkmybatis，sqlmapper时，记住设置mybatisplus的驼峰配置为false
+  #why?mybatisplus框架的构造方法MyBatiConfiguration类设置了mapUnderscoreToCamelCase的值为trueapp
+
+  #xml配置中的方法 配置mybatis的驼峰配置为false,字段ip_address->ip_address 单摄
+  #xml配置中的方法 mybatis的驼峰配置为true，字段ip_address->ipAddress 根据驼峰进行映射
+
+

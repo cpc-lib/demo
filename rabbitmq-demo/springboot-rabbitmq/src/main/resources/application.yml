@@ -1,0 +1,22 @@
+server:
+  port: 8080 #tomcat的默认端口号
+spring:
+  rabbitmq:
+    host: 114.132.210.77
+    port: 5672
+    virtual-host: /root
+    username: root
+    password: root
+    listener:
+      simple:
+        retry:
+          enable: true
+          max-attempts: 3
+          initial-interval: 1000
+          max-interval: 9000
+          multiplier: 3
+    publisher-confirm-type: correlated
+    publisher-returns: true
+
+
+

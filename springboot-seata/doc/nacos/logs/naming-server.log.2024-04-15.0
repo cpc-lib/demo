@@ -1,0 +1,272 @@
+2024-04-15 14:25:50,703 INFO [SelectorManager] Load SelectorContextBuilder(class com.alibaba.nacos.naming.selector.context.CmdbSelectorContextBuilder) contextType(CMDB) successfully.
+
+2024-04-15 14:25:50,703 INFO [SelectorManager] Load SelectorContextBuilder(class com.alibaba.nacos.naming.selector.context.NoneSelectorContextBuilder) contextType(NONE) successfully.
+
+2024-04-15 14:25:50,703 INFO [SelectorManager] Load Selector(class com.alibaba.nacos.naming.selector.LabelSelector) type(label) contextType(CMDB) successfully.
+
+2024-04-15 14:25:50,703 INFO [SelectorManager] Load Selector(class com.alibaba.nacos.naming.selector.NoneSelector) type(none) contextType(NONE) successfully.
+
+2024-04-15 14:25:52,898 INFO Load instance extension handler []
+
+2024-04-15 15:11:32,999 INFO Client connection 198.18.0.1:51453#true connect
+
+2024-04-15 15:11:35,515 INFO Client connection 10.1.2.232:10010#true connect
+
+2024-04-15 15:11:35,516 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=0}, 10.1.2.232:10010#true
+
+2024-04-15 15:11:46,216 INFO Client connection 198.18.0.1:63742#true connect
+
+2024-04-15 15:11:46,255 INFO Client connection 10.1.2.232:8088#true connect
+
+2024-04-15 15:11:46,255 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=0}, 10.1.2.232:8088#true
+
+2024-04-15 15:12:50,772 INFO Client connection 198.18.0.1:57207#true connect
+
+2024-04-15 15:12:50,804 INFO Client connection 10.1.2.232:8081#true connect
+
+2024-04-15 15:12:50,804 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=0}, 10.1.2.232:8081#true
+
+2024-04-15 15:20:21,772 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=1}, 10.1.2.232:10010#true
+
+2024-04-15 15:20:39,359 INFO Client connection 198.18.0.1:60833#true connect
+
+2024-04-15 15:20:41,827 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=2}, 10.1.2.232:10010#true
+
+2024-04-15 15:20:47,717 INFO Client connection 198.18.0.1:51453#true disconnect, remove instances and subscribers
+
+2024-04-15 15:20:48,739 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}, 10.1.2.232:8088#true
+
+2024-04-15 15:21:22,798 INFO Client connection 10.1.2.232:8088#true disconnect, remove instances and subscribers
+
+2024-04-15 15:21:22,798 INFO Client connection 198.18.0.1:63742#true disconnect, remove instances and subscribers
+
+2024-04-15 15:22:22,629 WARN namespace : public, [DEFAULT_GROUP@@orderservice] services are automatically cleaned
+
+2024-04-15 15:25:54,094 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=3}, 10.1.2.232:10010#true
+
+2024-04-15 15:26:12,639 INFO Client connection 198.18.0.1:58358#true connect
+
+2024-04-15 15:26:12,674 INFO Client connection 10.1.2.232:8088#true connect
+
+2024-04-15 15:26:12,674 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=0}, 10.1.2.232:8088#true
+
+2024-04-15 15:26:15,725 INFO Client connection 198.18.0.1:58359#true connect
+
+2024-04-15 15:26:18,186 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=4}, 10.1.2.232:10010#true
+
+2024-04-15 15:26:23,247 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}, 10.1.2.232:8081#true
+
+2024-04-15 15:26:23,281 INFO Client connection 198.18.0.1:60833#true disconnect, remove instances and subscribers
+
+2024-04-15 15:26:39,414 INFO Client connection 198.18.0.1:57520#true connect
+
+2024-04-15 15:26:39,448 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=2}, 10.1.2.232:8081#true
+
+2024-04-15 15:26:53,348 INFO Client connection 198.18.0.1:57207#true disconnect, remove instances and subscribers
+
+2024-04-15 15:43:50,455 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}, 10.1.2.232:8088#true
+
+2024-04-15 15:44:09,593 INFO Client connection 198.18.0.1:52418#true connect
+
+2024-04-15 15:44:09,634 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=2}, 10.1.2.232:8088#true
+
+2024-04-15 15:44:30,032 INFO Client connection 198.18.0.1:58358#true disconnect, remove instances and subscribers
+
+2024-04-15 15:45:03,932 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=3}, 10.1.2.232:8088#true
+
+2024-04-15 15:45:35,141 INFO Client connection 10.1.2.232:8088#true disconnect, remove instances and subscribers
+
+2024-04-15 15:45:35,141 INFO Client connection 198.18.0.1:52418#true disconnect, remove instances and subscribers
+
+2024-04-15 15:45:36,280 INFO Client connection 198.18.0.1:51244#true connect
+
+2024-04-15 15:45:36,315 INFO Client connection 10.1.2.232:8088#true connect
+
+2024-04-15 15:45:36,315 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=4}, 10.1.2.232:8088#true
+
+2024-04-15 15:47:44,687 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=5}, 10.1.2.232:10010#true
+
+2024-04-15 15:47:44,787 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=5}, 10.1.2.232:8088#true
+
+2024-04-15 15:47:44,806 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, 10.1.2.232:8081#true
+
+2024-04-15 15:48:00,218 INFO Client connection 198.18.0.1:56897#true connect
+
+2024-04-15 15:48:00,274 INFO Client connection 198.18.0.1:56898#true connect
+
+2024-04-15 15:48:00,314 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=6}, 10.1.2.232:8088#true
+
+2024-04-15 15:48:00,899 INFO Client connection 198.18.0.1:56899#true connect
+
+2024-04-15 15:48:00,932 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=4}, 10.1.2.232:8081#true
+
+2024-04-15 15:48:03,029 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=6}, 10.1.2.232:10010#true
+
+2024-04-15 15:48:10,378 INFO Client connection 198.18.0.1:58359#true disconnect, remove instances and subscribers
+
+2024-04-15 15:48:15,388 INFO Client connection 198.18.0.1:57520#true disconnect, remove instances and subscribers
+
+2024-04-15 15:48:20,395 INFO Client connection 198.18.0.1:51244#true disconnect, remove instances and subscribers
+
+2024-04-15 16:32:25,256 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=7}, 10.1.2.232:8088#true
+
+2024-04-15 16:32:44,407 INFO Client connection 198.18.0.1:52953#true connect
+
+2024-04-15 16:32:44,444 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=8}, 10.1.2.232:8088#true
+
+2024-04-15 16:32:59,689 INFO Client connection 198.18.0.1:56898#true disconnect, remove instances and subscribers
+
+2024-04-15 17:01:31,148 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=9}, 10.1.2.232:8088#true
+
+2024-04-15 17:01:48,800 INFO Client connection 198.18.0.1:54256#true connect
+
+2024-04-15 17:01:48,835 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=10}, 10.1.2.232:8088#true
+
+2024-04-15 17:02:02,585 INFO Client connection 198.18.0.1:52953#true disconnect, remove instances and subscribers
+
+2024-04-15 17:06:48,546 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=11}, 10.1.2.232:8088#true
+
+2024-04-15 17:07:23,084 INFO Client connection 10.1.2.232:8088#true disconnect, remove instances and subscribers
+
+2024-04-15 17:07:23,084 INFO Client connection 198.18.0.1:54256#true disconnect, remove instances and subscribers
+
+2024-04-15 17:07:29,907 INFO Client connection 198.18.0.1:62149#true connect
+
+2024-04-15 17:07:29,946 INFO Client connection 10.1.2.232:8088#true connect
+
+2024-04-15 17:07:29,946 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=12}, 10.1.2.232:8088#true
+
+2024-04-15 18:14:03,285 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=13}, 10.1.2.232:8088#true
+
+2024-04-15 18:14:19,640 INFO Client connection 198.18.0.1:55812#true connect
+
+2024-04-15 18:14:19,676 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=14}, 10.1.2.232:8088#true
+
+2024-04-15 18:14:39,438 INFO Client connection 198.18.0.1:62149#true disconnect, remove instances and subscribers
+
+2024-04-15 18:51:06,795 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=7}, 10.1.2.232:10010#true
+
+2024-04-15 18:51:06,891 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=15}, 10.1.2.232:8088#true
+
+2024-04-15 18:51:06,912 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, 10.1.2.232:8081#true
+
+2024-04-15 18:51:24,335 INFO Client connection 198.18.0.1:52202#true connect
+
+2024-04-15 18:51:26,805 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=8}, 10.1.2.232:10010#true
+
+2024-04-15 18:51:32,116 INFO Client connection 198.18.0.1:52798#true connect
+
+2024-04-15 18:51:32,153 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=16}, 10.1.2.232:8088#true
+
+2024-04-15 18:51:32,166 INFO Client connection 198.18.0.1:52799#true connect
+
+2024-04-15 18:51:32,197 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=6}, 10.1.2.232:8081#true
+
+2024-04-15 18:51:37,886 INFO Client connection 198.18.0.1:55812#true disconnect, remove instances and subscribers
+
+2024-04-15 18:51:37,886 INFO Client connection 198.18.0.1:56899#true disconnect, remove instances and subscribers
+
+2024-04-15 18:51:42,899 INFO Client connection 198.18.0.1:56897#true disconnect, remove instances and subscribers
+
+2024-04-15 18:59:54,773 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=9}, 10.1.2.232:10010#true
+
+2024-04-15 19:00:28,701 INFO Client connection 10.1.2.232:10010#true disconnect, remove instances and subscribers
+
+2024-04-15 19:00:28,701 INFO Client connection 198.18.0.1:52202#true disconnect, remove instances and subscribers
+
+2024-04-15 19:00:33,707 INFO Client connection 198.18.0.1:52798#true disconnect, remove instances and subscribers
+
+2024-04-15 19:00:35,566 INFO [AUTO-DELETE-IP] service: Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=17}, ip: {"ip":"10.1.2.232","port":8088,"healthy":false,"cluster":"DEFAULT","extendDatum":{"preserved.register.source":"SPRING_CLOUD","customInstanceId":"10.1.2.232#8088#DEFAULT#DEFAULT_GROUP@@orderservice"},"lastHeartBeatTime":1713178803098,"metadataId":"10.1.2.232:8088:DEFAULT"}
+
+2024-04-15 19:00:35,566 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=17}, 10.1.2.232:8088#true
+
+2024-04-15 19:00:38,715 INFO Client connection 10.1.2.232:8088#true disconnect, remove instances and subscribers
+
+2024-04-15 19:00:38,715 INFO Client connection 198.18.0.1:52799#true disconnect, remove instances and subscribers
+
+2024-04-15 19:00:47,659 INFO [AUTO-DELETE-IP] service: Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, ip: {"ip":"10.1.2.232","port":8081,"healthy":false,"cluster":"DEFAULT","extendDatum":{"preserved.register.source":"SPRING_CLOUD","customInstanceId":"10.1.2.232#8081#DEFAULT#DEFAULT_GROUP@@userservice"},"lastHeartBeatTime":1713178813270,"metadataId":"10.1.2.232:8081:DEFAULT"}
+
+2024-04-15 19:00:47,660 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, 10.1.2.232:8081#true
+
+2024-04-15 19:00:48,730 INFO Client connection 10.1.2.232:8081#true disconnect, remove instances and subscribers
+
+2024-04-15 19:01:24,347 WARN namespace : public, [DEFAULT_GROUP@@gateway] services are automatically cleaned
+
+2024-04-15 19:02:24,360 WARN namespace : public, [DEFAULT_GROUP@@orderservice] services are automatically cleaned
+
+2024-04-15 19:02:24,361 WARN namespace : public, [DEFAULT_GROUP@@userservice] services are automatically cleaned
+
+2024-04-15 19:10:45,652 INFO Client connection 198.18.0.1:50619#true connect
+
+2024-04-15 19:10:48,090 INFO Client connection 10.1.2.232:10010#true connect
+
+2024-04-15 19:10:48,090 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=0}, 10.1.2.232:10010#true
+
+2024-04-15 19:10:51,141 INFO Client connection 198.18.0.1:61588#true connect
+
+2024-04-15 19:10:51,177 INFO Client connection 10.1.2.232:8088#true connect
+
+2024-04-15 19:10:51,177 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=0}, 10.1.2.232:8088#true
+
+2024-04-15 19:10:56,310 INFO Client connection 198.18.0.1:57224#true connect
+
+2024-04-15 19:10:56,340 INFO Client connection 10.1.2.232:8081#true connect
+
+2024-04-15 19:10:56,340 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=0}, 10.1.2.232:8081#true
+
+2024-04-15 19:18:57,469 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}, 10.1.2.232:8081#true
+
+2024-04-15 19:19:16,498 INFO Client connection 198.18.0.1:64801#true connect
+
+2024-04-15 19:19:16,525 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=2}, 10.1.2.232:8081#true
+
+2024-04-15 19:19:30,592 INFO Client connection 198.18.0.1:57224#true disconnect, remove instances and subscribers
+
+2024-04-15 19:49:40,842 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=1}, 10.1.2.232:10010#true
+
+2024-04-15 19:49:40,960 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}, 10.1.2.232:8088#true
+
+2024-04-15 19:49:40,964 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, 10.1.2.232:8081#true
+
+2024-04-15 19:49:59,349 INFO Client connection 198.18.0.1:65527#true connect
+
+2024-04-15 19:49:59,384 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=2}, 10.1.2.232:8088#true
+
+2024-04-15 19:50:00,906 INFO Client connection 198.18.0.1:65528#true connect
+
+2024-04-15 19:50:00,937 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=4}, 10.1.2.232:8081#true
+
+2024-04-15 19:50:02,298 INFO Client connection 198.18.0.1:65529#true connect
+
+2024-04-15 19:50:04,761 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=2}, 10.1.2.232:10010#true
+
+2024-04-15 19:50:13,545 INFO Client connection 198.18.0.1:50619#true disconnect, remove instances and subscribers
+
+2024-04-15 19:50:13,545 INFO Client connection 198.18.0.1:64801#true disconnect, remove instances and subscribers
+
+2024-04-15 19:50:18,555 INFO Client connection 198.18.0.1:61588#true disconnect, remove instances and subscribers
+
+2024-04-15 19:53:50,182 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, 10.1.2.232:8081#true
+
+2024-04-15 19:54:06,209 INFO Client connection 198.18.0.1:49265#true connect
+
+2024-04-15 19:54:06,239 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=6}, 10.1.2.232:8081#true
+
+2024-04-15 19:54:23,907 INFO Client connection 198.18.0.1:65528#true disconnect, remove instances and subscribers
+
+2024-04-15 20:24:42,999 WARN [NamingServerHttpClientManager] Start destroying HTTP-Client
+
+2024-04-15 20:24:43,009 WARN [NamingServerHttpClientManager] Destruction of the end
+
+2024-04-15 20:24:43,334 ERROR [HEALTH-CHECK-V2] error while processing NIO task
+
+java.lang.InterruptedException: null
+	at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1679)
+	at java.base/java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+	at com.alibaba.nacos.naming.healthcheck.v2.processor.TcpHealthCheckProcessor.processTask(TcpHealthCheckProcessor.java:122)
+	at com.alibaba.nacos.naming.healthcheck.v2.processor.TcpHealthCheckProcessor.run(TcpHealthCheckProcessor.java:139)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:833)

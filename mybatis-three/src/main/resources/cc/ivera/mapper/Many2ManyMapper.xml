@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--MyBatis的DTD约束-->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.cc.ivera.Many2ManyMapper">
+    <resultMap id="many2Many" type="student">
+        <id column="sid" property="id"/>
+        <result column="sname" property="name"/>
+        <result column="sage" property="age"/>
+
+        <collection property="courses" ofType="course">
+            <id column="cid" property="id"/>
+            <result column="cname" property="name"/>
+        </collection>
+    </resultMap>
+    <select id="selectAll" resultMap="many2Many">
+        SELECT sc.id sid,s.name sname,s.age sage,sc.course_id cid,c.name cname
+        FROM student s,course c,stu_crs sc
+        WHERE sc.student_id=s.id AND sc.course_id=c.id
+    </select>
+</mapper>

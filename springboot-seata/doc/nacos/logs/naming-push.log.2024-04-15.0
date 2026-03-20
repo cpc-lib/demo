@@ -1,0 +1,970 @@
+2024-04-15 15:11:33,602 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:11:33,607 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:51453, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51453,24468476639500
+
+2024-04-15 15:11:33,608 INFO send udp packet: 198.18.0.1,51453,24468476639500
+
+2024-04-15 15:11:33,638 INFO [PUSH-SUCC] 37ms, all delay time 632ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=0}, originalSize=0, DataSize=0
+
+2024-04-15 15:11:36,109 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:11:36,111 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:51453, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51453,24470983318600
+
+2024-04-15 15:11:36,112 INFO send udp packet: 198.18.0.1,51453,24470983318600
+
+2024-04-15 15:11:36,112 INFO [PUSH-SUCC] 3ms, all delay time 594ms, SLA 594ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:11:46,255 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}
+
+2024-04-15 15:11:46,805 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:11:46,806 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:63742, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,63742,24481679455500
+
+2024-04-15 15:11:46,806 INFO send udp packet: 198.18.0.1,63742,24481679455500
+
+2024-04-15 15:11:46,825 INFO [PUSH-SUCC] 20ms, all delay time 609ms, SLA 570ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:11:48,007 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:11:48,007 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:63742, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,63742,24482881481800
+
+2024-04-15 15:11:48,007 INFO send udp packet: 198.18.0.1,63742,24482881481800
+
+2024-04-15 15:11:48,008 INFO [PUSH-SUCC] 1ms, all delay time 530ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=0}, originalSize=0, DataSize=0
+
+2024-04-15 15:12:50,804 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}
+
+2024-04-15 15:12:51,362 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:12:51,365 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:63742, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,63742,24546237672000
+
+2024-04-15 15:12:51,365 INFO send udp packet: 198.18.0.1,63742,24546237672000
+
+2024-04-15 15:12:51,366 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:12:51,367 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57207, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57207,24546239839600
+
+2024-04-15 15:12:51,367 INFO send udp packet: 198.18.0.1,57207,24546239839600
+
+2024-04-15 15:12:51,371 INFO [PUSH-SUCC] 8ms, all delay time 598ms, SLA 566ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:12:51,381 INFO [PUSH-SUCC] 16ms, all delay time 609ms, SLA 577ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:20:22,301 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:20:22,302 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:51453, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51453,24997175839900
+
+2024-04-15 15:20:22,303 INFO send udp packet: 198.18.0.1,51453,24997175839900
+
+2024-04-15 15:20:22,315 INFO [PUSH-SUCC] 14ms, all delay time 542ms, SLA 543ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:20:39,893 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:20:39,894 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:60833, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,60833,25014767279300
+
+2024-04-15 15:20:39,895 INFO send udp packet: 198.18.0.1,60833,25014767279300
+
+2024-04-15 15:20:39,906 INFO [PUSH-SUCC] 14ms, all delay time 547ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=2}, originalSize=0, DataSize=0
+
+2024-04-15 15:20:42,407 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:20:42,408 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:60833, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,60833,25017281629700
+
+2024-04-15 15:20:42,408 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:20:42,408 INFO send udp packet: 198.18.0.1,60833,25017281629700
+
+2024-04-15 15:20:42,408 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:51453, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51453,25017282229000
+
+2024-04-15 15:20:42,408 INFO send udp packet: 198.18.0.1,51453,25017282229000
+
+2024-04-15 15:20:42,420 INFO [PUSH-SUCC] 13ms, all delay time 593ms, SLA 593ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:20:49,291 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:20:49,291 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:63742, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,63742,25024165160300
+
+2024-04-15 15:20:49,291 INFO send udp packet: 198.18.0.1,63742,25024165160300
+
+2024-04-15 15:20:49,296 INFO [PUSH-SUCC] 5ms, all delay time 557ms, SLA 557ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:20:52,415 INFO retry to push data, key: 198.18.0.1,51453,25017282229000
+
+2024-04-15 15:21:02,423 WARN max re-push times reached, retry times 2, key: 198.18.0.1,51453,25017282229000
+
+2024-04-15 15:21:02,424 ERROR [PUSH-FAIL] 20016ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=3}, reason=null, target=198.18.0.1
+
+2024-04-15 15:25:54,614 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:25:54,617 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:60833, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,60833,25329488679700
+
+2024-04-15 15:25:54,617 INFO send udp packet: 198.18.0.1,60833,25329488679700
+
+2024-04-15 15:25:54,630 INFO [PUSH-SUCC] 16ms, all delay time 536ms, SLA 536ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:26:12,674 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}
+
+2024-04-15 15:26:13,183 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:26:13,183 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:58358, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58358,25348056831100
+
+2024-04-15 15:26:13,183 INFO send udp packet: 198.18.0.1,58358,25348056831100
+
+2024-04-15 15:26:13,199 INFO [PUSH-SUCC] 16ms, all delay time 560ms, SLA 525ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:26:14,495 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:26:14,495 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:58358, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58358,25349369059600
+
+2024-04-15 15:26:14,495 INFO send udp packet: 198.18.0.1,58358,25349369059600
+
+2024-04-15 15:26:14,496 INFO [PUSH-SUCC] 1ms, all delay time 595ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}, originalSize=1, DataSize=1
+
+2024-04-15 15:26:16,242 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:26:16,244 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:58359, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58359,25351117912000
+
+2024-04-15 15:26:16,245 INFO send udp packet: 198.18.0.1,58359,25351117912000
+
+2024-04-15 15:26:16,254 INFO [PUSH-SUCC] 12ms, all delay time 529ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=4}, originalSize=0, DataSize=0
+
+2024-04-15 15:26:18,755 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:26:18,755 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:60833, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,60833,25353629402700
+
+2024-04-15 15:26:18,755 INFO send udp packet: 198.18.0.1,60833,25353629402700
+
+2024-04-15 15:26:18,755 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:26:18,756 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:58359, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58359,25353629939400
+
+2024-04-15 15:26:18,756 INFO send udp packet: 198.18.0.1,58359,25353629939400
+
+2024-04-15 15:26:18,768 INFO [PUSH-SUCC] 13ms, all delay time 582ms, SLA 582ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:26:23,782 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:26:23,782 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:58358, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58358,25358655627500
+
+2024-04-15 15:26:23,782 INFO send udp packet: 198.18.0.1,58358,25358655627500
+
+2024-04-15 15:26:23,782 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:26:23,782 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57207, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57207,25358655904200
+
+2024-04-15 15:26:23,782 INFO send udp packet: 198.18.0.1,57207,25358655904200
+
+2024-04-15 15:26:23,788 INFO [PUSH-SUCC] 6ms, all delay time 541ms, SLA 541ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:26:23,788 INFO [PUSH-SUCC] 6ms, all delay time 541ms, SLA 541ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:26:28,765 INFO retry to push data, key: 198.18.0.1,60833,25353629402700
+
+2024-04-15 15:26:38,778 WARN max re-push times reached, retry times 2, key: 198.18.0.1,60833,25353629402700
+
+2024-04-15 15:26:38,778 ERROR [PUSH-FAIL] 20023ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=5}, reason=null, target=198.18.0.1
+
+2024-04-15 15:26:39,448 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}
+
+2024-04-15 15:26:39,985 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:26:39,987 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57520, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57520,25374859377200
+
+2024-04-15 15:26:39,988 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:26:39,988 INFO send udp packet: 198.18.0.1,57520,25374859377200
+
+2024-04-15 15:26:39,989 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:58358, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58358,25374862643400
+
+2024-04-15 15:26:39,989 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:26:39,990 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57207, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57207,25374863417000
+
+2024-04-15 15:26:39,990 INFO send udp packet: 198.18.0.1,58358,25374862643400
+
+2024-04-15 15:26:39,990 INFO send udp packet: 198.18.0.1,57207,25374863417000
+
+2024-04-15 15:26:39,997 INFO [PUSH-SUCC] 9ms, all delay time 583ms, SLA 549ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:26:40,006 INFO [PUSH-SUCC] 21ms, all delay time 592ms, SLA 558ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:26:50,001 INFO retry to push data, key: 198.18.0.1,57207,25374863417000
+
+2024-04-15 15:27:00,002 WARN max re-push times reached, retry times 2, key: 198.18.0.1,57207,25374863417000
+
+2024-04-15 15:27:00,002 ERROR [PUSH-FAIL] 20013ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, reason=null, target=198.18.0.1
+
+2024-04-15 15:43:50,968 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:43:50,969 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:58358, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58358,26405842405400
+
+2024-04-15 15:43:50,969 INFO send udp packet: 198.18.0.1,58358,26405842405400
+
+2024-04-15 15:43:50,975 INFO [PUSH-SUCC] 7ms, all delay time 520ms, SLA 520ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:44:09,634 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=3}
+
+2024-04-15 15:44:10,199 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:44:10,201 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:58358, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58358,26425073543200
+
+2024-04-15 15:44:10,201 INFO send udp packet: 198.18.0.1,58358,26425073543200
+
+2024-04-15 15:44:10,201 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:44:10,202 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:52418, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52418,26425074880700
+
+2024-04-15 15:44:10,204 INFO send udp packet: 198.18.0.1,52418,26425074880700
+
+2024-04-15 15:44:10,225 INFO [PUSH-SUCC] 24ms, all delay time 632ms, SLA 591ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:44:11,509 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:44:11,509 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:52418, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52418,26426383098400
+
+2024-04-15 15:44:11,509 INFO send udp packet: 198.18.0.1,52418,26426383098400
+
+2024-04-15 15:44:11,511 INFO [PUSH-SUCC] 2ms, all delay time 607ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1
+
+2024-04-15 15:44:20,214 INFO retry to push data, key: 198.18.0.1,58358,26425073543200
+
+2024-04-15 15:44:30,218 WARN max re-push times reached, retry times 2, key: 198.18.0.1,58358,26425073543200
+
+2024-04-15 15:44:30,219 ERROR [PUSH-FAIL] 20019ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=3}, reason=null, target=198.18.0.1
+
+2024-04-15 15:45:04,510 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:45:04,512 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:52418, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52418,26479385097000
+
+2024-04-15 15:45:04,512 INFO send udp packet: 198.18.0.1,52418,26479385097000
+
+2024-04-15 15:45:04,521 INFO [PUSH-SUCC] 11ms, all delay time 589ms, SLA 589ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:45:36,315 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=5}
+
+2024-04-15 15:45:36,841 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:45:36,842 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:51244, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51244,26511715127100
+
+2024-04-15 15:45:36,843 INFO send udp packet: 198.18.0.1,51244,26511715127100
+
+2024-04-15 15:45:36,867 INFO [PUSH-SUCC] 26ms, all delay time 587ms, SLA 552ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:45:38,151 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:45:38,156 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:51244, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51244,26513025619000
+
+2024-04-15 15:45:38,156 INFO send udp packet: 198.18.0.1,51244,26513025619000
+
+2024-04-15 15:45:38,158 INFO [PUSH-SUCC] 7ms, all delay time 614ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1
+
+2024-04-15 15:47:45,221 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:47:45,221 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:58359, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58359,26640094599100
+
+2024-04-15 15:47:45,221 INFO send udp packet: 198.18.0.1,58359,26640094599100
+
+2024-04-15 15:47:45,231 INFO [PUSH-SUCC] 11ms, all delay time 543ms, SLA 543ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:47:45,330 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:47:45,330 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:47:45,331 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57520, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57520,26640204597000
+
+2024-04-15 15:47:45,331 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:47:45,331 INFO send udp packet: 198.18.0.1,57520,26640204597000
+
+2024-04-15 15:47:45,331 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:51244, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51244,26640204453200
+
+2024-04-15 15:47:45,331 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:51244, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51244,26640205016800
+
+2024-04-15 15:47:45,331 INFO send udp packet: 198.18.0.1,51244,26640204453200
+
+2024-04-15 15:47:45,331 INFO send udp packet: 198.18.0.1,51244,26640205016800
+
+2024-04-15 15:47:45,339 INFO [PUSH-SUCC] 9ms, all delay time 533ms, SLA 533ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:47:45,339 INFO [PUSH-SUCC] 9ms, all delay time 552ms, SLA 552ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:47:45,340 INFO [PUSH-SUCC] 9ms, all delay time 534ms, SLA 534ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 15:48:00,314 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=7}
+
+2024-04-15 15:48:00,800 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:48:00,800 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:48:00,800 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:56897, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56897,26655673814600
+
+2024-04-15 15:48:00,801 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:51244, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51244,26655674092100
+
+2024-04-15 15:48:00,801 INFO send udp packet: 198.18.0.1,56897,26655673814600
+
+2024-04-15 15:48:00,801 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 15:48:00,803 INFO send udp packet: 198.18.0.1,51244,26655674092100
+
+2024-04-15 15:48:00,803 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:56898, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56898,26655676705200
+
+2024-04-15 15:48:00,803 INFO send udp packet: 198.18.0.1,56898,26655676705200
+
+2024-04-15 15:48:00,809 INFO [PUSH-SUCC] 10ms, all delay time 591ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=6}, originalSize=0, DataSize=0
+
+2024-04-15 15:48:00,822 INFO [PUSH-SUCC] 21ms, all delay time 548ms, SLA 508ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=7}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:48:00,932 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}
+
+2024-04-15 15:48:01,456 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:48:01,457 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57520, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57520,26656330044000
+
+2024-04-15 15:48:01,457 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:48:01,457 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:51244, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,51244,26656330647800
+
+2024-04-15 15:48:01,457 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:48:01,457 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:56899, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56899,26656330805500
+
+2024-04-15 15:48:01,457 INFO send udp packet: 198.18.0.1,57520,26656330044000
+
+2024-04-15 15:48:01,457 INFO send udp packet: 198.18.0.1,51244,26656330647800
+
+2024-04-15 15:48:01,457 INFO send udp packet: 198.18.0.1,56899,26656330805500
+
+2024-04-15 15:48:01,473 INFO [PUSH-SUCC] 16ms, all delay time 574ms, SLA 541ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:48:02,106 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 15:48:02,106 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:56898, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56898,26656980501200
+
+2024-04-15 15:48:02,106 INFO send udp packet: 198.18.0.1,56898,26656980501200
+
+2024-04-15 15:48:02,108 INFO [PUSH-SUCC] 2ms, all delay time 544ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1
+
+2024-04-15 15:48:03,625 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:48:03,625 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:56897, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56897,26658498614000
+
+2024-04-15 15:48:03,625 INFO send udp packet: 198.18.0.1,56897,26658498614000
+
+2024-04-15 15:48:03,625 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 15:48:03,626 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:58359, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,58359,26658499644300
+
+2024-04-15 15:48:03,626 INFO send udp packet: 198.18.0.1,58359,26658499644300
+
+2024-04-15 15:48:03,645 INFO [PUSH-SUCC] 20ms, all delay time 616ms, SLA 616ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=7}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 15:48:10,814 INFO retry to push data, key: 198.18.0.1,51244,26655674092100
+
+2024-04-15 15:48:11,468 INFO retry to push data, key: 198.18.0.1,57520,26656330044000
+
+2024-04-15 15:48:11,468 INFO retry to push data, key: 198.18.0.1,51244,26656330647800
+
+2024-04-15 15:48:13,628 INFO retry to push data, key: 198.18.0.1,58359,26658499644300
+
+2024-04-15 15:48:20,826 WARN max re-push times reached, retry times 2, key: 198.18.0.1,51244,26655674092100
+
+2024-04-15 15:48:20,827 ERROR [PUSH-FAIL] 20028ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=7}, reason=null, target=198.18.0.1
+
+2024-04-15 15:48:21,480 WARN max re-push times reached, retry times 2, key: 198.18.0.1,57520,26656330044000
+
+2024-04-15 15:48:21,480 ERROR [PUSH-FAIL] 20024ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, reason=null, target=198.18.0.1
+
+2024-04-15 15:48:21,480 WARN max re-push times reached, retry times 2, key: 198.18.0.1,51244,26656330647800
+
+2024-04-15 15:48:21,480 ERROR [PUSH-FAIL] 20023ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, reason=null, target=198.18.0.1
+
+2024-04-15 15:48:23,637 WARN max re-push times reached, retry times 2, key: 198.18.0.1,58359,26658499644300
+
+2024-04-15 15:48:23,637 ERROR [PUSH-FAIL] 20012ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=7}, reason=null, target=198.18.0.1
+
+2024-04-15 16:32:25,773 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 16:32:25,775 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:56898, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56898,29320648249700
+
+2024-04-15 16:32:25,778 INFO send udp packet: 198.18.0.1,56898,29320648249700
+
+2024-04-15 16:32:25,788 INFO [PUSH-SUCC] 15ms, all delay time 531ms, SLA 532ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=8}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 16:32:44,444 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=9}
+
+2024-04-15 16:32:45,008 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 16:32:45,008 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:52953, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52953,29339882020300
+
+2024-04-15 16:32:45,008 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 16:32:45,008 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:56898, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56898,29339882223600
+
+2024-04-15 16:32:45,008 INFO send udp packet: 198.18.0.1,52953,29339882020300
+
+2024-04-15 16:32:45,009 INFO send udp packet: 198.18.0.1,56898,29339882223600
+
+2024-04-15 16:32:45,021 INFO [PUSH-SUCC] 13ms, all delay time 614ms, SLA 577ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=9}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 16:32:46,213 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 16:32:46,215 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:52953, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52953,29341087669400
+
+2024-04-15 16:32:46,215 INFO send udp packet: 198.18.0.1,52953,29341087669400
+
+2024-04-15 16:32:46,219 INFO [PUSH-SUCC] 6ms, all delay time 554ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1
+
+2024-04-15 16:32:55,021 INFO retry to push data, key: 198.18.0.1,56898,29339882223600
+
+2024-04-15 16:33:05,029 WARN max re-push times reached, retry times 2, key: 198.18.0.1,56898,29339882223600
+
+2024-04-15 16:33:05,029 ERROR [PUSH-FAIL] 20021ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=9}, reason=null, target=198.18.0.1
+
+2024-04-15 17:01:31,658 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 17:01:31,660 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:52953, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52953,31066533296300
+
+2024-04-15 17:01:31,660 INFO send udp packet: 198.18.0.1,52953,31066533296300
+
+2024-04-15 17:01:31,670 INFO [PUSH-SUCC] 12ms, all delay time 522ms, SLA 522ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=10}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 17:01:48,835 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=11}
+
+2024-04-15 17:01:49,348 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 17:01:49,349 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:52953, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52953,31084222405500
+
+2024-04-15 17:01:49,349 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 17:01:49,349 INFO send udp packet: 198.18.0.1,52953,31084222405500
+
+2024-04-15 17:01:49,349 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:54256, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,54256,31084223508900
+
+2024-04-15 17:01:49,350 INFO send udp packet: 198.18.0.1,54256,31084223508900
+
+2024-04-15 17:01:49,369 INFO [PUSH-SUCC] 20ms, all delay time 569ms, SLA 534ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=11}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 17:01:50,656 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 17:01:50,657 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:54256, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,54256,31085531090600
+
+2024-04-15 17:01:50,657 INFO send udp packet: 198.18.0.1,54256,31085531090600
+
+2024-04-15 17:01:50,658 INFO [PUSH-SUCC] 2ms, all delay time 609ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1
+
+2024-04-15 17:01:59,359 INFO retry to push data, key: 198.18.0.1,52953,31084222405500
+
+2024-04-15 17:02:09,370 WARN max re-push times reached, retry times 2, key: 198.18.0.1,52953,31084222405500
+
+2024-04-15 17:02:09,370 ERROR [PUSH-FAIL] 20023ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=11}, reason=null, target=198.18.0.1
+
+2024-04-15 17:06:49,061 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 17:06:49,062 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:54256, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,54256,31383935265700
+
+2024-04-15 17:06:49,062 INFO send udp packet: 198.18.0.1,54256,31383935265700
+
+2024-04-15 17:06:49,072 INFO [PUSH-SUCC] 11ms, all delay time 526ms, SLA 526ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=12}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 17:07:29,946 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=13}
+
+2024-04-15 17:07:30,456 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 17:07:30,456 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:62149, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,62149,31425329694200
+
+2024-04-15 17:07:30,456 INFO send udp packet: 198.18.0.1,62149,31425329694200
+
+2024-04-15 17:07:30,469 INFO [PUSH-SUCC] 13ms, all delay time 562ms, SLA 523ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=13}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 17:07:31,765 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 17:07:31,765 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:62149, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,62149,31426638788200
+
+2024-04-15 17:07:31,765 INFO send udp packet: 198.18.0.1,62149,31426638788200
+
+2024-04-15 17:07:31,767 INFO [PUSH-SUCC] 2ms, all delay time 584ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1
+
+2024-04-15 18:14:03,866 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 18:14:03,867 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:62149, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,62149,35418739756300
+
+2024-04-15 18:14:03,867 INFO send udp packet: 198.18.0.1,62149,35418739756300
+
+2024-04-15 18:14:03,872 INFO [PUSH-SUCC] 7ms, all delay time 587ms, SLA 587ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=14}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 18:14:19,676 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=15}
+
+2024-04-15 18:14:20,156 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 18:14:20,158 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:55812, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,55812,35435030726100
+
+2024-04-15 18:14:20,158 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 18:14:20,159 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:62149, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,62149,35435032613600
+
+2024-04-15 18:14:20,159 INFO send udp packet: 198.18.0.1,55812,35435030726100
+
+2024-04-15 18:14:20,160 INFO send udp packet: 198.18.0.1,62149,35435032613600
+
+2024-04-15 18:14:20,179 INFO [PUSH-SUCC] 23ms, all delay time 539ms, SLA 503ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=15}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 18:14:21,463 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 18:14:21,463 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:55812, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,55812,35436336997900
+
+2024-04-15 18:14:21,463 INFO send udp packet: 198.18.0.1,55812,35436336997900
+
+2024-04-15 18:14:21,465 INFO [PUSH-SUCC] 2ms, all delay time 554ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1
+
+2024-04-15 18:14:30,167 INFO retry to push data, key: 198.18.0.1,62149,35435032613600
+
+2024-04-15 18:14:40,169 WARN max re-push times reached, retry times 2, key: 198.18.0.1,62149,35435032613600
+
+2024-04-15 18:14:40,169 ERROR [PUSH-FAIL] 20011ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=15}, reason=null, target=198.18.0.1
+
+2024-04-15 18:51:07,371 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 18:51:07,372 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:56897, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56897,37642246148100
+
+2024-04-15 18:51:07,373 INFO send udp packet: 198.18.0.1,56897,37642246148100
+
+2024-04-15 18:51:07,386 INFO [PUSH-SUCC] 15ms, all delay time 591ms, SLA 591ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=8}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 18:51:07,480 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 18:51:07,480 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 18:51:07,481 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:55812, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,55812,37642354066300
+
+2024-04-15 18:51:07,481 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:55812, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,55812,37642353883200
+
+2024-04-15 18:51:07,481 INFO send udp packet: 198.18.0.1,55812,37642354066300
+
+2024-04-15 18:51:07,481 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 18:51:07,482 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:56899, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56899,37642354894500
+
+2024-04-15 18:51:07,482 INFO send udp packet: 198.18.0.1,55812,37642353883200
+
+2024-04-15 18:51:07,482 INFO send udp packet: 198.18.0.1,56899,37642354894500
+
+2024-04-15 18:51:07,491 INFO [PUSH-SUCC] 11ms, all delay time 579ms, SLA 579ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 18:51:07,492 INFO [PUSH-SUCC] 11ms, all delay time 580ms, SLA 580ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 18:51:07,494 INFO [PUSH-SUCC] 14ms, all delay time 603ms, SLA 603ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=16}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 18:51:24,850 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 18:51:24,851 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:52202, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52202,37659724480900
+
+2024-04-15 18:51:24,851 INFO send udp packet: 198.18.0.1,52202,37659724480900
+
+2024-04-15 18:51:24,856 INFO [PUSH-SUCC] 6ms, all delay time 520ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=8}, originalSize=0, DataSize=0
+
+2024-04-15 18:51:27,356 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 18:51:27,356 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:56897, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56897,37662230383300
+
+2024-04-15 18:51:27,356 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 18:51:27,356 INFO send udp packet: 198.18.0.1,56897,37662230383300
+
+2024-04-15 18:51:27,356 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:52202, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52202,37662230606000
+
+2024-04-15 18:51:27,356 INFO send udp packet: 198.18.0.1,52202,37662230606000
+
+2024-04-15 18:51:27,369 INFO [PUSH-SUCC] 13ms, all delay time 564ms, SLA 564ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=9}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 18:51:32,153 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=17}
+
+2024-04-15 18:51:32,197 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}
+
+2024-04-15 18:51:32,705 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 18:51:32,705 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 18:51:32,705 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:52799, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52799,37667579174000
+
+2024-04-15 18:51:32,706 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 18:51:32,705 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:55812, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,55812,37667579078700
+
+2024-04-15 18:51:32,706 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 18:51:32,706 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:55812, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,55812,37667579519500
+
+2024-04-15 18:51:32,706 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 18:51:32,706 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:52798, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52798,37667579604400
+
+2024-04-15 18:51:32,706 INFO send udp packet: 198.18.0.1,52799,37667579174000
+
+2024-04-15 18:51:32,706 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:56899, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,56899,37667579655400
+
+2024-04-15 18:51:32,706 INFO send udp packet: 198.18.0.1,55812,37667579078700
+
+2024-04-15 18:51:32,706 INFO send udp packet: 198.18.0.1,55812,37667579519500
+
+2024-04-15 18:51:32,706 INFO send udp packet: 198.18.0.1,52798,37667579604400
+
+2024-04-15 18:51:32,706 INFO send udp packet: 198.18.0.1,56899,37667579655400
+
+2024-04-15 18:51:32,719 INFO [PUSH-SUCC] 14ms, all delay time 553ms, SLA 522ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 18:51:32,721 INFO [PUSH-SUCC] 15ms, all delay time 605ms, SLA 568ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=17}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 18:51:34,015 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 18:51:34,015 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:52798, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52798,37668889067500
+
+2024-04-15 18:51:34,015 INFO send udp packet: 198.18.0.1,52798,37668889067500
+
+2024-04-15 18:51:34,017 INFO [PUSH-SUCC] 2ms, all delay time 610ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, originalSize=1, DataSize=1
+
+2024-04-15 18:51:37,358 INFO retry to push data, key: 198.18.0.1,56897,37662230383300
+
+2024-04-15 18:51:42,712 INFO retry to push data, key: 198.18.0.1,55812,37667579078700
+
+2024-04-15 18:51:42,712 INFO retry to push data, key: 198.18.0.1,55812,37667579519500
+
+2024-04-15 18:51:42,712 INFO retry to push data, key: 198.18.0.1,56899,37667579655400
+
+2024-04-15 18:51:47,361 WARN max re-push times reached, retry times 2, key: 198.18.0.1,56897,37662230383300
+
+2024-04-15 18:51:47,362 ERROR [PUSH-FAIL] 20006ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=9}, reason=null, target=198.18.0.1
+
+2024-04-15 18:51:52,719 WARN max re-push times reached, retry times 2, key: 198.18.0.1,55812,37667579078700
+
+2024-04-15 18:51:52,720 ERROR [PUSH-FAIL] 20015ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=17}, reason=null, target=198.18.0.1
+
+2024-04-15 18:51:52,720 WARN max re-push times reached, retry times 2, key: 198.18.0.1,55812,37667579519500
+
+2024-04-15 18:51:52,720 ERROR [PUSH-FAIL] 20014ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, reason=null, target=198.18.0.1
+
+2024-04-15 18:51:52,720 WARN max re-push times reached, retry times 2, key: 198.18.0.1,56899,37667579655400
+
+2024-04-15 18:51:52,720 ERROR [PUSH-FAIL] 20014ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, reason=null, target=198.18.0.1
+
+2024-04-15 18:59:55,371 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 18:59:55,372 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:52202, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52202,38170245904300
+
+2024-04-15 18:59:55,372 INFO send udp packet: 198.18.0.1,52202,38170245904300
+
+2024-04-15 18:59:55,384 INFO [PUSH-SUCC] 13ms, all delay time 611ms, SLA 611ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=10}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:00:21,072 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 19:00:21,075 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:52798, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52798,38195946642600
+
+2024-04-15 19:00:21,075 INFO send udp packet: 198.18.0.1,52798,38195946642600
+
+2024-04-15 19:00:31,091 INFO retry to push data, key: 198.18.0.1,52798,38195946642600
+
+2024-04-15 19:00:33,177 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:00:33,177 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:52799, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52799,38208051092500
+
+2024-04-15 19:00:33,177 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:00:33,178 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:52798, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,52798,38208051324000
+
+2024-04-15 19:00:33,178 INFO send udp packet: 198.18.0.1,52799,38208051092500
+
+2024-04-15 19:00:33,178 INFO send udp packet: 198.18.0.1,52798,38208051324000
+
+2024-04-15 19:00:41,100 WARN max re-push times reached, retry times 2, key: 198.18.0.1,52798,38195946642600
+
+2024-04-15 19:00:41,100 ERROR [PUSH-FAIL] 20030ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=18}, reason=null, target=198.18.0.1
+
+2024-04-15 19:00:43,186 INFO retry to push data, key: 198.18.0.1,52799,38208051092500
+
+2024-04-15 19:00:43,186 INFO retry to push data, key: 198.18.0.1,52798,38208051324000
+
+2024-04-15 19:00:53,198 WARN max re-push times reached, retry times 2, key: 198.18.0.1,52799,38208051092500
+
+2024-04-15 19:00:53,198 ERROR [PUSH-FAIL] 20021ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=8}, reason=null, target=198.18.0.1
+
+2024-04-15 19:00:53,198 WARN max re-push times reached, retry times 2, key: 198.18.0.1,52798,38208051324000
+
+2024-04-15 19:00:53,198 ERROR [PUSH-FAIL] 20021ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=8}, reason=null, target=198.18.0.1
+
+2024-04-15 19:10:46,235 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 19:10:46,235 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:50619, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,50619,38821109221800
+
+2024-04-15 19:10:46,235 INFO send udp packet: 198.18.0.1,50619,38821109221800
+
+2024-04-15 19:10:46,238 INFO [PUSH-SUCC] 3ms, all delay time 586ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=0}, originalSize=0, DataSize=0
+
+2024-04-15 19:10:48,631 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 19:10:48,632 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:50619, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,50619,38823505086300
+
+2024-04-15 19:10:48,632 INFO send udp packet: 198.18.0.1,50619,38823505086300
+
+2024-04-15 19:10:48,645 INFO [PUSH-SUCC] 14ms, all delay time 555ms, SLA 555ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:10:51,177 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}
+
+2024-04-15 19:10:51,687 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 19:10:51,688 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,38826561241200
+
+2024-04-15 19:10:51,688 INFO send udp packet: 198.18.0.1,61588,38826561241200
+
+2024-04-15 19:10:51,711 INFO [PUSH-SUCC] 25ms, all delay time 570ms, SLA 534ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:10:52,996 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:10:52,996 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,38827870669700
+
+2024-04-15 19:10:52,996 INFO send udp packet: 198.18.0.1,61588,38827870669700
+
+2024-04-15 19:10:52,997 INFO [PUSH-SUCC] 1ms, all delay time 575ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=0}, originalSize=0, DataSize=0
+
+2024-04-15 19:10:56,340 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}
+
+2024-04-15 19:10:56,812 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:10:56,812 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,38831686368500
+
+2024-04-15 19:10:56,812 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:10:56,813 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57224, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57224,38831686696000
+
+2024-04-15 19:10:56,813 INFO send udp packet: 198.18.0.1,61588,38831686368500
+
+2024-04-15 19:10:56,813 INFO send udp packet: 198.18.0.1,57224,38831686696000
+
+2024-04-15 19:10:56,820 INFO [PUSH-SUCC] 8ms, all delay time 510ms, SLA 480ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:10:56,832 INFO [PUSH-SUCC] 20ms, all delay time 522ms, SLA 492ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:18:57,988 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:18:57,989 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,39312862550000
+
+2024-04-15 19:18:57,989 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:18:57,989 INFO send udp packet: 198.18.0.1,61588,39312862550000
+
+2024-04-15 19:18:57,990 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57224, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57224,39312863765400
+
+2024-04-15 19:18:57,991 INFO send udp packet: 198.18.0.1,57224,39312863765400
+
+2024-04-15 19:18:58,004 INFO [PUSH-SUCC] 16ms, all delay time 534ms, SLA 534ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:18:58,004 INFO [PUSH-SUCC] 15ms, all delay time 534ms, SLA 534ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:19:16,525 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}
+
+2024-04-15 19:19:17,065 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:19:17,065 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,39331939341600
+
+2024-04-15 19:19:17,065 INFO send udp packet: 198.18.0.1,61588,39331939341600
+
+2024-04-15 19:19:17,065 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:19:17,066 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:57224, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,57224,39331939757100
+
+2024-04-15 19:19:17,066 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:19:17,066 INFO send udp packet: 198.18.0.1,57224,39331939757100
+
+2024-04-15 19:19:17,066 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:64801, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,64801,39331940029600
+
+2024-04-15 19:19:17,066 INFO send udp packet: 198.18.0.1,64801,39331940029600
+
+2024-04-15 19:19:17,072 INFO [PUSH-SUCC] 7ms, all delay time 574ms, SLA 547ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:19:17,080 INFO [PUSH-SUCC] 14ms, all delay time 582ms, SLA 555ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:19:27,073 INFO retry to push data, key: 198.18.0.1,57224,39331939757100
+
+2024-04-15 19:19:37,077 WARN max re-push times reached, retry times 2, key: 198.18.0.1,57224,39331939757100
+
+2024-04-15 19:19:37,078 ERROR [PUSH-FAIL] 20013ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=3}, reason=null, target=198.18.0.1
+
+2024-04-15 19:49:41,386 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 19:49:41,389 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:50619, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,50619,41156261260600
+
+2024-04-15 19:49:41,390 INFO send udp packet: 198.18.0.1,50619,41156261260600
+
+2024-04-15 19:49:41,400 INFO [PUSH-SUCC] 14ms, all delay time 558ms, SLA 558ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:49:41,495 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:49:41,495 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 19:49:41,496 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,41156368908900
+
+2024-04-15 19:49:41,496 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,41156368709800
+
+2024-04-15 19:49:41,496 INFO send udp packet: 198.18.0.1,61588,41156368908900
+
+2024-04-15 19:49:41,496 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:49:41,497 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:64801, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,64801,41156370173800
+
+2024-04-15 19:49:41,497 INFO send udp packet: 198.18.0.1,61588,41156368709800
+
+2024-04-15 19:49:41,498 INFO send udp packet: 198.18.0.1,64801,41156370173800
+
+2024-04-15 19:49:41,508 INFO [PUSH-SUCC] 12ms, all delay time 544ms, SLA 544ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:49:41,508 INFO [PUSH-SUCC] 13ms, all delay time 548ms, SLA 548ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:49:41,511 INFO [PUSH-SUCC] 16ms, all delay time 547ms, SLA 547ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:49:59,384 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=3}
+
+2024-04-15 19:49:59,943 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 19:49:59,943 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:65527, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65527,41174817099400
+
+2024-04-15 19:49:59,943 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 19:49:59,943 INFO send udp packet: 198.18.0.1,65527,41174817099400
+
+2024-04-15 19:49:59,944 INFO serviceName: DEFAULT_GROUP@@orderservice@@DEFAULT changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,41174817250000
+
+2024-04-15 19:49:59,944 INFO send udp packet: 198.18.0.1,61588,41174817250000
+
+2024-04-15 19:49:59,957 INFO [PUSH-SUCC] 14ms, all delay time 608ms, SLA 573ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:50:00,906 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=4}
+
+2024-04-15 19:50:00,937 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}
+
+2024-04-15 19:50:01,145 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:50:01,146 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:65527, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65527,41176019268500
+
+2024-04-15 19:50:01,146 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:50:01,146 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:61588, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,61588,41176019614800
+
+2024-04-15 19:50:01,146 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:50:01,146 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:65528, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65528,41176019698300
+
+2024-04-15 19:50:01,146 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:50:01,146 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:64801, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,64801,41176019767600
+
+2024-04-15 19:50:01,146 INFO send udp packet: 198.18.0.1,65527,41176019268500
+
+2024-04-15 19:50:01,146 INFO send udp packet: 198.18.0.1,61588,41176019614800
+
+2024-04-15 19:50:01,146 INFO send udp packet: 198.18.0.1,65528,41176019698300
+
+2024-04-15 19:50:01,146 INFO send udp packet: 198.18.0.1,64801,41176019767600
+
+2024-04-15 19:50:01,151 INFO [PUSH-SUCC] 6ms, all delay time 539ms, SLA 214ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:50:01,159 INFO [PUSH-SUCC] 13ms, all delay time 547ms, SLA 222ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:50:02,894 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 19:50:02,895 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:65529, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65529,41177768091700
+
+2024-04-15 19:50:02,895 INFO send udp packet: 198.18.0.1,65529,41177768091700
+
+2024-04-15 19:50:02,898 INFO [PUSH-SUCC] 4ms, all delay time 600ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=2}, originalSize=0, DataSize=0
+
+2024-04-15 19:50:05,295 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 19:50:05,295 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:50619, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,50619,41180168474900
+
+2024-04-15 19:50:05,295 INFO DEFAULT_GROUP@@gateway is changed, add it to push queue.
+
+2024-04-15 19:50:05,295 INFO send udp packet: 198.18.0.1,50619,41180168474900
+
+2024-04-15 19:50:05,295 INFO serviceName: DEFAULT_GROUP@@gateway@@DEFAULT changed, schedule push for: 198.18.0.1:65529, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65529,41180168664200
+
+2024-04-15 19:50:05,295 INFO send udp packet: 198.18.0.1,65529,41180168664200
+
+2024-04-15 19:50:05,306 INFO [PUSH-SUCC] 11ms, all delay time 545ms, SLA 545ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:50:09,951 INFO retry to push data, key: 198.18.0.1,61588,41174817250000
+
+2024-04-15 19:50:11,155 INFO retry to push data, key: 198.18.0.1,61588,41176019614800
+
+2024-04-15 19:50:11,156 INFO retry to push data, key: 198.18.0.1,64801,41176019767600
+
+2024-04-15 19:50:15,307 INFO retry to push data, key: 198.18.0.1,50619,41180168474900
+
+2024-04-15 19:50:19,967 WARN max re-push times reached, retry times 2, key: 198.18.0.1,61588,41174817250000
+
+2024-04-15 19:50:19,967 ERROR [PUSH-FAIL] 20024ms, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=3}, reason=null, target=198.18.0.1
+
+2024-04-15 19:50:21,160 WARN max re-push times reached, retry times 2, key: 198.18.0.1,61588,41176019614800
+
+2024-04-15 19:50:21,160 ERROR [PUSH-FAIL] 20014ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, reason=null, target=198.18.0.1
+
+2024-04-15 19:50:21,160 WARN max re-push times reached, retry times 2, key: 198.18.0.1,64801,41176019767600
+
+2024-04-15 19:50:21,160 ERROR [PUSH-FAIL] 20014ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=5}, reason=null, target=198.18.0.1
+
+2024-04-15 19:50:25,309 WARN max re-push times reached, retry times 2, key: 198.18.0.1,50619,41180168474900
+
+2024-04-15 19:50:25,309 ERROR [PUSH-FAIL] 20014ms, Service{namespace='public', group='DEFAULT_GROUP', name='gateway', ephemeral=true, revision=3}, reason=null, target=198.18.0.1
+
+2024-04-15 19:52:54,103 INFO DEFAULT_GROUP@@orderservice is changed, add it to push queue.
+
+2024-04-15 19:52:54,103 INFO serviceName: DEFAULT_GROUP@@orderservice changed, schedule push for: 198.18.0.1:65529, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65529,41348977500000
+
+2024-04-15 19:52:54,103 INFO send udp packet: 198.18.0.1,65529,41348977500000
+
+2024-04-15 19:52:54,105 INFO [PUSH-SUCC] 2ms, all delay time 592ms for subscriber 198.18.0.1, Service{namespace='public', group='DEFAULT_GROUP', name='orderservice', ephemeral=true, revision=3}, originalSize=1, DataSize=1
+
+2024-04-15 19:53:50,702 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:53:50,702 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:65527, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65527,41405575910900
+
+2024-04-15 19:53:50,702 INFO send udp packet: 198.18.0.1,65527,41405575910900
+
+2024-04-15 19:53:50,702 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:53:50,702 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:65528, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65528,41405576412700
+
+2024-04-15 19:53:50,702 INFO send udp packet: 198.18.0.1,65528,41405576412700
+
+2024-04-15 19:53:50,711 INFO [PUSH-SUCC] 9ms, all delay time 529ms, SLA 529ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:53:50,711 INFO [PUSH-SUCC] 9ms, all delay time 529ms, SLA 529ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=198.18.0.1
+
+2024-04-15 19:54:06,239 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}
+
+2024-04-15 19:54:06,758 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:54:06,758 INFO serviceName: DEFAULT_GROUP@@userservice changed, schedule push for: 198.18.0.1:65527, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65527,41421632197700
+
+2024-04-15 19:54:06,759 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:54:06,759 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:49265, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,49265,41421632874700
+
+2024-04-15 19:54:06,759 INFO DEFAULT_GROUP@@userservice is changed, add it to push queue.
+
+2024-04-15 19:54:06,759 INFO serviceName: DEFAULT_GROUP@@userservice@@DEFAULT changed, schedule push for: 198.18.0.1:65528, agent: Nacos-Java-Client:v1.4.1, key: 198.18.0.1,65528,41421633285400
+
+2024-04-15 19:54:06,759 INFO send udp packet: 198.18.0.1,65527,41421632197700
+
+2024-04-15 19:54:06,760 INFO send udp packet: 198.18.0.1,49265,41421632874700
+
+2024-04-15 19:54:06,760 INFO send udp packet: 198.18.0.1,65528,41421633285400
+
+2024-04-15 19:54:06,767 INFO [PUSH-SUCC] 10ms, all delay time 558ms, SLA 528ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:54:06,777 INFO [PUSH-SUCC] 19ms, all delay time 568ms, SLA 538ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, originalSize=1, DataSize=1, target=198.18.0.1
+
+2024-04-15 19:54:16,763 INFO retry to push data, key: 198.18.0.1,65528,41421633285400
+
+2024-04-15 19:54:26,768 WARN max re-push times reached, retry times 2, key: 198.18.0.1,65528,41421633285400
+
+2024-04-15 19:54:26,768 ERROR [PUSH-FAIL] 20009ms, Service{namespace='public', group='DEFAULT_GROUP', name='userservice', ephemeral=true, revision=7}, reason=null, target=198.18.0.1
+

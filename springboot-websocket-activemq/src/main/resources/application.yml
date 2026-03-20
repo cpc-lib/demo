@@ -1,0 +1,28 @@
+server:
+  port: 8181
+
+broker:
+  host: 114.132.210.77
+  port: 61616
+  username: artemis
+  password: artemis
+
+redis:
+  channel:
+    msgAlone: websocket.msgAlone
+    msgToAll: websocket.msgToAll
+    userStatus: websocket.userStatus
+  set:
+    onlineUsers: websocket.onlineUsers
+
+spring:
+  redis:
+    database: 0
+    host: 114.132.210.77
+    jedis:
+      pool:
+        max-idle: 10
+        max-wait: 60000
+    password: cpc!23
+    port: 6379
+    ssl: false

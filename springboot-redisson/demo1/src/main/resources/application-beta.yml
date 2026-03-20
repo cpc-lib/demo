@@ -1,0 +1,18 @@
+#sentinel模式
+spring:
+  redis:
+    timeout: 3000
+    sentinel:
+      master: mymaster
+      nodes:
+        - 101.32.189.58:27001
+        - 101.32.189.58:27002
+        - 101.32.189.58:27003
+      password:
+    lettuce:
+      pool:
+        enabled: true
+        max-idle: 100
+        min-idle: 1
+        max-active: 10
+        max-wait: 5000

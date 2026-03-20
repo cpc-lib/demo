@@ -1,0 +1,9 @@
+#!/usr/bin/expect -f 
+spawn su -
+expect ":"
+send "password\r"
+expect "#"
+send "bash /home/arhi/CS/shell/nginx_install.sh\r"
+expect "#"
+interact
+

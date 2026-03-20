@@ -1,0 +1,12 @@
+server:
+  port: 8999
+# 日志配置
+logging:
+  level:
+    org.springframework.security: debug
+spring:
+  redis:
+    host: 114.132.210.77
+    password: cpc!23#@
+    port: 6380
+    database: 11

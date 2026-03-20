@@ -1,0 +1,6 @@
+#https://blog.csdn.net/weixin_43848469/article/details/123276181
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://admin:hjm029796@67.215.249.182:27017/test?authSource=admin

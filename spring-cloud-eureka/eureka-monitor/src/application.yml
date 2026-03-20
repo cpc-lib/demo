@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: eureka-monitor
+turbine:
+  combine-host-port: true
+  # 配置需要被监控的服务名称列表
+  app-config: eureka-provider,eureka-consumer
+  cluster-name-expression: "'default'"
+  aggregator:
+    cluster-config: default
+  #instanceUrlSuffix: /actuator/hystrix.stream
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka,http://eureka-server-1:8762/eureka,http://eureka-server-2:8763/eureka

@@ -1,0 +1,13 @@
+package cc.ivera.dbsharding.simple;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ShardingJdbcSimpleBootstrap {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ShardingJdbcSimpleBootstrap.class, args);
+    }
+
+}

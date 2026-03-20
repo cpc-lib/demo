@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--MyBatis的DTD约束-->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cc.ivera.mapper.One2ManyMapper">
+    <resultMap id="one2Many" type="class">
+        <!--根据select语句选择的字段进行确定column的属性值-->
+        <id column="cid" property="id"/>
+        <result column="cname" property="name"/>
+
+        <!--
+            collection：配置被包含的集合对象映射关系
+            property：被包含对象的变量名
+            ofType：被包含对象的实际数据类型 集合的泛型的具体类型
+        -->
+        <collection property="students" ofType="student">
+            <id column="sid" property="id"/>
+            <result column="sname" property="name"/>
+            <result column="sage" property="age"/>
+            <collection property="courses" ofType="course">
+                <id column="crsid" property="id"/>
+                <result column="crsname" property="name"/>
+            </collection>
+        </collection>
+    </resultMap>
+    <select id="selectAll" resultMap="one2Many">
+        SELECT cid,cname,sid,sname,sage,course.id AS crsid,course.name AS crsname FROM(
+            SELECT c.id cid,c.name cname,s.id sid,s.name sname,s.age sage
+            FROM class c,student s,cls_stu cs WHERE c.id=cs.class_id AND s.id=cs.student_id) AS temp,stu_crs,course
+        WHERE temp.sid=stu_crs.`student_id` AND stu_crs.course_id=course.id
+    </select>
+    <select id="selectAll2" resultMap="one2Many">
+        SELECT class.id AS cid,class.name AS cname,
+               student.id AS sid,student.name AS sname,student.age AS sage,
+               course.id AS crsid,course.name AS crsname
+        FROM student JOIN stu_crs ON student.id=stu_crs.student_id
+                     JOIN cls_stu ON cls_stu.`student_id`=student.id JOIN class ON cls_stu.class_id = class.id
+                     LEFT JOIN course ON stu_crs.`course_id`=course.id;
+
+    </select>
+</mapper>

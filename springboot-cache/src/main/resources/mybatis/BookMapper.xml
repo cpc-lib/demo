@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.BookMapper">
+
+    <select id="findById" resultType="Book" parameterType="long" useCache="true">
+        select id,name,price,description from tb_book where id = #{id}
+    </select>
+
+</mapper>

@@ -1,0 +1,11 @@
+server:
+  port: 8088
+spring:
+  profiles:
+    active: mysql #激活mysql配置
+  #    active: postgresql #激活postgresql配置
+  redis:
+    host: 114.132.210.77
+    port: 6380
+    database: 13
+    password: xxxxxx

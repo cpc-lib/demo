@@ -1,0 +1,491 @@
+package cc.ivera.util;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.util.Assert;
+
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.*;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.Locale.ENGLISH;
+
+/**
+ * Bean工具
+ */
+public class BeanUtil {
+
+    //默认的基础类型的实例化初始值
+    private static final Map<Class, Object> BaseType = new HashMap<>() {
+        {
+            put(int.class, 0);
+            put(long.class, 0l);
+            put(short.class, 0);
+            put(byte.class, 0);
+            put(float.class, 0f);
+            put(double.class, 0d);
+            put(boolean.class, false);
+            put(char.class, "");
+
+            put(Integer.class, 0);
+            put(Long.class, 0l);
+            put(Short.class, 0);
+            put(Byte.class, 0);
+            put(Float.class, 0f);
+            put(Double.class, 0d);
+            put(Boolean.class, false);
+
+            put(BigDecimal.class, 0);
+        }
+    };
+
+    /**
+     * javaBean转map
+     *
+     * @param obj
+     * @return
+     * @throws Exception
+     */
+    public static Map<String, Object> bean2Map(Object obj) {
+        Map<String, Object> map = new HashMap<>();
+        if (obj == null) {
+            return map;
+        }
+        try {
+            // 获取javaBean的BeanInfo对象
+            BeanInfo beanInfo = Introspector.getBeanInfo(obj.getClass(), Object.class);
+            // 获取属性描述器
+            PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+            for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+                // 获取属性名
+                String key = propertyDescriptor.getName();
+                // 获取该属性的值
+                Method readMethod = propertyDescriptor.getReadMethod();
+                // 通过反射来调用javaBean定义的getName()方法
+                Object value = readMethod.invoke(obj);
+                map.put(key, value);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+
+    /**
+     * 读取一个bean的类型
+     *
+     * @return
+     */
+    @SneakyThrows
+    public static Map<String, Class> readBeanType(Class<?> cls) {
+        Map<String, Class> ret = new HashMap<>();
+        // 获取javaBean的BeanInfo对象
+        BeanInfo beanInfo = Introspector.getBeanInfo(cls, Object.class);
+        PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            ret.put(propertyDescriptor.getName(), propertyDescriptor.getPropertyType());
+        }
+        return ret;
+    }
+
+
+    /**
+     * 通过map设置bean对象
+     *
+     * @param obj
+     * @param map
+     */
+    @SneakyThrows
+    public static void setBean(final Object obj, final Map<String, Object> map) {
+        // 获取javaBean的BeanInfo对象
+        BeanInfo beanInfo = Introspector.getBeanInfo(obj.getClass(), Object.class);
+        // 获取属性描述器
+        PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            // 获取属性名
+            String key = propertyDescriptor.getName();
+            if (!map.containsKey(key)) {
+                continue;
+            }
+
+
+            // 兼容 @Accessors(chain = true)
+            // 获取该属性的值
+            Method writeMethod = propertyDescriptor.getWriteMethod();
+
+            //如果为空则通过反射取出来
+            if (writeMethod == null) {
+                writeMethod = obj.getClass().getMethod(toMethodName(propertyDescriptor.getName()), propertyDescriptor.getPropertyType());
+            }
+
+            // 通过反射来调用javaBean定义的getName()方法
+            if (writeMethod == null) {
+                continue;
+            }
+
+            //调用方法
+            final Class propertyType = propertyDescriptor.getPropertyType();
+            Object sourceObj = map.get(key);
+            if (sourceObj == null) {
+                continue;
+            }
+
+            //递归类型 ( 当value 为 map)
+            if (propertyType != sourceObj.getClass() && sourceObj instanceof Map) {
+                Object ret = newClass(propertyType);
+                setBean(ret, (Map) sourceObj);
+                writeMethod.invoke(obj, ret);
+            } else if (sourceObj instanceof Collection || sourceObj.getClass().isArray()) {
+                writeMethod.invoke(obj, toTypeFromCollectionObject(propertyType, sourceObj));
+            } else {
+                writeMethod.invoke(obj, sourceObj);
+            }
+        }
+    }
+
+    /**
+     * 转换到目标类型
+     *
+     * @param <T>
+     * @return
+     */
+    private static <T> T toTypeFromCollectionObject(Class<T> targetCls, Object sourceObj) {
+
+        //处理集合类型
+        List items = null;
+        if (sourceObj instanceof Collection) {
+            items = (List) ((Collection) sourceObj).stream().collect(Collectors.toList());
+        } else if (targetCls.isArray()) {
+            items = Arrays.stream((Object[]) sourceObj).collect(Collectors.toList());
+        } else {
+            items = new ArrayList();
+        }
+
+
+        //目标类型
+        if (targetCls.isArray()) {
+            Object ret = Array.newInstance(targetCls.getComponentType(), items.size());
+            for (int i = 0; i < items.size(); i++) {
+                Array.set(ret, i, items.get(i));
+            }
+            return (T) ret;
+        }
+
+
+        if (targetCls == List.class) {
+            return (T) new ArrayList(items);
+        }
+        if (targetCls == Set.class) {
+            return (T) new HashSet<>(items);
+        }
+        if (targetCls == Vector.class) {
+            return (T) new Vector<>(items);
+        }
+//        sourceObj instanceof Map sourceObj instanceof Collections || sourceObj.getClass().isArray()
+
+        return null;
+    }
+
+    /**
+     * 转换到方法名
+     *
+     * @param name
+     * @return
+     */
+    private static String toMethodName(String name) {
+        return "set" + name.substring(0, 1).toUpperCase(ENGLISH) + name.substring(1);
+    }
+
+    /**
+     * Bean转到Map
+     *
+     * @param obj
+     * @return
+     */
+    public static Map<String, Object> toMap(Object obj) {
+        Map<String, Object> m = new HashMap<>();
+        setMap(m, obj);
+        return m;
+    }
+
+
+    @SneakyThrows
+    public static <T> T getBeanValue(Object obj, String name) {
+        // 获取javaBean的BeanInfo对象
+        BeanInfo beanInfo = Introspector.getBeanInfo(obj.getClass(), Object.class);
+        // 获取属性描述器
+        PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            // 获取属性名
+            String key = propertyDescriptor.getName();
+            if (key.equals(name)) {
+                Method readMethod = propertyDescriptor.getReadMethod();
+                return (T) readMethod.invoke(obj, name);
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * bean转到Map
+     *
+     * @param map
+     * @param obj
+     */
+    @SneakyThrows
+    public static void setMap(final Map<String, Object> map, final Object obj) {
+        //如果对象为Map，直接拷贝到目标Map中
+        if (obj instanceof Map) {
+            map.putAll((Map) obj);
+            return;
+        }
+        // 获取javaBean的BeanInfo对象
+        BeanInfo beanInfo = Introspector.getBeanInfo(obj.getClass(), Object.class);
+        // 获取属性描述器
+        PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            // 获取属性名
+            String key = propertyDescriptor.getName();
+            Method readMethod = propertyDescriptor.getReadMethod();
+            map.put(key, readMethod.invoke(obj));
+        }
+    }
+
+
+    /**
+     * 获取bean对象中为null的属性名
+     *
+     * @param source
+     * @return
+     */
+    public static void getNullPropertyNames(Object source, Set<String> sets) {
+        final BeanWrapper src = new BeanWrapperImpl(source);
+        java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
+        for (java.beans.PropertyDescriptor pd : pds) {
+            Object srcValue = src.getPropertyValue(pd.getName());
+            if (srcValue == null) sets.add(pd.getName());
+        }
+    }
+
+
+    /**
+     * 构建Bean对象
+     *
+     * @param cls
+     * @param componentType
+     * @param <T>
+     * @return
+     */
+    @SneakyThrows
+    private static <T> T buildBean(final Class<T> cls, final Class componentType, int currentDepth,
+                                   int maxDepthCount) {
+        //集合对象
+        Object items = null;
+        //单独的属性
+        Object item = null;
+        //处理数组与集合
+        if (cls.isArray()) {
+            items = Array.newInstance(componentType, 1);
+            item = newClass(componentType);
+            Array.set(items, 0, item);
+        } else if (Collection.class.isAssignableFrom(cls)) {
+            item = newClass(componentType);
+            if (cls == Collection.class) {
+                items = List.of(item);
+            } else {
+                //取出ofMethod 的方法
+                Method ofMethod = cls.getDeclaredMethod("of", Object.class);
+                if (ofMethod != null) {
+                    ofMethod.setAccessible(true);
+                    items = ofMethod.invoke(null, item);
+                }
+            }
+        } else if (Map.class.isAssignableFrom(cls)) {
+            items = new HashMap<>();
+        } else {
+            item = newClass(cls);
+        }
+
+        //深度执行 , 过滤基础类型与字符串类型
+        if (item != null && !(item instanceof String) && currentDepth < maxDepthCount && item.getClass() != Object.class && !item.getClass().isEnum()) {
+            depthSetBean(item, ++currentDepth, maxDepthCount);
+        }
+        //集合对象不为空则返回集合对象，否则返回单个的对象
+        return (T) (items != null ? items : item);
+    }
+
+
+
+    /**
+     * 参数信息
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BeanValueInfo {
+        //名称
+        private String name;
+
+        //类型
+        private String commentText;
+
+        //值
+        private Object value;
+
+    }
+
+
+    /**
+     * 构建bean，支持深度遍历构建
+     *
+     * @param cls
+     * @param <T>
+     * @return
+     */
+    public static <T> T buildBean(Class<T> cls, int maxDepthCount) {
+        return buildBean(cls, cls.getComponentType(), 0, maxDepthCount);
+    }
+
+
+    /**
+     * 通过属性构建bean对象
+     *
+     * @param field
+     * @param <T>
+     * @return
+     */
+    private static <T> T buildBean(Field field, int currentDepth, int maxDepthCount) {
+        Class type = field.getType();
+        Class[] cls = getGenericType(field);
+        Object ret = buildBean(type, (cls != null && cls.length > 0) ? cls[0] : type.getComponentType(), currentDepth, maxDepthCount);
+        return ret == null ? null : (T) ret;
+    }
+
+
+    /**
+     * 实例化对象
+     *
+     * @param cls
+     */
+    @SneakyThrows
+    public static <T> T newClass(Class<T> cls) {
+        //基础类型,则直接返回null
+        Object val = BaseType.get(cls);
+        if (val != null) {
+            return (T) val;
+        }
+        //枚举类
+        if (cls.isEnum()) {
+            return (T) cls.getFields()[0].get(null);
+        }
+
+        // 数组与集合
+        if (cls.isArray()) {
+            return (T) Array.newInstance(cls, 0);
+        } else if (cls == List.class) {
+            return (T) new ArrayList();
+        } else if (cls == Set.class) {
+            return (T) new HashSet<>();
+        } else if (cls == Map.class) {
+            return (T) new HashMap<>();
+        }
+
+
+        Constructor<?> newConstructor = null;
+        //遍历出所有的构造方法
+        for (Constructor<?> constructor : cls.getDeclaredConstructors()) {
+            if (constructor.getParameterCount() == 0) {
+                newConstructor = constructor;
+                break;
+            }
+        }
+        Assert.notNull(newConstructor, "未找到可用的构造方法 : " + cls);
+        return (T) newConstructor.newInstance();
+    }
+
+
+    /**
+     * 获取枚举类的class
+     *
+     * @param field
+     * @return
+     */
+    public static Class[] getGenericType(Field field) {
+        Type genericType = field.getGenericType();
+        if (null == genericType) {
+            return null;
+        }
+        if (genericType instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) genericType;
+            // 得到泛型里的class类型对象
+            return Arrays.stream(pt.getActualTypeArguments()).map((it) -> {
+                return (Class) it;
+            }).collect(Collectors.toList()).toArray(new Class[0]);
+        }
+        return null;
+    }
+
+    /**
+     * 深度设置Bean的默认值,调用Set方法进行赋值
+     *
+     * @param item
+     */
+    @SneakyThrows
+    private static <T> void depthSetBean(Object item, int currentDepth, int maxDepthCount) {
+        // 获取javaBean的BeanInfo对象
+        BeanInfo beanInfo = Introspector.getBeanInfo(item.getClass(), Object.class);
+        // 获取属性描述器
+        PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            String name = propertyDescriptor.getName();
+            //属性
+            Field field = getField(item.getClass(), name);
+            if (field == null) {
+                continue;
+            }
+            // 根据类型进行构建Bean
+            Object val = buildBean(field, currentDepth, maxDepthCount);
+            if (val != null) {
+                // 获取该属性的值
+                Method readMethod = propertyDescriptor.getWriteMethod();
+                // 通过反射来调用javaBean定义的getName()方法
+                readMethod.invoke(item, val);
+            }
+        }
+    }
+
+
+    /**
+     * 获取class的属性
+     *
+     * @param cls
+     * @param fieldName
+     * @return
+     */
+    @SneakyThrows
+    private static Field getField(Class cls, String fieldName) {
+        for (Field field : cls.getDeclaredFields()) {
+            if (field.getName().equals(fieldName)) {
+                field.setAccessible(true);
+                return field;
+            }
+        }
+        Field field = null;
+        if (cls.getSuperclass() != null) {
+            field = getField(cls.getSuperclass(), fieldName);
+        }
+        return field;
+    }
+
+
+}

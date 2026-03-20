@@ -1,0 +1,15 @@
+mybatis:
+    mapper-locations: classpath:mappers/*xml
+    type-aliases-package: cc.ivera.entity
+spring:
+    application:
+        name: localtx
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        password: root
+        url: jdbc:mysql://localhost:3306/bank0?serverTimezone=UTC
+        username: root
+server:
+  servlet:
+    context-path: /bank0
+  port: 8081

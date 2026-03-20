@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  minio1:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/minio:RELEASE.2023-01-02T09-40-09Z
+    container_name: minio1
+    restart: always
+    command: server http://minio{1...4}/data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: hjm029796
+    volumes:
+      - ./data/minio1:/data
+    networks:
+      - minio_net
+
+  minio2:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/minio:RELEASE.2023-01-02T09-40-09Z
+    container_name: minio2
+    restart: always
+    command: server http://minio{1...4}/data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: hjm029796
+    volumes:
+      - ./data/minio2:/data
+    networks:
+      - minio_net
+
+  minio3:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/minio:RELEASE.2023-01-02T09-40-09Z
+    container_name: minio3
+    restart: always
+    command: server http://minio{1...4}/data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: hjm029796
+    volumes:
+      - ./data/minio3:/data
+    networks:
+      - minio_net
+
+  minio4:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/minio:RELEASE.2023-01-02T09-40-09Z
+    container_name: minio4
+    restart: always
+    command: server http://minio{1...4}/data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: hjm029796
+    volumes:
+      - ./data/minio4:/data
+    networks:
+      - minio_net
+
+  nginx:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/nginx:1.22
+    container_name: nginx_minio
+    restart: always
+    ports:
+      - "9200:9200"      # MinIO API
+      - "9201:9201"      # MinIO 控制台
+    volumes:
+      - ./minio.conf:/etc/nginx/conf.d/minio.conf
+    depends_on:
+      - minio1
+      - minio2
+      - minio3
+      - minio4
+    networks:
+      - minio_net
+
+networks:
+  minio_net:
+    driver: bridge

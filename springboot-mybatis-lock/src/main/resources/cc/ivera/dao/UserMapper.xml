@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.dao.UserMapper">
+    <select id="findAll" resultType="cc.ivera.domain.User">
+        select * from tb_user
+    </select>
+    <insert id="save"  parameterType="user">
+        insert into tb_user (id,username,password) values (#{id},#{username},#{password})
+    </insert>
+    <delete id="delete" parameterType="int">
+        delete from tb_user where id=#{id}
+    </delete>
+    <update id="update" parameterType="user">
+        update tb_user set username=#{username},password=#{password} where id=#{id}
+    </update>
+    <select id="findById" resultType="User" parameterType="integer" >
+        select id, username,password,ip_address from tb_user where id=#{id}
+    </select>
+</mapper>

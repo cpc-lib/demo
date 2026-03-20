@@ -1,0 +1,163 @@
+server:
+  port: 8090
+  tomcat:
+    max-connections: 4000
+    accept-count: 1000
+    threads:
+      max: 800
+      min-spare: 10
+    uri-encoding: UTF-8
+ruoyi:
+  # 名称
+  name: RuoYi
+  # 版本
+  version: 3.8.5
+  # 版权年份
+  copyrightYear: 2023
+  # 实例演示开关
+  demoEnabled: true
+  # 文件路径 示例（ Windows配置D:/ruoyi/uploadPath(可以去除D:项目在哪个盘符就存在哪)，Linux配置 /home/ruoyi/uploadPath）
+  profile: D:/ruoyi/uploadPath
+  # 获取ip地址开关
+  addressEnabled: false
+  # 验证码类型 math 数组计算 char 字符验证
+  captchaType: math
+spring:
+  ai:
+    tongyi:
+      ai-api-key: sk-b9b104b6c0224290992b80eb4ada1002
+    openai:
+      base-url: https://api.openai.com/
+      api-key: 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
+      embedding:
+        options:
+          model: text-davinci-003
+      chat:
+        #指定某一个API配置(覆盖全局配置)
+        api-key: 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
+        base-url: https://api.openai.com/
+        options:
+          model: gpt-3.5-turbo # 模型配置
+  servlet:
+    multipart:
+      enabled: true #是否启用http上传处理
+      max-file-size: 50MB #设置单个文件最大长度
+      max-request-size: 50MB #最大请求文件的大小
+
+  #在 Spring Boot 2.6.x 及更高版本中，spring.resources.static-locations 已被废弃，
+  #推荐使用 spring.web.resources.static-locations 作为替代配置项
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/
+  redis:
+    port: 6379
+    host: 192.168.220.200
+    password: cpc!23#@
+    database: 3
+  datasource:
+    #设置数据库连接池的类型
+    #    type: com.zaxxer.hikari.HikariDataSource
+    #    hikari:
+    #      connection-timeout: 30000
+    #      idle-timeout: 60000
+    #      maximum-pool-size: 200
+    #      minimum-idle: 20
+    #      auto-commit: true
+    #      max-lifetime: 120000
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.220.200:3308/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+    username: root
+    password: wZKicHYoEgIMIVAU
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initialSize: 5
+      # 最小连接池数量
+      minIdle: 10
+      # 最大连接池数量
+      maxActive: 20
+      # 配置获取连接等待超时的时间
+      maxWait: 60000
+      # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+      timeBetweenEvictionRunsMillis: 60000
+      # 配置一个连接在池中最小生存的时间，单位是毫秒
+      minEvictableIdleTimeMillis: 300000
+      # 配置一个连接在池中最大生存的时间，单位是毫秒
+      maxEvictableIdleTimeMillis: 900000
+      # 配置检测连接是否有效
+      validationQuery: SELECT 1 FROM DUAL
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      webStatFilter:
+        enabled: true
+      statViewServlet:
+        enabled: true
+        # 设置白名单，不填则允许所有访问
+        allow:
+        url-pattern: /druid/*
+        # 控制台管理用户名和密码
+        login-username: ruoyi
+        login-password: 123456
+      filter:
+        stat:
+          enabled: true
+          # 慢SQL记录
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+  main:
+    allow-bean-definition-overriding: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: consumer_group
+
+#https://www.ihuyi.com/ 短信平台
+leetcode:
+  sms:
+    url: http://106.ihuyi.com/webservice/sms.php?method=Submit
+    account: C80305290
+    password: e6e474c1e7b4f88889f3fd67b474bd68
+upload:
+  dir: D:\\download
+
+tess4j:
+  datapath: D:\develop\Tesseract-OCR\tessdata
+
+mybatis-plus:
+  #开启日志
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath:mapper/*.xml
+  #自定义类型处理器包路径
+  type-handlers-package: cc.ivera.mp.handler
+
+ip2region:
+  external: false
+  index-block-size: 4096
+  total-header-size: 8192
+  location: classpath*:ip2region/ip2region.xdb
+
+#高德地图key
+amap:
+  key: 659f057c4e1b3c72ae58027363b3afb9
+
+#163邮箱(535错误)
+#qq邮箱(推荐使用qq)
+email:
+  smtp:
+    host: smtp.qq.com
+    email: 2607439502@qq.com
+    name: Arhi
+    password: hqovxyrpwanreabb
+    port: 25

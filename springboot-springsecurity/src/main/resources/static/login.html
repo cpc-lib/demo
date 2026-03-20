@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!--表单提交为啥要是post请求，name为username,name为password-->
+<!--org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+如果需要设置成不同的name名称，在配置类做配置,
+spring-security 的 remember-me 的接受值为bool类型，需要设置value的属性值value（前端传递的默认值为on）。需要通过ajax来传递参数
+
+-->
+
+<!--https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/Input/checkbox-->
+<form action="/login" method="post">
+    username:<input type="text" name="username"><br>
+    password:<input type="password" name="password"><br>
+    rememberMe:<input type="checkbox" name="remember-me" checked="checked" value="true"><br>
+    <input type="submit">
+</form>
+</body>
+</html>

@@ -1,0 +1,48 @@
+#去申请一个微信测试号 https://mp.weixin.qq.com/debug/cgi-bin/sandbox?t=sandbox/login
+wx:
+  config:
+    appId: "wx55f4e77fbd0bda50"
+    appSecret: "5342cbd2274199c8947613b8f520dec3"
+    #模板Id，这是你新增模板后的ID
+    templateId: "y3ub5Du12o9oDfD0tHSyia7WzQIt7k_n3NqYlu0iRy4"
+    # 这是OpenId，也就是你扫码关注的微信号的id，在微信后台看
+    openidList:
+      - "oyvmN6EkVXI2xPuw234y3Rdh8y1U"
+#      - ""
+# 这些是配置生日、在一起时间
+message:
+  config:
+    #  false：关闭
+    # true：开启
+    lunarSwitch: true # 农历开关 true：开启 false：关闭
+    birthday1: "01-01" # 生日日期
+    birthday2: "05-02" # 新历与农历都用数字表示。例如 08-03 表示 8月3号，也可以表示农历八月初三。
+    togetherDate: "2021-01-01" #填你们在一起的那天日期
+    message: "I love you 3,000"
+
+# 这是配置天气的，去申请 https://tianqiapi.com/user/login
+weather:
+  config:
+    # 这两个值来自提供天气服务的网站页面上的
+    appid: "61166159"
+    appSecret: "4HR86jrQ"
+    # 广州就广州，不要画蛇添足追加个“市”变成广州市
+    # 天河√，天河区×  北京√，北京市×
+    city: "衡阳"
+
+#注册并购买，有券，直接白嫖 https://www.apispace.com/eolink/api/myjj/introduction
+ApiSpace:
+  enableDaily: true #【新增功能】  true：开启每日一句，false：则不开启
+  # token来自名言警句的网站，直接复制即可
+  token: "l9h6wlxm87tsrb9rb98lzywtny9hsi9z"
+
+# 9月6号有道翻译取消免费接口，因此需申请有道翻译服务 https://ai.youdao.com/product-fanyi-text.s
+youdao:
+  appKey_YouDao: "1313dd1f2f10abc4" #即 应用ID
+  appSecret_YouDao: "kDH51BNQPTm3leicGteza5BxLras3wvT" # 即 应用秘钥
+
+
+# 服务器端口号，遇到端口冲突时修改
+server:
+  port: 8080
+

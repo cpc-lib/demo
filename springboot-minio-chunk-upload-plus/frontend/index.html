@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <title>MinIO 分片上传（后端 MD5 计算版）</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        #log {
+            margin-top: 10px;
+            white-space: pre-line;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        button {
+            padding: 6px 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>MinIO 分片上传 Demo（MD5 后端计算 + 秒传 + 中文文件名）</h2>
+
+<input type="file" id="fileInput"/>
+<button id="uploadBtn">上传</button>
+
+<div id="log"></div>
+
+<script>
+    const BASE_URL = "http://127.0.0.1:8080";
+    const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+
+    function log(msg) {
+        const box = document.getElementById("log");
+        box.textContent += msg + "\n";
+        box.scrollTop = box.scrollHeight;
+    }
+
+    /** 防止 Unexpected token '<' 错误的安全请求 */
+    async function safeFetch(url, options) {
+        try {
+            const resp = await fetch(url, options);
+            const contentType = resp.headers.get("content-type") || "";
+            const text = await resp.text();
+
+            if (!contentType.includes("application/json")) {
+                return {code: -1, message: "后端未返回 JSON：\n" + text.slice(0, 200)};
+            }
+            return JSON.parse(text);
+        } catch (e) {
+            return {code: -1, message: "网络异常：" + e.message};
+        }
+    }
+
+    /** 主流程 */
+    async function startUpload() {
+        const file = document.getElementById("fileInput").files[0];
+        document.getElementById("log").textContent = "";
+
+        if (!file) {
+            alert("请选择文件");
+            return;
+        }
+
+        log(`文件名: ${file.name} 大小: ${file.size}`);
+
+        // ---------------------------------
+        // ① 调用后端 MD5 接口
+        // ---------------------------------
+        log("上传文件到后端进行 MD5 计算...");
+
+        const md5Form = new FormData();
+        md5Form.append("file", file);
+
+        const md5Resp = await safeFetch(BASE_URL + "/api/chunk/md5", {
+            method: "POST",
+            body: md5Form
+        });
+
+        if (md5Resp.code !== 0) {
+            log("计算 MD5 失败：" + md5Resp.message);
+            return;
+        }
+
+        const md5 = md5Resp.data;
+        log("后端 MD5 = " + md5);
+
+        // ---------------------------------
+        // ② init 秒传判断
+        // ---------------------------------
+        log("初始化上传（包含秒传判断）...");
+
+        const initResp = await safeFetch(BASE_URL + "/api/chunk/init", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                fileName: file.name,
+                fileSize: file.size,
+                chunkSize: CHUNK_SIZE,
+                fileMd5: md5
+            })
+        });
+
+        if (initResp.code !== 0) {
+            log("初始化失败：" + initResp.message);
+            return;
+        }
+
+        // 秒传命中
+        if (initResp.data.exist) {
+            log("📌 文件已存在 —— 秒传成功！");
+            log("👉 5 分钟有效下载链接：");
+            log(initResp.data.fileUrl);
+            return;
+        }
+
+        const uploadId = initResp.data.uploadId;
+        const totalChunks = initResp.data.totalChunks;
+
+        log(`需上传 ${totalChunks} 个分片，uploadId=${uploadId}`);
+
+        // ---------------------------------
+        // ③ 分片上传
+        // ---------------------------------
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * CHUNK_SIZE;
+            const end = Math.min(file.size, start + CHUNK_SIZE);
+            const blob = file.slice(start, end);
+
+            const fd = new FormData();
+            fd.append("uploadId", uploadId);
+            fd.append("chunkIndex", i);
+            fd.append("file", blob, file.name + ".part" + i);
+
+            log(`上传分片 ${i + 1}/${totalChunks}...`);
+
+            const uploadResp = await safeFetch(BASE_URL + "/api/chunk/upload", {
+                method: "POST",
+                body: fd
+            });
+
+            if (uploadResp.code !== 0) {
+                log(`❌ 分片 ${i} 上传失败：${uploadResp.message}`);
+                return;
+            }
+        }
+
+        log("所有分片上传完成，准备合并...");
+
+        // ---------------------------------
+        // ④ 合并（中文文件名 Base64 处理）
+        // ---------------------------------
+        const encodedFilename = btoa(encodeURIComponent(file.name));
+
+        const mergeParams = new URLSearchParams();
+        mergeParams.append("uploadId", uploadId);
+        mergeParams.append("totalChunks", totalChunks);
+        mergeParams.append("fileName", encodedFilename);
+
+        const mergeResp = await safeFetch(BASE_URL + "/api/chunk/merge", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+            body: mergeParams.toString()
+        });
+
+        if (mergeResp.code !== 0) {
+            log("合并失败：" + mergeResp.message);
+            return;
+        }
+
+        log("🎉 合并成功！");
+        log("👉 5 分钟有效下载链接：");
+        log(mergeResp.data);
+    }
+
+    /** 按钮绑定事件 */
+    window.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("uploadBtn").onclick = () => {
+            startUpload().catch(err => log("上传异常：" + err.message));
+        };
+    });
+</script>
+
+</body>
+</html>

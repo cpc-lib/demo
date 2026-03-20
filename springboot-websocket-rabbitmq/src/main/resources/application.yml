@@ -1,0 +1,32 @@
+server:
+  port: 8181
+
+redis:
+  channel:
+    msgAlone: websocket.msgAlone
+    msgToAll: websocket.msgToAll
+    userStatus: websocket.userStatus
+  set:
+    onlineUsers: websocket.onlineUsers
+
+spring:
+  activemq:
+    broker-url: tcp://127.0.0.1:61616
+    user: admin
+    password: admin
+    close-timeout: 15s
+    in-memory: false
+    non-blocking-redelivery: false
+    send-timeout: 0
+    queue-name: active.queue
+    topic-name: /topic/public
+  redis:
+    database: 0
+    host: 114.132.210.77
+    jedis:
+      pool:
+        max-idle: 10
+        max-wait: 60000
+    password: cpc!23
+    port: 6379
+    ssl: false

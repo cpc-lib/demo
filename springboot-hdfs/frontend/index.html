@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>HDFS Upload & Download</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input, button {
+            padding: 10px; margin: 5px 0; border-radius: 4px;
+            border: 1px solid #ccc; font-size: 14px;
+        }
+        button {
+            background-color: #007bff; color: white; cursor: pointer;
+            border: none;
+        }
+        button:hover { background-color: #0056b3; }
+        #result {
+            margin-top: 15px; padding: 10px;
+            border: 1px solid green; min-height: 50px;
+            background-color: #e6ffe6;
+        }
+    </style>
+</head>
+<body>
+
+<h2>⬆️ HDFS 文件上传</h2>
+<div>
+    <input type="file" id="fileInput">
+    <button onclick="upload()">上传</button>
+</div>
+
+<div id="result"></div>
+
+<hr>
+
+<h2>⬇️ HDFS 文件下载</h2>
+<div>
+    <input id="path" placeholder="/upload/file.bin" style="width:280px;">
+    <button onclick="download()">下载</button>
+</div>
+
+<script>
+    const SIZE = 5 * 1024 * 1024;
+    const TH = 50 * 1024 * 1024;
+    const BASE = "http://localhost:8080";
+
+    // 安全 JSON 解析（避免后端返回纯文本导致前端崩溃）
+    async function safeJson(res) {
+        try { return await res.json(); }
+        catch (e) { return {}; }
+    }
+
+    // 显示结果
+    function show(html) {
+        document.getElementById("result").innerHTML = html;
+    }
+
+    // 上传入口
+    async function upload() {
+        const f = document.getElementById("fileInput").files[0];
+        if (!f) return show("❌ 请选择文件！");
+
+        show("准备上传...");
+        const uid = f.name + "-" + f.size;
+
+        if (f.size <= TH) return uploadSmall(f, uid);
+        return uploadLarge(f, uid);
+    }
+
+    // 小文件上传（不分片）
+    async function uploadSmall(f, uid) {
+        let fd = new FormData();
+        fd.append("file", f);
+        fd.append("uploadId", uid);
+        fd.append("chunkIndex", 0);
+
+        await fetch(BASE + "/upload/chunk", { method: "POST", body: fd });
+
+        let res = await fetch(BASE + "/upload/merge", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: new URLSearchParams({
+                uploadId: uid,
+                totalChunks: 1,
+                hdfsPath: "/upload/" + f.name
+            })
+        });
+
+        const data = await safeJson(res);
+        if (data.hdfsUrl)
+            show(`上传成功！<br><a href="${data.hdfsUrl}" target="_blank">${data.hdfsUrl}</a>`);
+        else
+            show("上传成功（后端未返回 URL）");
+    }
+
+    // 大文件上传（分片 + 断点续传）
+    async function uploadLarge(f, uid) {
+        const total = Math.ceil(f.size / SIZE);
+
+        for (let i = 0; i < total; i++) {
+            show(`上传分片 ${i+1}/${total}...`);
+
+            // 检查分片是否存在
+            const exists = await fetch(BASE + "/upload/check", {
+                method: "POST",
+                headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                body: new URLSearchParams({ uploadId: uid, chunkIndex: i })
+            }).then(r => r.json());
+
+            if (exists) continue;
+
+            let fd = new FormData();
+            fd.append("file", f.slice(i*SIZE, (i+1)*SIZE));
+            fd.append("uploadId", uid);
+            fd.append("chunkIndex", i);
+
+            await fetch(BASE + "/upload/chunk", { method:"POST", body:fd });
+        }
+
+        show("所有分片上传完毕，正在合并...");
+
+        let res = await fetch(BASE + "/upload/merge", {
+            method:"POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body:new URLSearchParams({
+                uploadId: uid,
+                totalChunks: total,
+                hdfsPath: "/upload/" + f.name
+            })
+        });
+
+        const data = await safeJson(res);
+
+        if (data.hdfsUrl)
+            show(`上传成功！<br><a href="${data.hdfsUrl}" target="_blank">${data.hdfsUrl}</a>`);
+        else
+            show("上传成功（后端未返回 URL）");
+    }
+
+    // 下载
+    function download() {
+        const p = document.getElementById("path").value;
+        if (!p) return alert("请输入路径！");
+
+        window.location.href =
+            BASE + "/upload/download?hdfsPath=" + encodeURIComponent(p);
+    }
+</script>
+
+</body>
+</html>

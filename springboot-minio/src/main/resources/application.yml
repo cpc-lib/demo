@@ -1,0 +1,19 @@
+server:
+  port: 8080
+spring:
+  servlet:
+    multipart:
+      #开启文件上传
+      enabled: true
+      #限制文件上传大小为50M
+      max-file-size: 50MB
+# MinIO对象存储相关配置
+minio:
+  #MinIO服务所在地址
+  endpoint: http://114.132.210.77:9000
+  #存储桶名称
+  bucketName: ruoyi
+  #访问的key
+  accessKey: minioadmin
+  #访问的秘钥
+  secretKey: minioadmin

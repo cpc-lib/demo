@@ -1,0 +1,16 @@
+
+server:
+  port: 8080
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 2048MB
+      max-request-size: 2048MB
+
+hadoop:
+  fs-uri: "hdfs://192.168.220.102:8020"
+  user: "atguigu"
+
+upload:
+  temp-dir: "./tmp/uploads"

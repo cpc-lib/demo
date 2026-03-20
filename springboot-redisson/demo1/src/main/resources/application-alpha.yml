@@ -1,0 +1,17 @@
+#单机模式
+spring:
+  redis:
+    host: 101.32.189.58
+    port: 7001
+    password:
+    database: 0
+    #lettuce:
+    lettuce:
+      pool:
+        enabled: true
+        max-idle: 100
+        min-idle: 1
+        max-active: 10
+        max-wait: 5000
+    timeout: 10000
+

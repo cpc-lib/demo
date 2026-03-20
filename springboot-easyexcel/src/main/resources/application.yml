@@ -1,0 +1,22 @@
+server:
+    port: 8080
+spring:
+    application:
+        name: springboot-easyexcel
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/arhi?serverTimezone=UTC
+        password: root
+        username: root
+mybatis-plus:
+    #config-location: classpath:mybatis-config.xml
+    mapper-locations: classpath*:mybatis/*.xml
+    type-aliases-package: cc.ivera.domain
+    configuration:
+        map-underscore-to-camel-case: false
+        cache-enabled: false
+        use-generated-keys: true
+    global-config:
+        db-config:
+            id-type: auto
+            table-prefix: tb_

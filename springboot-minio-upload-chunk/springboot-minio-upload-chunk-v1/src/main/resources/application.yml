@@ -1,0 +1,55 @@
+server:
+  port: 9090
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://93.177.76.161:3306/minio-upload?serverTimezone=Asia/Shanghai&userUnicode=true&useSSL=false&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: hjm029796
+  redis:
+    # Redis服务器地址
+    host: 127.0.0.1
+    # Redis服务器端口号
+    port: 6379
+    # 使用的数据库索引，默认是0
+    database: 1
+    # 连接超时时间
+    timeout: 1800000
+    # 设置密码
+    #password:
+    lettuce:
+      pool:
+        # 最大阻塞等待时间，负数表示没有限制
+        max-wait: -1
+        # 连接池中的最大空闲连接
+        max-idle: 5
+        # 连接池中的最小空闲连接
+        min-idle: 0
+        # 连接池中最大连接数，负数表示没有限制
+        max-active: 20
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+#minio:
+#  endpoint: http://192.168.83.132:9001
+#  accesskey: admin
+#  secretkey: password
+#  expiry: 1  #分片对象过期时间 单位（天）
+#  breakpoint-time: 1 #断点续传有效时间，在redis存储任务的时间 单位（天）
+
+minio:
+  endpoint: http://93.177.76.161:9001
+  accesskey: admin
+  secretkey: hjm029796
+  expiry: 1  #分片对象过期时间 单位（天）
+  breakpoint-time: 1 #断点续传有效时间，在redis存储任务的时间 单位（天）
+
+logging:
+  level:
+    com.wusuowei.miniouploadfile: debug
+    org.springframework: warn

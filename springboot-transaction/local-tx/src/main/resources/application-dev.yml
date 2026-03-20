@@ -1,0 +1,50 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource   #com.zaxxer.hikari.HikariDataSource
+    druid:
+      initial-size: 5
+      max-active: 100
+      min-idle: 5
+      maxWait: 10000
+      connectTimeout: 10000 #SHOW GLOBAL VARIABLES LIKE '%timeout%';
+      timeBetweenEvictionRunsMillis: 60000
+      stat-view-servlet:
+        allow: true
+      test-on-borrow: true
+      filters: stat,wall
+      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+#    hikari:
+#      maximum-pool-size: 100
+#      minimum-idle: 5
+#      idle-timeout: 300000
+#      max-lifetime: 1200000
+#      connection-timeout: 10000
+#      auto-commit: true
+    default:  #数据源Default
+      name: default
+      type: com.alibaba.druid.pool.DruidDataSource   #com.zaxxer.hikari.HikariDataSource
+      driver-class-name: com.mysql.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/bank1?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=false&useSSL=false&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai
+      jdbc-url: jdbc:mysql://localhost:3306/bank1?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=false&useSSL=false&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai
+      username: root
+      password: root
+      #      password: root
+      poolPingEnabled: true
+      poolPingQuery: select 1
+      poolPingConnectionsNotUsedFor: 3600000
+      initial-size: 5
+      max-active: 100
+      min-idle: 5
+      connectTimeout: 10000 #SHOW GLOBAL VARIABLES LIKE '%timeout%';
+      stat-view-servlet:
+        allow: true
+      test-on-borrow: true
+      filters: stat,wall
+    platform:  #数据源Platform
+      name: platform
+      type: com.alibaba.druid.pool.DruidDataSource   #com.zaxxer.hikari.HikariDataSource
+      driver-class-name: com.mysql.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/bank2?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=false&useSSL=false&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai
+      jdbc-url: jdbc:mysql://localhost:3306/bank2?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=false&useSSL=false&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai
+      username: root
+      password: root

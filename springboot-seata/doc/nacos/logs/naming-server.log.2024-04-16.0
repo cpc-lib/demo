@@ -1,0 +1,220 @@
+2024-04-16 20:22:38,139 INFO [SelectorManager] Load SelectorContextBuilder(class com.alibaba.nacos.naming.selector.context.CmdbSelectorContextBuilder) contextType(CMDB) successfully.
+
+2024-04-16 20:22:38,139 INFO [SelectorManager] Load SelectorContextBuilder(class com.alibaba.nacos.naming.selector.context.NoneSelectorContextBuilder) contextType(NONE) successfully.
+
+2024-04-16 20:22:38,139 INFO [SelectorManager] Load Selector(class com.alibaba.nacos.naming.selector.LabelSelector) type(label) contextType(CMDB) successfully.
+
+2024-04-16 20:22:38,139 INFO [SelectorManager] Load Selector(class com.alibaba.nacos.naming.selector.NoneSelector) type(none) contextType(NONE) successfully.
+
+2024-04-16 20:22:40,272 INFO Load instance extension handler []
+
+2024-04-16 20:42:36,624 INFO Client connection 192.168.193.70:8091#true connect
+
+2024-04-16 20:42:36,628 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=0}, 192.168.193.70:8091#true
+
+2024-04-16 20:43:04,812 INFO Client connection 192.168.193.70:8092#true connect
+
+2024-04-16 20:43:04,812 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=1}, 192.168.193.70:8092#true
+
+2024-04-16 21:39:57,726 INFO Client connection 192.168.193.70:59000#true connect
+
+2024-04-16 21:39:58,614 INFO Client connection 192.168.193.70:59001#true connect
+
+2024-04-16 21:39:58,624 INFO Client connection 192.168.193.70:8081#true connect
+
+2024-04-16 21:39:58,624 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=0}, 192.168.193.70:8081#true
+
+2024-04-16 21:55:53,040 INFO Client connection 192.168.193.70:58274#true connect
+
+2024-04-16 21:55:53,911 INFO Client connection 192.168.193.70:58275#true connect
+
+2024-04-16 21:55:53,931 INFO Client connection 192.168.193.70:8082#true connect
+
+2024-04-16 21:55:53,931 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=0}, 192.168.193.70:8082#true
+
+2024-04-16 21:56:03,493 INFO Client connection 192.168.193.70:63528#true connect
+
+2024-04-16 21:56:04,431 INFO Client connection 192.168.193.70:63529#true connect
+
+2024-04-16 21:56:04,442 INFO Client connection 192.168.193.70:8083#true connect
+
+2024-04-16 21:56:04,442 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=0}, 192.168.193.70:8083#true
+
+2024-04-16 22:05:28,161 INFO Client connection 192.168.193.70:63528#true disconnect, remove instances and subscribers
+
+2024-04-16 22:05:28,162 INFO Client connection 192.168.193.70:58274#true disconnect, remove instances and subscribers
+
+2024-04-16 22:05:28,162 INFO Client connection 192.168.193.70:63529#true disconnect, remove instances and subscribers
+
+2024-04-16 22:05:28,162 INFO Client connection 192.168.193.70:58275#true disconnect, remove instances and subscribers
+
+2024-04-16 22:05:29,876 INFO [AUTO-DELETE-IP] service: Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=1}, ip: {"ip":"192.168.193.70","port":8082,"healthy":false,"cluster":"DEFAULT","extendDatum":{"preserved.register.source":"SPRING_CLOUD","customInstanceId":"192.168.193.70#8082#DEFAULT#DEFAULT_GROUP@@order-service"},"lastHeartBeatTime":1713276297198,"metadataId":"192.168.193.70:8082:DEFAULT"}
+
+2024-04-16 22:05:29,876 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=1}, 192.168.193.70:8082#true
+
+2024-04-16 22:05:30,357 INFO [AUTO-DELETE-IP] service: Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=1}, ip: {"ip":"192.168.193.70","port":8083,"healthy":false,"cluster":"DEFAULT","extendDatum":{"preserved.register.source":"SPRING_CLOUD","customInstanceId":"192.168.193.70#8083#DEFAULT#DEFAULT_GROUP@@account-service"},"lastHeartBeatTime":1713276295722,"metadataId":"192.168.193.70:8083:DEFAULT"}
+
+2024-04-16 22:05:30,358 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=1}, 192.168.193.70:8083#true
+
+2024-04-16 22:05:33,170 INFO Client connection 192.168.193.70:8083#true disconnect, remove instances and subscribers
+
+2024-04-16 22:05:33,170 INFO Client connection 192.168.193.70:8082#true disconnect, remove instances and subscribers
+
+2024-04-16 22:06:39,400 INFO Client connection 192.168.193.70:58275#true connect
+
+2024-04-16 22:06:39,402 INFO Client connection 192.168.193.70:58274#true connect
+
+2024-04-16 22:06:39,408 INFO Client connection 192.168.193.70:8082#true connect
+
+2024-04-16 22:06:39,408 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=2}, 192.168.193.70:8082#true
+
+2024-04-16 22:07:10,326 WARN namespace : public, [DEFAULT_GROUP@@account-service] services are automatically cleaned
+
+2024-04-16 22:16:05,392 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=3}, 192.168.193.70:8082#true
+
+2024-04-16 22:16:21,092 INFO Client connection 192.168.193.70:56924#true connect
+
+2024-04-16 22:16:21,962 INFO Client connection 192.168.193.70:56925#true connect
+
+2024-04-16 22:16:21,975 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=4}, 192.168.193.70:8082#true
+
+2024-04-16 22:16:34,181 INFO Client connection 192.168.193.70:58274#true disconnect, remove instances and subscribers
+
+2024-04-16 22:16:34,181 INFO Client connection 192.168.193.70:58275#true disconnect, remove instances and subscribers
+
+2024-04-16 22:20:49,598 INFO Client connection 192.168.193.70:56924#true disconnect, remove instances and subscribers
+
+2024-04-16 22:20:49,598 INFO Client connection 192.168.193.70:56925#true disconnect, remove instances and subscribers
+
+2024-04-16 22:20:50,848 INFO [AUTO-DELETE-IP] service: Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}, ip: {"ip":"192.168.193.70","port":8082,"healthy":false,"cluster":"DEFAULT","extendDatum":{"preserved.register.source":"SPRING_CLOUD","customInstanceId":"192.168.193.70#8082#DEFAULT#DEFAULT_GROUP@@order-service"},"lastHeartBeatTime":1713277220309,"metadataId":"192.168.193.70:8082:DEFAULT"}
+
+2024-04-16 22:20:50,848 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}, 192.168.193.70:8082#true
+
+2024-04-16 22:20:54,611 INFO Client connection 192.168.193.70:8082#true disconnect, remove instances and subscribers
+
+2024-04-16 22:22:10,419 WARN namespace : public, [DEFAULT_GROUP@@order-service] services are automatically cleaned
+
+2024-04-16 22:25:12,397 INFO Client connection 192.168.193.70:56925#true connect
+
+2024-04-16 22:25:12,397 INFO Client connection 192.168.193.70:56924#true connect
+
+2024-04-16 22:25:12,399 INFO Client connection 192.168.193.70:8082#true connect
+
+2024-04-16 22:25:12,399 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=0}, 192.168.193.70:8082#true
+
+2024-04-16 22:26:14,688 INFO Client connection 192.168.193.70:63528#true connect
+
+2024-04-16 22:26:14,689 INFO Client connection 192.168.193.70:63529#true connect
+
+2024-04-16 22:26:14,691 INFO Client connection 192.168.193.70:8083#true connect
+
+2024-04-16 22:26:14,691 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=0}, 192.168.193.70:8083#true
+
+2024-04-16 22:27:03,077 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=1}, 192.168.193.70:8083#true
+
+2024-04-16 22:27:03,098 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=1}, 192.168.193.70:8082#true
+
+2024-04-16 22:27:03,105 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=1}, 192.168.193.70:8081#true
+
+2024-04-16 22:27:12,984 INFO Client connection 192.168.193.70:56232#true connect
+
+2024-04-16 22:27:13,765 INFO Client connection 192.168.193.70:56233#true connect
+
+2024-04-16 22:27:14,067 INFO Client connection 192.168.193.70:56234#true connect
+
+2024-04-16 22:27:14,080 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=2}, 192.168.193.70:8082#true
+
+2024-04-16 22:27:14,703 INFO Client connection 192.168.193.70:56235#true connect
+
+2024-04-16 22:27:14,791 INFO Client connection 192.168.193.70:56236#true connect
+
+2024-04-16 22:27:14,804 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=2}, 192.168.193.70:8083#true
+
+2024-04-16 22:27:15,685 INFO Client connection 192.168.193.70:56237#true connect
+
+2024-04-16 22:27:15,697 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=2}, 192.168.193.70:8081#true
+
+2024-04-16 22:27:35,230 INFO Client connection 192.168.193.70:63528#true disconnect, remove instances and subscribers
+
+2024-04-16 22:27:35,230 INFO Client connection 192.168.193.70:56925#true disconnect, remove instances and subscribers
+
+2024-04-16 22:27:35,230 INFO Client connection 192.168.193.70:59000#true disconnect, remove instances and subscribers
+
+2024-04-16 22:27:35,230 INFO Client connection 192.168.193.70:56924#true disconnect, remove instances and subscribers
+
+2024-04-16 22:27:35,230 INFO Client connection 192.168.193.70:59001#true disconnect, remove instances and subscribers
+
+2024-04-16 22:27:40,236 INFO Client connection 192.168.193.70:63529#true disconnect, remove instances and subscribers
+
+2024-04-16 22:30:43,049 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=3}, 192.168.193.70:8083#true
+
+2024-04-16 22:30:43,076 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=3}, 192.168.193.70:8082#true
+
+2024-04-16 22:30:43,092 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=3}, 192.168.193.70:8081#true
+
+2024-04-16 22:30:52,089 INFO Client connection 192.168.193.70:50794#true connect
+
+2024-04-16 22:30:52,800 INFO Client connection 192.168.193.70:50795#true connect
+
+2024-04-16 22:30:53,148 INFO Client connection 192.168.193.70:61573#true connect
+
+2024-04-16 22:30:53,163 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=4}, 192.168.193.70:8082#true
+
+2024-04-16 22:30:53,806 INFO Client connection 192.168.193.70:61574#true connect
+
+2024-04-16 22:30:53,840 INFO Client connection 192.168.193.70:61575#true connect
+
+2024-04-16 22:30:53,855 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=4}, 192.168.193.70:8083#true
+
+2024-04-16 22:30:54,774 INFO Client connection 192.168.193.70:59122#true connect
+
+2024-04-16 22:30:54,786 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=4}, 192.168.193.70:8081#true
+
+2024-04-16 22:31:15,530 INFO Client connection 192.168.193.70:56233#true disconnect, remove instances and subscribers
+
+2024-04-16 22:31:15,530 INFO Client connection 192.168.193.70:56232#true disconnect, remove instances and subscribers
+
+2024-04-16 22:31:15,531 INFO Client connection 192.168.193.70:56234#true disconnect, remove instances and subscribers
+
+2024-04-16 22:31:20,536 INFO Client connection 192.168.193.70:56235#true disconnect, remove instances and subscribers
+
+2024-04-16 22:31:20,536 INFO Client connection 192.168.193.70:56236#true disconnect, remove instances and subscribers
+
+2024-04-16 22:31:20,536 INFO Client connection 192.168.193.70:56237#true disconnect, remove instances and subscribers
+
+2024-04-16 22:46:59,665 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=5}, 192.168.193.70:8083#true
+
+2024-04-16 22:46:59,696 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=5}, 192.168.193.70:8081#true
+
+2024-04-16 22:46:59,795 INFO Client remove for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}, 192.168.193.70:8082#true
+
+2024-04-16 22:47:08,531 INFO Client connection 192.168.193.70:50573#true connect
+
+2024-04-16 22:47:09,508 INFO Client connection 192.168.193.70:51832#true connect
+
+2024-04-16 22:47:09,520 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=6}, 192.168.193.70:8083#true
+
+2024-04-16 22:47:21,487 INFO Client connection 192.168.193.70:58274#true connect
+
+2024-04-16 22:47:21,744 INFO Client connection 192.168.193.70:58275#true connect
+
+2024-04-16 22:47:22,442 INFO Client connection 192.168.193.70:58276#true connect
+
+2024-04-16 22:47:22,455 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=6}, 192.168.193.70:8082#true
+
+2024-04-16 22:47:22,737 INFO Client connection 192.168.193.70:58277#true connect
+
+2024-04-16 22:47:22,748 INFO Client change for service Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=6}, 192.168.193.70:8081#true
+
+2024-04-16 22:47:26,994 INFO Client connection 192.168.193.70:59122#true disconnect, remove instances and subscribers
+
+2024-04-16 22:47:26,994 INFO Client connection 192.168.193.70:61575#true disconnect, remove instances and subscribers
+
+2024-04-16 22:47:26,994 INFO Client connection 192.168.193.70:50795#true disconnect, remove instances and subscribers
+
+2024-04-16 22:47:32,002 INFO Client connection 192.168.193.70:61573#true disconnect, remove instances and subscribers
+
+2024-04-16 22:47:37,016 INFO Client connection 192.168.193.70:61574#true disconnect, remove instances and subscribers
+
+2024-04-16 22:47:37,016 INFO Client connection 192.168.193.70:50794#true disconnect, remove instances and subscribers
+

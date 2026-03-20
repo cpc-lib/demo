@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       https://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+    <!--加载配置文件-->
+    <context:property-placeholder location="classpath:rabbitmq.properties"/>
+
+    <!-- 定义rabbitmq connectionFactory -->
+    <rabbit:connection-factory id="connectionFactory" host="${rabbitmq.host}"
+                               port="${rabbitmq.port}"
+                               username="${rabbitmq.username}"
+                               password="${rabbitmq.password}"
+                               virtual-host="${rabbitmq.virtual-host}"/>
+
+
+    <context:component-scan base-package="cc.ivera.listener"/>
+
+    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="manual" prefetch="1">
+        <rabbit:listener ref="ackListener" queue-names="queue_confirm"/>
+
+        <rabbit:listener ref="qosListener" queue-names="queue_confirm"/>
+
+        <!--死信队列-拒收测试-->
+        <rabbit:listener ref="dlxListener" queue-names="test_queue_dlx"/>
+
+
+        <rabbit:listener ref="ttlListener" queue-names="test_queue_ttl"/>
+
+        <!--监听要撤销的信息-->
+        <!--延迟队列 order_queue_dlx-->
+        <rabbit:listener ref="delayMsgListener" queue-names="order_queue_dlx"/>
+    </rabbit:listener-container>
+</beans>

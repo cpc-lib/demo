@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.FileRecordMapper">
+
+    <insert id="insertFileRecord" parameterType="cc.ivera.entity.FileRecord">
+        INSERT INTO file_records (file_name, file_id)
+        VALUES (#{fileName}, #{fileId})
+    </insert>
+
+    <select id="findByFileId" parameterType="String" resultType="cc.ivera.entity.FileRecord">
+        SELECT id, file_name as fileName, file_id as fileId
+        FROM file_records
+        WHERE file_id = #{fileId}
+    </select>
+
+</mapper>

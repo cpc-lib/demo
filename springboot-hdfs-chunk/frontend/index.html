@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>HDFS分片上传</title>
+</head>
+<body>
+
+<h3>选择文件并上传</h3>
+<input type="file" id="f"/>
+<button onclick="upload()">上传</button>
+
+<hr>
+
+<h3>下载文件</h3>
+<!-- 动态填充下载地址 -->
+<div id="downloadArea" style="display:none;">
+    <p>文件已上传，点击下面的按钮下载：</p>
+    <button id="downloadBtn">下载文件</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/spark-md5@3.0.2/spark-md5.min.js"></script>
+
+<script>
+    const SIZE = 5 * 1024 * 1024;
+    const TH = 50 * 1024 * 1024;
+    const BASE = "http://localhost:8080";
+
+    // 将下载按钮与下载地址绑定
+    function showDownloadButton(downloadUrl) {
+        const area = document.getElementById("downloadArea");
+        const btn = document.getElementById("downloadBtn");
+
+        btn.onclick = function () {
+            window.location = downloadUrl;
+        };
+
+        area.style.display = "block";
+    }
+
+    async function md5(file) {
+        return new Promise(resolve => {
+            const chunk = 5 * 1024 * 1024;
+            const spark = new SparkMD5.ArrayBuffer();
+            const reader = new FileReader();
+            let cur = 0;
+
+            reader.onload = e => {
+                spark.append(e.target.result);
+                cur += chunk;
+                if (cur < file.size) load();
+                else resolve(spark.end());
+            };
+
+            function load() {
+                reader.readAsArrayBuffer(file.slice(cur, cur + chunk));
+            }
+
+            load();
+        });
+    }
+
+    async function upload() {
+        const file = document.getElementById('f').files[0];
+        if (!file) return alert("请选择文件");
+
+        const uid = file.name + "-" + file.size;
+
+        const md5Value = await md5(file);
+
+        // 秒传校验
+        const exists = await fetch(BASE + "/upload/md5Check?md5=" + md5Value).then(r => r.text());
+        if (exists) {
+            alert("命中秒传");
+            const downloadUrl = BASE + "/upload/download?path=" + encodeURIComponent(exists);
+            showDownloadButton(downloadUrl);
+            return;
+        }
+
+        if (file.size <= TH) return smallUpload(file, uid, md5Value);
+        return largeUpload(file, uid, md5Value);
+    }
+
+    async function smallUpload(file, uid, md5Value) {
+        let fd = new FormData();
+        fd.append("file", file);
+        fd.append("uploadId", uid);
+        fd.append("chunkIndex", 0);
+
+        await fetch(BASE + "/upload/chunk", { method: "POST", body: fd });
+
+        let finalPath = await fetch(BASE + "/upload/merge", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                uploadId: uid,
+                totalChunks: 1,
+                hdfsPath: "/upload/" + file.name,
+                md5: md5Value
+            })
+        }).then(r => r.text());
+
+        alert("上传成功");
+
+        const downloadUrl = BASE + "/upload/download?path=" + encodeURIComponent(finalPath);
+        showDownloadButton(downloadUrl);
+    }
+
+    async function largeUpload(file, uid, md5Value) {
+        const total = Math.ceil(file.size / SIZE);
+
+        for (let i = 0; i < total; i++) {
+
+            // 检查是否已上传
+            let ck = await fetch(BASE + "/upload/check", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ uploadId: uid, chunkIndex: i })
+            }).then(r => r.json());
+
+            if (ck) continue;
+
+            // ★★★ 核心修复：严格计算最后一个 chunk 的范围
+            let start = i * SIZE;
+            let end = Math.min(file.size, start + SIZE);
+
+            // 最后一片的真实大小
+            let realSize = end - start;
+            if (realSize <= 0) continue;   // 不会出现空片
+
+            let blob = file.slice(start, end);
+
+            // 防御性判断，绝不允许 0 字节分片上传
+            if (blob.size <= 0) {
+                console.error("跳过空分片 chunk =", i, "start=", start, "end=", end);
+                continue;
+            }
+
+            let fd = new FormData();
+            fd.append("file", blob);
+            fd.append("uploadId", uid);
+            fd.append("chunkIndex", i);
+
+            await fetch(BASE + "/upload/chunk", { method: "POST", body: fd });
+        }
+
+        // 合并
+        let finalPath = await fetch(BASE + "/upload/merge", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                uploadId: uid,
+                totalChunks: total,
+                hdfsPath: "/upload/" + file.name,
+                md5: md5Value
+            })
+        }).then(r => r.text());
+
+        alert("上传成功");
+
+        const downloadUrl = BASE + "/upload/download?path=" + encodeURIComponent(finalPath);
+        showDownloadButton(downloadUrl);
+    }
+
+</script>
+
+</body>
+</html>

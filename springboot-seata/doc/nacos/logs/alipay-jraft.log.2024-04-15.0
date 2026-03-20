@@ -1,0 +1,172 @@
+2024-04-15 14:25:50,914 INFO SPI service [com.alipay.sofa.jraft.JRaftServiceFactory - com.alipay.sofa.jraft.core.DefaultJRaftServiceFactory] loading.
+
+2024-04-15 14:25:51,036 INFO SPI service [com.alipay.sofa.jraft.rpc.RaftRpcFactory - com.alipay.sofa.jraft.rpc.impl.GrpcRaftRpcFactory] loading.
+
+2024-04-15 14:25:51,194 INFO SPI service [com.alipay.sofa.jraft.util.timer.RaftTimerFactory - com.alipay.sofa.jraft.util.timer.DefaultRaftTimerFactory] loading.
+
+2024-04-15 14:25:51,207 INFO The number of active nodes increment to 1.
+
+2024-04-15 14:25:52,109 INFO Starts FSMCaller successfully.
+
+2024-04-15 14:25:52,113 WARN No data for snapshot reader D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\snapshot.
+
+2024-04-15 14:25:52,117 INFO Node <naming_persistent_service_v2/10.1.2.232:7848> init, term=0, lastLogId=LogId [index=0, term=0], conf=10.1.2.232:7848, oldConf=.
+
+2024-04-15 14:25:52,118 INFO Node <naming_persistent_service_v2/10.1.2.232:7848> start vote and grant vote self, term=0.
+
+2024-04-15 14:25:52,151 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\meta-data on windows.
+
+2024-04-15 14:25:52,153 INFO Save raft meta, path=D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\meta-data, term=1, votedFor=10.1.2.232:7848, cost time=33 ms
+
+2024-04-15 14:25:52,153 INFO Node <naming_persistent_service_v2/10.1.2.232:7848> become leader of group, term=1, conf=10.1.2.232:7848, oldConf=.
+
+2024-04-15 14:25:52,155 INFO -Djraft.recyclers.maxCapacityPerThread: 4096.
+
+2024-04-15 14:25:52,156 WARN RPC server is not started in RaftGroupService.
+
+2024-04-15 14:25:52,156 INFO Start the RaftGroupService successfully.
+
+2024-04-15 14:25:52,165 INFO The number of active nodes increment to 2.
+
+2024-04-15 14:25:52,183 INFO onLeaderStart: term=1.
+
+2024-04-15 14:25:52,230 INFO Creating new channel to: 10.1.2.232:7848.
+
+2024-04-15 14:25:52,262 INFO The channel 10.1.2.232:7848 is in state: CONNECTING.
+
+2024-04-15 14:25:52,393 INFO The channel 10.1.2.232:7848 is in state: READY.
+
+2024-04-15 14:25:52,393 INFO The channel 10.1.2.232:7848 has successfully established.
+
+2024-04-15 14:25:52,444 INFO Starts FSMCaller successfully.
+
+2024-04-15 14:25:52,445 WARN No data for snapshot reader D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\snapshot.
+
+2024-04-15 14:25:52,446 INFO Node <naming_instance_metadata/10.1.2.232:7848> init, term=0, lastLogId=LogId [index=0, term=0], conf=10.1.2.232:7848, oldConf=.
+
+2024-04-15 14:25:52,447 INFO Node <naming_instance_metadata/10.1.2.232:7848> start vote and grant vote self, term=0.
+
+2024-04-15 14:25:52,472 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\meta-data on windows.
+
+2024-04-15 14:25:52,472 INFO Save raft meta, path=D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\meta-data, term=1, votedFor=10.1.2.232:7848, cost time=25 ms
+
+2024-04-15 14:25:52,472 INFO Node <naming_instance_metadata/10.1.2.232:7848> become leader of group, term=1, conf=10.1.2.232:7848, oldConf=.
+
+2024-04-15 14:25:52,472 WARN RPC server is not started in RaftGroupService.
+
+2024-04-15 14:25:52,472 INFO Start the RaftGroupService successfully.
+
+2024-04-15 14:25:52,494 INFO onLeaderStart: term=1.
+
+2024-04-15 14:25:52,494 INFO The number of active nodes increment to 3.
+
+2024-04-15 14:25:52,803 INFO Starts FSMCaller successfully.
+
+2024-04-15 14:25:52,803 WARN No data for snapshot reader D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\snapshot.
+
+2024-04-15 14:25:52,804 INFO Node <naming_service_metadata/10.1.2.232:7848> init, term=0, lastLogId=LogId [index=0, term=0], conf=10.1.2.232:7848, oldConf=.
+
+2024-04-15 14:25:52,804 INFO Node <naming_service_metadata/10.1.2.232:7848> start vote and grant vote self, term=0.
+
+2024-04-15 14:25:52,823 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\meta-data on windows.
+
+2024-04-15 14:25:52,823 INFO Save raft meta, path=D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\meta-data, term=1, votedFor=10.1.2.232:7848, cost time=19 ms
+
+2024-04-15 14:25:52,823 INFO Node <naming_service_metadata/10.1.2.232:7848> become leader of group, term=1, conf=10.1.2.232:7848, oldConf=.
+
+2024-04-15 14:25:52,823 WARN RPC server is not started in RaftGroupService.
+
+2024-04-15 14:25:52,823 INFO Start the RaftGroupService successfully.
+
+2024-04-15 14:25:52,849 INFO onLeaderStart: term=1.
+
+2024-04-15 14:42:04,262 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\snapshot\temp on windows.
+
+2024-04-15 14:42:04,262 INFO Deleting snapshot D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\snapshot\snapshot_1.
+
+2024-04-15 14:42:04,262 INFO Renaming D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\snapshot\temp to D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\snapshot\snapshot_1.
+
+2024-04-15 14:42:04,262 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\snapshot on windows.
+
+2024-04-15 14:47:38,191 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\snapshot\temp on windows.
+
+2024-04-15 14:47:38,191 INFO Deleting snapshot D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\snapshot\snapshot_1.
+
+2024-04-15 14:47:38,191 INFO Renaming D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\snapshot\temp to D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\snapshot\snapshot_1.
+
+2024-04-15 14:47:38,192 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\snapshot on windows.
+
+2024-04-15 14:49:25,183 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\snapshot\temp on windows.
+
+2024-04-15 14:49:25,183 INFO Deleting snapshot D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\snapshot\snapshot_1.
+
+2024-04-15 14:49:25,183 INFO Renaming D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\snapshot\temp to D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\snapshot\snapshot_1.
+
+2024-04-15 14:49:25,184 WARN Unable to fsync directory D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\snapshot on windows.
+
+2024-04-15 15:12:04,238 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 1 to 2, cost 0 ms.
+
+2024-04-15 15:17:38,198 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 1 to 2, cost 1 ms.
+
+2024-04-15 15:19:25,209 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 1 to 2, cost 0 ms.
+
+2024-04-15 15:42:04,225 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 15:47:38,195 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 15:49:25,195 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 16:12:04,219 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 16:17:38,221 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 16:19:25,201 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 16:42:04,212 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 16:47:38,195 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 1 ms.
+
+2024-04-15 16:49:25,217 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 17:12:04,241 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 17:17:38,201 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 17:19:25,211 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 1 ms.
+
+2024-04-15 17:42:04,256 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 17:47:38,237 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 17:49:25,227 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 18:12:04,262 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 1 ms.
+
+2024-04-15 18:17:38,209 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 18:19:25,228 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 18:42:04,347 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 18:47:38,305 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 18:49:25,232 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 19:12:04,282 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 19:17:38,222 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 19:19:25,238 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 19:42:04,277 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 19:47:38,227 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 19:49:25,244 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 20:12:04,282 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_persistent_service_v2\log from log index 2 to 2, cost 1 ms.
+
+2024-04-15 20:17:38,222 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_instance_metadata\log from log index 2 to 2, cost 0 ms.
+
+2024-04-15 20:19:25,249 INFO Truncated prefix logs in data path: D:\develop\jar\nacos\data\protocol\raft\naming_service_metadata\log from log index 2 to 2, cost 0 ms.
+

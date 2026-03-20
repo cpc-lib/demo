@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+
+mybatis-plus:
+  global-config:
+    #二级缓存
+    configuration:
+      map-underscore-to-camel-case: false #禁用自定义驼峰
+      cache-enabled: true #开启二级缓存 默认为关闭状态
+    db-config:
+      logic-not-delete-value: '0'
+      table-prefix: tb_
+      logic-delete-value: '1'
+      id-type: auto
+  type-enums-package: cc.ivera.enums
+  type-aliases-package: cc.ivera.domain
+  mapper-locations: classpath*:mybatis/*.xml
+  config-location: classpath:mybatis-config.xml
+
+spring:
+  application:
+    name: springboot-cache
+  datasource:
+    druid:
+      password: root
+      driver-class-name: com.mysql.jdbc.Driver
+      username: root
+      url: jdbc:mysql://127.0.0.1:3306/mp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true&useSSL=false
+
+#阿里的缓存技术
+jetcache:
+  statIntervalMinutes: 1
+  local:
+    default:
+      type: linkedhashmap
+      keyConvertor: fastjson
+  remote:
+    default:
+      type: redis
+      host: localhost
+      port: 6379
+      keyConvertor: fastjson
+      valueEncode: java
+      valueDecode: java
+      poolConfig:
+        maxTotal: 50
+    sms:
+      type: redis
+      host: localhost
+      port: 6379
+      poolConfig:
+        maxTotal: 50

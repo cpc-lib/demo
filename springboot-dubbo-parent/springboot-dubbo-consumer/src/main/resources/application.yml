@@ -1,0 +1,10 @@
+spring:
+  dubbo:
+    application:
+      name: springboot-dubbo-consumer #dubbo应用名称，一般与项目的名称保持一致
+    registry:
+      address: zookeeper://192.168.31.135 #注册中心所在电脑的ip地址
+      port: 2181 #zookeeper对外提高的服务接口，默认为2181
+    scan: cc.ivera.controller
+server:
+  port: 8081 #Tomcat服务的接口

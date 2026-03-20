@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: eureka-provider # 设置当前应用的名称。将来会在eureka中Application显示。将来需要使用该名称来获取路径
+eureka:
+  instance:
+    hostname: 127.0.0.1 # 主机名
+    prefer-ip-address: true # 将当前实例的ip注册到eureka server 中。默认是false 注册主机名
+    ip-address: 127.0.0.1 # 设置当前实例的ip
+    instance-id: ${eureka.instance.ip-address}:${spring.application.name}:${server.port} # 设置web控制台显示的 实例id
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka,http://eureka-server-1:8762/eureka,http://eureka-server-2:8763/eureka

@@ -1,0 +1,24 @@
+server:
+  port:80
+
+#指定配置文件dev
+spring:
+  profiles:
+    active: dev
+
+mybatis:
+  mapper-locations: cn/fiesacyum/dao/*Mapper.xml
+  type-aliases-package: cc.ivera.domain
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: false
+
+
+redis:
+  #nodes: redis://192.168.1.112:6379,redis://192.168.1.112:6380,redis://192.168.1.112:6381,redis://192.168.1.112:7379,redis://192.168.1.112:7380,redis://192.168.1.112:7381
+  nodes: redis://127.0.0.1:6379
+  connect-timeout: 6000
+  connect-pool-size: 150
+  connection-minimumidle-size: 30
+  timeout: 6000
+  global-session-timeout: 25200000

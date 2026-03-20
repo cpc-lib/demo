@@ -1,0 +1,70 @@
+#tomcat的启动端口为8090,spring配置文件加载优先级(属性了相同属性的覆盖)
+server:
+  port: 8091
+
+#默认使用hikari数据库连接池
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/db?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=UTC
+    username: root
+    password: root
+
+mybatis:
+  #引入读取多个xml配置文件
+  mapper-locations: classpath*:top/cloud/**/*.xml, classpath*:cn/fiesacyum/*.xml, classpath*:top/arhi/**/*Mapper.xml #(xml文件的加载位置使用,与@MapperScan(程序启动类)或者@Mapper(具体mapper接口上)(推荐使用@MapperScan)配置完成mapper信息的加载)
+  type-aliases-package: cc.ivera.domain
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #map-underscore-to-camel-case的默认值为false(基本类型boolean(成员变量)的初始值为false)
+    map-underscore-to-camel-case: true #开启驼峰配 置(数据库中字段自动映射到相应的驼峰名称上 e.g. ip_address->ipAddress)
+    #ps(数据库的字段多个单词不能组合成为一个单词,使用underscore(_)进行多个单词的拼接))
+    #不做配置,需要实现例如ip_address->ipAddress的映射,可以设置BaseResultMap
+    #<!--配置实体类属性和数据库表中列的对应关系-->
+    #    <resultMap id="BaseResultMap" type="domain.cc.ivera.User">
+    #        <id column="id" property="id"/>
+    #        <result column="username" property="username"/>
+    #        <result column="password" property="password"/>
+    #        <result column="ip_address" property="ipAddress"/>
+    #        <!--关联表 column为子表的主键,javaType 结果封装为java的类型 select 调用的方法-->
+    #        <association
+    #                property="course"
+    #                column="course_id"
+    #                javaType="cc.ivera.domain.Course"
+    #                select="cc.ivera.dao.CoursMapper.findById"
+    #        />
+    #    </resultMap>
+    # sql语句起别名
+
+    #原生mybatis回显主键值请在xml中进行如下配置
+    #parameterType支持基本类型,hashMap,pojo类型
+#    <insert id="insert" parameterType="Spares"
+#            useGeneratedKeys="true" keyProperty="id">
+#            insert into system(name) values(#{name})
+#    </insert>
+
+#拓展:jdbcTemplate如何设置回显主键 KeyHolder
+#  public int insertCustomer(final Customer customer) {
+#  //TODO.
+#  final String sql = "insert into customer (mobile,nickname,password,score,avatar,push_key,reg_time) values(?,?,?,?,?,?,now())";
+#  KeyHolder keyHolder = new GeneratedKeyHolder();
+#  jdbcTemplate.update(new PreparedStatementCreator() {
+#  @Override
+#  public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
+#  PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+#  ps.setString(1, customer.getMobile());
+#  ps.setString(2, customer.getNickname());
+#  ps.setString(3, customer.getPassword());
+#  ps.setInt(4, customer.getScore());
+#  ps.setString(5, customer.getAvatar());
+#  ps.setString(6,customer.getPushKey());
+#  // ps.setString(7, customer.getRegTime());
+#  return ps;
+#  }
+#  }, keyHolder);
+#  return keyHolder.getKey().intValue();
+#}
+#原理如下:https://www.it610.com/article/1283377358014791680.htm
+
+
+

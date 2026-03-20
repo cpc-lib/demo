@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: trace-demo-latest
+  profiles:
+    active: prod

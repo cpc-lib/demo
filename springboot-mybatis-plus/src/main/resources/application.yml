@@ -1,0 +1,31 @@
+spring:
+    datasource:
+        driver-class-name: com.mysql.jdbc.Driver
+        url: jdbc:mysql://127.0.0.1:3306/db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+        username: root
+        password: root
+
+
+#mybatis-plus:
+#    #config-location: classpath:mybatis-config.xml
+#    mapper-locations: classpath*:mybatis/*.xml
+#    type-aliases-package: cc.ivera.domain
+#    configuration:
+#        #map-underscore-to-camel-case: true
+#        cache-enabled: false
+#        use-generated-keys: true
+#    global-config:
+#        db-config:
+#            id-type: auto
+#            table-prefix: tb_
+
+mybatis:
+    configuration:
+        map-underscore-to-camel-case: false #此设置无效
+
+    #mybatisplus配置为false，配置mybatis true被拦截,不起作用。
+    #显式设置mybaitsplus驼峰为ture，设置mybatis的配置不起作用
+    #不进行mybatisplus的驼峰配置,设置mybatis的驼峰配置为false没有作用。
+    #引入了mybatisplus,不需要设置mybaits的驼峰配置。没得作用呀。
+    #在开发过程中建议设置驼峰配置为false。
+    #排除查询list的size不为0,当时all elements are null的问题。

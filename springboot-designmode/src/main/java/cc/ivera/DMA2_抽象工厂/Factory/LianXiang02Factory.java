@@ -1,0 +1,30 @@
+package cc.ivera.DMA2_抽象工厂.Factory;
+
+import cc.ivera.DMA2_抽象工厂.DM2.AComputerFactory;
+import cc.ivera.DMA2_抽象工厂.DM2.ProduceKeyBord;
+import cc.ivera.DMA2_抽象工厂.DM2.ProduceMouse;
+import cc.ivera.DMA2_抽象工厂.KeyBoard.LuoJiKeyBord;
+import cc.ivera.DMA2_抽象工厂.Mouse.LuoJiMouse;
+
+/**
+ * <p>联想电脑生产商 == 电脑型号：02【固定键盘和鼠标生产商】</p>
+ *
+ * @Author Appleyk
+ * @Blob https://blog.csdn.net/appleyk
+ * @Date Created on 上午 11:47 2018-11-6
+ * @Version V.1.0.1
+ */
+public class LianXiang02Factory implements AComputerFactory {
+
+    @Override
+    public ProduceKeyBord createKeyBord() {
+        // 使用罗技的键盘
+        return new LuoJiKeyBord();
+    }
+
+    @Override
+    public ProduceMouse createMouse() {
+        // 使用罗技的鼠标
+        return new LuoJiMouse();
+    }
+}

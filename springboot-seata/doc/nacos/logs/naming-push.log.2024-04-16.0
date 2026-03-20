@@ -1,0 +1,810 @@
+2024-04-16 21:39:58,238 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 21:39:58,258 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:59000, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,59000,8944113260500
+
+2024-04-16 21:39:58,258 INFO send udp packet: 192.168.193.70,59000,8944113260500
+
+2024-04-16 21:39:58,262 INFO [PUSH-SUCC] 25ms, all delay time 536ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 21:39:58,624 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=1}
+
+2024-04-16 21:39:59,220 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 21:39:59,220 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:59001, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,59001,8945094428100
+
+2024-04-16 21:39:59,220 INFO send udp packet: 192.168.193.70,59001,8945094428100
+
+2024-04-16 21:39:59,222 INFO [PUSH-SUCC] 2ms, all delay time 608ms, SLA 598ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 21:55:53,569 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 21:55:53,569 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:58274, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58274,9899443229700
+
+2024-04-16 21:55:53,569 INFO send udp packet: 192.168.193.70,58274,9899443229700
+
+2024-04-16 21:55:53,576 INFO [PUSH-SUCC] 7ms, all delay time 536ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 21:55:53,932 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=1}
+
+2024-04-16 21:55:54,428 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 21:55:54,429 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,9900302670700
+
+2024-04-16 21:55:54,429 INFO send udp packet: 192.168.193.70,58275,9900302670700
+
+2024-04-16 21:55:54,431 INFO [PUSH-SUCC] 3ms, all delay time 520ms, SLA 500ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 21:56:04,088 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 21:56:04,089 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:63528, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,63528,9909962302900
+
+2024-04-16 21:56:04,089 INFO send udp packet: 192.168.193.70,63528,9909962302900
+
+2024-04-16 21:56:04,091 INFO [PUSH-SUCC] 3ms, all delay time 598ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 21:56:04,442 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=1}
+
+2024-04-16 21:56:04,946 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 21:56:04,946 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:63529, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,63529,9910821074500
+
+2024-04-16 21:56:04,946 INFO send udp packet: 192.168.193.70,63529,9910821074500
+
+2024-04-16 21:56:04,950 INFO [PUSH-SUCC] 4ms, all delay time 519ms, SLA 508ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 21:57:11,733 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 21:57:11,734 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,9977607836000
+
+2024-04-16 21:57:11,734 INFO send udp packet: 192.168.193.70,58275,9977607836000
+
+2024-04-16 21:57:11,737 INFO [PUSH-SUCC] 4ms, all delay time 576ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=1}, originalSize=1, DataSize=1
+
+2024-04-16 21:57:11,950 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 21:57:11,951 INFO serviceName: DEFAULT_GROUP@@storage-service changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,9977824575200
+
+2024-04-16 21:57:11,952 INFO send udp packet: 192.168.193.70,58275,9977824575200
+
+2024-04-16 21:57:11,958 INFO [PUSH-SUCC] 8ms, all delay time 608ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=1}, originalSize=1, DataSize=1
+
+2024-04-16 22:05:15,393 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:05:15,395 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,10461267135700
+
+2024-04-16 22:05:15,395 INFO send udp packet: 192.168.193.70,58275,10461267135700
+
+2024-04-16 22:05:15,934 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:05:15,935 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:63529, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,63529,10461808750700
+
+2024-04-16 22:05:15,935 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:05:15,936 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,10461809811000
+
+2024-04-16 22:05:15,936 INFO send udp packet: 192.168.193.70,63529,10461808750700
+
+2024-04-16 22:05:15,937 INFO send udp packet: 192.168.193.70,58275,10461809811000
+
+2024-04-16 22:05:25,402 INFO retry to push data, key: 192.168.193.70,58275,10461267135700
+
+2024-04-16 22:05:25,939 INFO retry to push data, key: 192.168.193.70,63529,10461808750700
+
+2024-04-16 22:05:25,939 INFO retry to push data, key: 192.168.193.70,58275,10461809811000
+
+2024-04-16 22:05:35,407 WARN max re-push times reached, retry times 2, key: 192.168.193.70,58275,10461267135700
+
+2024-04-16 22:05:35,409 ERROR [PUSH-FAIL] 20016ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=2}, reason=null, target=192.168.193.70
+
+2024-04-16 22:05:35,950 WARN max re-push times reached, retry times 2, key: 192.168.193.70,63529,10461808750700
+
+2024-04-16 22:05:35,950 ERROR [PUSH-FAIL] 20016ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=2}, reason=null, target=192.168.193.70
+
+2024-04-16 22:05:35,950 WARN max re-push times reached, retry times 2, key: 192.168.193.70,58275,10461809811000
+
+2024-04-16 22:05:35,950 ERROR [PUSH-FAIL] 20015ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=2}, reason=null, target=192.168.193.70
+
+2024-04-16 22:06:39,408 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=3}
+
+2024-04-16 22:06:39,408 WARN ack takes too long from /192.168.193.70:58275 ack json: {"type": "push-ack", "lastRefTime":"10461267135700", "data":""}
+
+2024-04-16 22:06:39,409 ERROR [NACOS-PUSH] error while receiving ack data
+
+java.lang.IllegalStateException: unable to find ackEntry for key: 192.168.193.70,58275,10461267135700, ack json: {"type": "push-ack", "lastRefTime":"10461267135700", "data":""}
+	at com.alibaba.nacos.naming.remote.udp.UdpConnector$UdpReceiver.run(UdpConnector.java:205)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+2024-04-16 22:06:39,411 WARN ack takes too long from /192.168.193.70:58275 ack json: {"type": "push-ack", "lastRefTime":"10461809811000", "data":""}
+
+2024-04-16 22:06:39,411 ERROR [NACOS-PUSH] error while receiving ack data
+
+java.lang.IllegalStateException: unable to find ackEntry for key: 192.168.193.70,58275,10461809811000, ack json: {"type": "push-ack", "lastRefTime":"10461809811000", "data":""}
+	at com.alibaba.nacos.naming.remote.udp.UdpConnector$UdpReceiver.run(UdpConnector.java:205)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+2024-04-16 22:06:39,971 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:06:39,971 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:06:39,971 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:06:39,972 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:06:39,972 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,10545845200200
+
+2024-04-16 22:06:39,972 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,10545845245500
+
+2024-04-16 22:06:39,972 INFO send udp packet: 192.168.193.70,58275,10545845200200
+
+2024-04-16 22:06:39,975 INFO send udp packet: 192.168.193.70,58275,10545845245500
+
+2024-04-16 22:06:39,983 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:58274, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58274,10545845660800
+
+2024-04-16 22:06:39,983 INFO send udp packet: 192.168.193.70,58274,10545845660800
+
+2024-04-16 22:06:39,984 INFO serviceName: DEFAULT_GROUP@@storage-service changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,10545845586100
+
+2024-04-16 22:06:39,984 INFO send udp packet: 192.168.193.70,58275,10545845586100
+
+2024-04-16 22:06:41,079 INFO [PUSH-SUCC] 1108ms, all delay time 1675ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:06:45,630 WARN ack takes too long from /192.168.193.70:58275 ack json: {"type": "push-ack", "lastRefTime":"10461267135700", "data":""}
+
+2024-04-16 22:06:45,630 ERROR [NACOS-PUSH] error while receiving ack data
+
+java.lang.IllegalStateException: unable to find ackEntry for key: 192.168.193.70,58275,10461267135700, ack json: {"type": "push-ack", "lastRefTime":"10461267135700", "data":""}
+	at com.alibaba.nacos.naming.remote.udp.UdpConnector$UdpReceiver.run(UdpConnector.java:205)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+2024-04-16 22:06:45,631 WARN ack takes too long from /192.168.193.70:58275 ack json: {"type": "push-ack", "lastRefTime":"10461809811000", "data":""}
+
+2024-04-16 22:06:45,631 ERROR [NACOS-PUSH] error while receiving ack data
+
+java.lang.IllegalStateException: unable to find ackEntry for key: 192.168.193.70,58275,10461809811000, ack json: {"type": "push-ack", "lastRefTime":"10461809811000", "data":""}
+	at com.alibaba.nacos.naming.remote.udp.UdpConnector$UdpReceiver.run(UdpConnector.java:205)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+2024-04-16 22:06:45,637 INFO [PUSH-SUCC] 5666ms, all delay time 6233ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=2}, originalSize=0, DataSize=0
+
+2024-04-16 22:06:45,642 INFO [PUSH-SUCC] 5671ms, all delay time 6238ms, SLA 6234ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:06:45,642 INFO [PUSH-SUCC] 5671ms, all delay time 6238ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=1}, originalSize=1, DataSize=1
+
+2024-04-16 22:07:19,986 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:07:19,987 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,10585860960900
+
+2024-04-16 22:07:19,988 INFO send udp packet: 192.168.193.70,58275,10585860960900
+
+2024-04-16 22:07:23,862 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:07:23,864 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,10589736956300
+
+2024-04-16 22:07:23,864 INFO send udp packet: 192.168.193.70,58275,10589736956300
+
+2024-04-16 22:07:24,476 INFO [PUSH-SUCC] 4490ms, all delay time 4998ms, SLA 4998ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:07:27,211 INFO [PUSH-SUCC] 3349ms, all delay time 3954ms, SLA 3954ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=0}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:16:05,962 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:16:05,962 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,11111836219600
+
+2024-04-16 22:16:05,962 INFO send udp packet: 192.168.193.70,58275,11111836219600
+
+2024-04-16 22:16:05,967 INFO [PUSH-SUCC] 5ms, all delay time 574ms, SLA 574ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:16:21,653 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:16:21,653 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:56924, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56924,11127527461300
+
+2024-04-16 22:16:21,653 INFO send udp packet: 192.168.193.70,56924,11127527461300
+
+2024-04-16 22:16:21,656 INFO [PUSH-SUCC] 3ms, all delay time 564ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:16:21,975 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}
+
+2024-04-16 22:16:22,523 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:16:22,525 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56925, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56925,11128397465400
+
+2024-04-16 22:16:22,525 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:16:22,525 INFO send udp packet: 192.168.193.70,56925,11128397465400
+
+2024-04-16 22:16:22,533 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,11128399793700
+
+2024-04-16 22:16:22,533 INFO send udp packet: 192.168.193.70,58275,11128399793700
+
+2024-04-16 22:16:22,541 INFO [PUSH-SUCC] 18ms, all delay time 579ms, SLA 566ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:16:32,549 INFO retry to push data, key: 192.168.193.70,58275,11128399793700
+
+2024-04-16 22:16:42,553 WARN max re-push times reached, retry times 2, key: 192.168.193.70,58275,11128399793700
+
+2024-04-16 22:16:42,553 ERROR [PUSH-FAIL] 20028ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}, reason=null, target=192.168.193.70
+
+2024-04-16 22:19:51,256 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:19:51,256 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56925, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56925,11337130121200
+
+2024-04-16 22:19:51,256 INFO send udp packet: 192.168.193.70,56925,11337130121200
+
+2024-04-16 22:19:54,761 INFO [PUSH-SUCC] 3505ms, all delay time 4013ms, SLA 4013ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:19:55,256 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:19:55,256 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56925, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56925,11341129943500
+
+2024-04-16 22:19:55,256 INFO send udp packet: 192.168.193.70,56925,11341129943500
+
+2024-04-16 22:19:55,262 INFO [PUSH-SUCC] 6ms, all delay time 509ms, SLA 509ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=0}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:20:36,358 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:20:36,358 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56925, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56925,11382232641500
+
+2024-04-16 22:20:36,359 INFO send udp packet: 192.168.193.70,56925,11382232641500
+
+2024-04-16 22:20:46,369 INFO retry to push data, key: 192.168.193.70,56925,11382232641500
+
+2024-04-16 22:20:56,383 WARN max re-push times reached, retry times 2, key: 192.168.193.70,56925,11382232641500
+
+2024-04-16 22:20:56,383 ERROR [PUSH-FAIL] 20025ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=6}, reason=null, target=192.168.193.70
+
+2024-04-16 22:25:12,399 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=1}
+
+2024-04-16 22:25:12,402 WARN ack takes too long from /192.168.193.70:56925 ack json: {"type": "push-ack", "lastRefTime":"11382232641500", "data":""}
+
+2024-04-16 22:25:12,402 ERROR [NACOS-PUSH] error while receiving ack data
+
+java.lang.IllegalStateException: unable to find ackEntry for key: 192.168.193.70,56925,11382232641500, ack json: {"type": "push-ack", "lastRefTime":"11382232641500", "data":""}
+	at com.alibaba.nacos.naming.remote.udp.UdpConnector$UdpReceiver.run(UdpConnector.java:205)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+2024-04-16 22:25:12,406 WARN ack takes too long from /192.168.193.70:56925 ack json: {"type": "push-ack", "lastRefTime":"11382232641500", "data":""}
+
+2024-04-16 22:25:12,406 ERROR [NACOS-PUSH] error while receiving ack data
+
+java.lang.IllegalStateException: unable to find ackEntry for key: 192.168.193.70,56925,11382232641500, ack json: {"type": "push-ack", "lastRefTime":"11382232641500", "data":""}
+	at com.alibaba.nacos.naming.remote.udp.UdpConnector$UdpReceiver.run(UdpConnector.java:205)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+2024-04-16 22:25:12,983 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:25:12,983 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:25:12,985 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56925, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56925,11658857873500
+
+2024-04-16 22:25:12,985 INFO send udp packet: 192.168.193.70,56925,11658857873500
+
+2024-04-16 22:25:12,987 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:56924, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56924,11658857730700
+
+2024-04-16 22:25:12,988 INFO send udp packet: 192.168.193.70,56924,11658857730700
+
+2024-04-16 22:25:12,994 INFO [PUSH-SUCC] 11ms, all delay time 597ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:25:13,000 INFO [PUSH-SUCC] 17ms, all delay time 603ms, SLA 601ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:26:14,692 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=1}
+
+2024-04-16 22:26:14,695 WARN ack takes too long from /192.168.193.70:63529 ack json: {"type": "push-ack", "lastRefTime":"10461808750700", "data":""}
+
+2024-04-16 22:26:14,695 ERROR [NACOS-PUSH] error while receiving ack data
+
+java.lang.IllegalStateException: unable to find ackEntry for key: 192.168.193.70,63529,10461808750700, ack json: {"type": "push-ack", "lastRefTime":"10461808750700", "data":""}
+	at com.alibaba.nacos.naming.remote.udp.UdpConnector$UdpReceiver.run(UdpConnector.java:205)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+2024-04-16 22:26:14,700 WARN ack takes too long from /192.168.193.70:63529 ack json: {"type": "push-ack", "lastRefTime":"10461808750700", "data":""}
+
+2024-04-16 22:26:14,700 ERROR [NACOS-PUSH] error while receiving ack data
+
+java.lang.IllegalStateException: unable to find ackEntry for key: 192.168.193.70,63529,10461808750700, ack json: {"type": "push-ack", "lastRefTime":"10461808750700", "data":""}
+	at com.alibaba.nacos.naming.remote.udp.UdpConnector$UdpReceiver.run(UdpConnector.java:205)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+2024-04-16 22:26:15,241 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:26:15,242 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:26:15,242 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:63528, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,63528,11721116387800
+
+2024-04-16 22:26:15,243 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:63529, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,63529,11721116343900
+
+2024-04-16 22:26:15,243 INFO send udp packet: 192.168.193.70,63528,11721116387800
+
+2024-04-16 22:26:15,245 INFO send udp packet: 192.168.193.70,63529,11721116343900
+
+2024-04-16 22:26:15,247 INFO [PUSH-SUCC] 6ms, all delay time 558ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:26:15,255 INFO [PUSH-SUCC] 14ms, all delay time 566ms, SLA 563ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=1}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:27:03,636 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:27:03,637 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:27:03,637 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:27:03,637 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:63529, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,63529,11769511439300
+
+2024-04-16 22:27:03,637 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56925, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56925,11769511481400
+
+2024-04-16 22:27:03,638 INFO send udp packet: 192.168.193.70,63529,11769511439300
+
+2024-04-16 22:27:03,638 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:59001, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,59001,11769511746700
+
+2024-04-16 22:27:03,640 INFO send udp packet: 192.168.193.70,56925,11769511481400
+
+2024-04-16 22:27:03,642 INFO send udp packet: 192.168.193.70,59001,11769511746700
+
+2024-04-16 22:27:03,649 INFO [PUSH-SUCC] 13ms, all delay time 572ms, SLA 572ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:27:03,649 INFO [PUSH-SUCC] 12ms, all delay time 544ms, SLA 544ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:27:03,650 INFO [PUSH-SUCC] 14ms, all delay time 552ms, SLA 552ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=2}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:27:13,501 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:27:13,501 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:56232, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56232,11779375673600
+
+2024-04-16 22:27:13,501 INFO send udp packet: 192.168.193.70,56232,11779375673600
+
+2024-04-16 22:27:13,504 INFO [PUSH-SUCC] 3ms, all delay time 520ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:27:14,081 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=3}
+
+2024-04-16 22:27:14,373 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:27:14,373 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:56233, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56233,11780247289400
+
+2024-04-16 22:27:14,373 INFO send udp packet: 192.168.193.70,56233,11780247289400
+
+2024-04-16 22:27:14,376 INFO [PUSH-SUCC] 3ms, all delay time 611ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:27:14,591 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:27:14,591 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56925, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56925,11780465612400
+
+2024-04-16 22:27:14,591 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:27:14,591 INFO send udp packet: 192.168.193.70,56925,11780465612400
+
+2024-04-16 22:27:14,592 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56234, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56234,11780465892100
+
+2024-04-16 22:27:14,592 INFO send udp packet: 192.168.193.70,56234,11780465892100
+
+2024-04-16 22:27:14,597 INFO [PUSH-SUCC] 6ms, all delay time 530ms, SLA 516ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:27:14,804 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=3}
+
+2024-04-16 22:27:15,245 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:27:15,245 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:56235, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56235,11781119184800
+
+2024-04-16 22:27:15,245 INFO send udp packet: 192.168.193.70,56235,11781119184800
+
+2024-04-16 22:27:15,247 INFO [PUSH-SUCC] 2ms, all delay time 544ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:27:15,354 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:27:15,354 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:56236, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56236,11781227784600
+
+2024-04-16 22:27:15,354 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:27:15,354 INFO send udp packet: 192.168.193.70,56236,11781227784600
+
+2024-04-16 22:27:15,354 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:63529, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,63529,11781227984900
+
+2024-04-16 22:27:15,354 INFO send udp packet: 192.168.193.70,63529,11781227984900
+
+2024-04-16 22:27:15,358 INFO [PUSH-SUCC] 4ms, all delay time 567ms, SLA 554ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:27:15,697 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=3}
+
+2024-04-16 22:27:16,224 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:27:16,226 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:59001, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,59001,11782097984300
+
+2024-04-16 22:27:16,226 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:27:16,226 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:56237, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56237,11782100795700
+
+2024-04-16 22:27:16,226 INFO send udp packet: 192.168.193.70,59001,11782097984300
+
+2024-04-16 22:27:16,229 INFO send udp packet: 192.168.193.70,56237,11782100795700
+
+2024-04-16 22:27:16,241 INFO [PUSH-SUCC] 15ms, all delay time 555ms, SLA 544ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=3}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:27:24,602 INFO retry to push data, key: 192.168.193.70,56925,11780465612400
+
+2024-04-16 22:27:25,365 INFO retry to push data, key: 192.168.193.70,63529,11781227984900
+
+2024-04-16 22:27:26,239 INFO retry to push data, key: 192.168.193.70,59001,11782097984300
+
+2024-04-16 22:27:34,613 WARN max re-push times reached, retry times 2, key: 192.168.193.70,56925,11780465612400
+
+2024-04-16 22:27:34,613 ERROR [PUSH-FAIL] 20022ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=3}, reason=null, target=192.168.193.70
+
+2024-04-16 22:27:35,370 WARN max re-push times reached, retry times 2, key: 192.168.193.70,63529,11781227984900
+
+2024-04-16 22:27:35,370 ERROR [PUSH-FAIL] 20016ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=3}, reason=null, target=192.168.193.70
+
+2024-04-16 22:27:36,243 WARN max re-push times reached, retry times 2, key: 192.168.193.70,59001,11782097984300
+
+2024-04-16 22:27:36,243 ERROR [PUSH-FAIL] 20019ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=3}, reason=null, target=192.168.193.70
+
+2024-04-16 22:30:43,650 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:30:43,650 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:30:43,650 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:30:43,651 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:56236, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56236,11989524108700
+
+2024-04-16 22:30:43,651 INFO send udp packet: 192.168.193.70,56236,11989524108700
+
+2024-04-16 22:30:43,651 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56234, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56234,11989524041500
+
+2024-04-16 22:30:43,651 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:56237, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56237,11989524266500
+
+2024-04-16 22:30:43,657 INFO send udp packet: 192.168.193.70,56234,11989524041500
+
+2024-04-16 22:30:43,657 INFO send udp packet: 192.168.193.70,56237,11989524266500
+
+2024-04-16 22:30:43,663 INFO [PUSH-SUCC] 13ms, all delay time 587ms, SLA 587ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:30:43,663 INFO [PUSH-SUCC] 13ms, all delay time 571ms, SLA 571ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:30:43,663 INFO [PUSH-SUCC] 13ms, all delay time 614ms, SLA 614ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=4}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:30:52,598 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:30:52,598 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:50794, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,50794,11998472031000
+
+2024-04-16 22:30:52,598 INFO send udp packet: 192.168.193.70,50794,11998472031000
+
+2024-04-16 22:30:52,600 INFO [PUSH-SUCC] 2ms, all delay time 511ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:30:53,163 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}
+
+2024-04-16 22:30:53,363 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:30:53,363 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:50795, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,50795,11999236859100
+
+2024-04-16 22:30:53,363 INFO send udp packet: 192.168.193.70,50795,11999236859100
+
+2024-04-16 22:30:53,366 INFO [PUSH-SUCC] 3ms, all delay time 566ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:30:53,690 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:30:53,690 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,11999564016100
+
+2024-04-16 22:30:53,690 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:30:53,690 INFO send udp packet: 192.168.193.70,61573,11999564016100
+
+2024-04-16 22:30:53,690 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:56234, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56234,11999564264200
+
+2024-04-16 22:30:53,691 INFO send udp packet: 192.168.193.70,56234,11999564264200
+
+2024-04-16 22:30:53,697 INFO [PUSH-SUCC] 7ms, all delay time 549ms, SLA 534ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:30:53,855 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=5}
+
+2024-04-16 22:30:54,341 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:30:54,341 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:30:54,341 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:61574, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61574,12000215537400
+
+2024-04-16 22:30:54,341 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:61575, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61575,12000215516600
+
+2024-04-16 22:30:54,341 INFO send udp packet: 192.168.193.70,61574,12000215537400
+
+2024-04-16 22:30:54,341 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:30:54,342 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:56236, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56236,12000215804800
+
+2024-04-16 22:30:54,342 INFO send udp packet: 192.168.193.70,61575,12000215516600
+
+2024-04-16 22:30:54,343 INFO send udp packet: 192.168.193.70,56236,12000215804800
+
+2024-04-16 22:30:54,345 INFO [PUSH-SUCC] 4ms, all delay time 539ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:30:54,349 INFO [PUSH-SUCC] 8ms, all delay time 508ms, SLA 494ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:30:54,786 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=5}
+
+2024-04-16 22:30:55,324 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:30:55,324 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:59122, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,59122,12001198394700
+
+2024-04-16 22:30:55,324 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:30:55,324 INFO send udp packet: 192.168.193.70,59122,12001198394700
+
+2024-04-16 22:30:55,325 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:56237, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,56237,12001199329700
+
+2024-04-16 22:30:55,325 INFO send udp packet: 192.168.193.70,56237,12001199329700
+
+2024-04-16 22:30:55,329 INFO [PUSH-SUCC] 5ms, all delay time 555ms, SLA 543ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:31:03,700 INFO retry to push data, key: 192.168.193.70,56234,11999564264200
+
+2024-04-16 22:31:04,348 INFO retry to push data, key: 192.168.193.70,56236,12000215804800
+
+2024-04-16 22:31:05,330 INFO retry to push data, key: 192.168.193.70,56237,12001199329700
+
+2024-04-16 22:31:13,707 WARN max re-push times reached, retry times 2, key: 192.168.193.70,56234,11999564264200
+
+2024-04-16 22:31:13,707 ERROR [PUSH-FAIL] 20017ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=5}, reason=null, target=192.168.193.70
+
+2024-04-16 22:31:14,354 WARN max re-push times reached, retry times 2, key: 192.168.193.70,56236,12000215804800
+
+2024-04-16 22:31:14,354 ERROR [PUSH-FAIL] 20013ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=5}, reason=null, target=192.168.193.70
+
+2024-04-16 22:31:15,344 WARN max re-push times reached, retry times 2, key: 192.168.193.70,56237,12001199329700
+
+2024-04-16 22:31:15,345 ERROR [PUSH-FAIL] 20021ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=5}, reason=null, target=192.168.193.70
+
+2024-04-16 22:31:46,060 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:31:46,060 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12051933718700
+
+2024-04-16 22:31:46,060 INFO send udp packet: 192.168.193.70,61573,12051933718700
+
+2024-04-16 22:31:46,061 INFO [PUSH-SUCC] 1ms, all delay time 504ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1
+
+2024-04-16 22:32:00,752 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:32:00,752 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:61575, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61575,12066626571500
+
+2024-04-16 22:32:00,752 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:32:00,753 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12066627069900
+
+2024-04-16 22:32:00,753 INFO send udp packet: 192.168.193.70,61575,12066626571500
+
+2024-04-16 22:32:00,754 INFO send udp packet: 192.168.193.70,61573,12066627069900
+
+2024-04-16 22:32:00,761 INFO [PUSH-SUCC] 9ms, all delay time 578ms, SLA 578ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:32:05,270 INFO [PUSH-SUCC] 4518ms, all delay time 5087ms, SLA 5087ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:32:05,825 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:32:05,826 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:61575, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61575,12071699282500
+
+2024-04-16 22:32:05,826 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:32:05,826 INFO send udp packet: 192.168.193.70,61575,12071699282500
+
+2024-04-16 22:32:05,828 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12071699813600
+
+2024-04-16 22:32:05,828 INFO send udp packet: 192.168.193.70,61573,12071699813600
+
+2024-04-16 22:32:05,834 INFO [PUSH-SUCC] 8ms, all delay time 574ms, SLA 574ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=0}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:32:08,534 INFO [PUSH-SUCC] 2708ms, all delay time 3273ms, SLA 3273ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=0}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:33:33,510 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:33:33,510 INFO serviceName: DEFAULT_GROUP@@storage-service changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12159384596000
+
+2024-04-16 22:33:33,510 INFO send udp packet: 192.168.193.70,61573,12159384596000
+
+2024-04-16 22:33:33,515 INFO [PUSH-SUCC] 5ms, all delay time 577ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=5}, originalSize=1, DataSize=1
+
+2024-04-16 22:47:00,187 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:47:00,188 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:61575, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61575,12966062281100
+
+2024-04-16 22:47:00,189 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:47:00,189 INFO send udp packet: 192.168.193.70,61575,12966062281100
+
+2024-04-16 22:47:00,192 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12966063519400
+
+2024-04-16 22:47:00,193 INFO send udp packet: 192.168.193.70,61573,12966063519400
+
+2024-04-16 22:47:00,208 INFO [PUSH-SUCC] 21ms, all delay time 543ms, SLA 543ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:47:00,209 INFO [PUSH-SUCC] 20ms, all delay time 544ms, SLA 544ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:47:00,298 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:47:00,298 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:47:00,299 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12966173132400
+
+2024-04-16 22:47:00,299 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:59122, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,59122,12966173087700
+
+2024-04-16 22:47:00,299 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:47:00,299 INFO send udp packet: 192.168.193.70,61573,12966173132400
+
+2024-04-16 22:47:00,303 INFO serviceName: DEFAULT_GROUP@@storage-service changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12966174046800
+
+2024-04-16 22:47:00,303 INFO send udp packet: 192.168.193.70,59122,12966173087700
+
+2024-04-16 22:47:00,306 INFO send udp packet: 192.168.193.70,61573,12966174046800
+
+2024-04-16 22:47:00,317 INFO [PUSH-SUCC] 19ms, all delay time 522ms, SLA 522ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:47:00,318 INFO [PUSH-SUCC] 20ms, all delay time 621ms, SLA 622ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:47:00,321 INFO [PUSH-SUCC] 22ms, all delay time 624ms, SLA 625ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=6}, originalSize=0, DataSize=0, target=192.168.193.70
+
+2024-04-16 22:47:09,094 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:47:09,094 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:50573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,50573,12974967847400
+
+2024-04-16 22:47:09,094 INFO send udp packet: 192.168.193.70,50573,12974967847400
+
+2024-04-16 22:47:09,097 INFO [PUSH-SUCC] 3ms, all delay time 566ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:47:09,520 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=7}
+
+2024-04-16 22:47:10,075 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:47:10,075 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:61575, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61575,12975949398700
+
+2024-04-16 22:47:10,075 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:47:10,075 INFO send udp packet: 192.168.193.70,61575,12975949398700
+
+2024-04-16 22:47:10,075 INFO serviceName: DEFAULT_GROUP@@account-service@@DEFAULT changed, schedule push for: 192.168.193.70:51832, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,51832,12975949732600
+
+2024-04-16 22:47:10,076 INFO send udp packet: 192.168.193.70,51832,12975949732600
+
+2024-04-16 22:47:10,076 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:47:10,077 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12975950881500
+
+2024-04-16 22:47:10,077 INFO send udp packet: 192.168.193.70,61573,12975950881500
+
+2024-04-16 22:47:10,081 INFO [PUSH-SUCC] 6ms, all delay time 573ms, SLA 561ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=7}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:47:20,086 INFO retry to push data, key: 192.168.193.70,61575,12975949398700
+
+2024-04-16 22:47:20,086 INFO retry to push data, key: 192.168.193.70,61573,12975950881500
+
+2024-04-16 22:47:21,744 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}
+
+2024-04-16 22:47:22,068 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:47:22,068 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:58275, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58275,12987941892300
+
+2024-04-16 22:47:22,068 INFO send udp packet: 192.168.193.70,58275,12987941892300
+
+2024-04-16 22:47:22,069 INFO DEFAULT_GROUP@@seata-tc-server is changed, add it to push queue.
+
+2024-04-16 22:47:22,069 INFO serviceName: DEFAULT_GROUP@@seata-tc-server@@SH changed, schedule push for: 192.168.193.70:58274, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58274,12987943123300
+
+2024-04-16 22:47:22,069 INFO send udp packet: 192.168.193.70,58274,12987943123300
+
+2024-04-16 22:47:22,072 INFO [PUSH-SUCC] 4ms, all delay time 585ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:47:22,072 INFO [PUSH-SUCC] 4ms, all delay time 585ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='seata-tc-server', ephemeral=true, revision=2}, originalSize=2, DataSize=1
+
+2024-04-16 22:47:22,455 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=7}
+
+2024-04-16 22:47:22,748 INFO [PUSH] Task merge for Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=7}
+
+2024-04-16 22:47:22,945 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:47:22,946 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:58276, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58276,12988819607200
+
+2024-04-16 22:47:22,946 INFO DEFAULT_GROUP@@order-service is changed, add it to push queue.
+
+2024-04-16 22:47:22,947 INFO send udp packet: 192.168.193.70,58276,12988819607200
+
+2024-04-16 22:47:22,949 INFO serviceName: DEFAULT_GROUP@@order-service@@DEFAULT changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12988820823300
+
+2024-04-16 22:47:22,949 INFO send udp packet: 192.168.193.70,61573,12988820823300
+
+2024-04-16 22:47:22,957 INFO [PUSH-SUCC] 12ms, all delay time 515ms, SLA 502ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=7}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:47:23,271 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:47:23,272 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:59122, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,59122,12989145373200
+
+2024-04-16 22:47:23,273 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:47:23,273 INFO serviceName: DEFAULT_GROUP@@storage-service@@DEFAULT changed, schedule push for: 192.168.193.70:58277, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58277,12989146743400
+
+2024-04-16 22:47:23,273 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:47:23,274 INFO serviceName: DEFAULT_GROUP@@storage-service changed, schedule push for: 192.168.193.70:61573, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,61573,12989147472600
+
+2024-04-16 22:47:23,273 INFO send udp packet: 192.168.193.70,59122,12989145373200
+
+2024-04-16 22:47:23,277 INFO send udp packet: 192.168.193.70,58277,12989146743400
+
+2024-04-16 22:47:23,277 INFO send udp packet: 192.168.193.70,61573,12989147472600
+
+2024-04-16 22:47:23,283 INFO [PUSH-SUCC] 11ms, all delay time 546ms, SLA 535ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=7}, originalSize=1, DataSize=1, target=192.168.193.70
+
+2024-04-16 22:47:29,381 INFO DEFAULT_GROUP@@account-service is changed, add it to push queue.
+
+2024-04-16 22:47:29,381 INFO serviceName: DEFAULT_GROUP@@account-service changed, schedule push for: 192.168.193.70:58276, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58276,12995255146000
+
+2024-04-16 22:47:29,381 INFO send udp packet: 192.168.193.70,58276,12995255146000
+
+2024-04-16 22:47:29,383 INFO [PUSH-SUCC] 2ms, all delay time 589ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=7}, originalSize=1, DataSize=1
+
+2024-04-16 22:47:29,602 INFO DEFAULT_GROUP@@storage-service is changed, add it to push queue.
+
+2024-04-16 22:47:29,602 INFO serviceName: DEFAULT_GROUP@@storage-service changed, schedule push for: 192.168.193.70:58276, agent: Nacos-Java-Client:v1.4.1, key: 192.168.193.70,58276,12995475752800
+
+2024-04-16 22:47:29,602 INFO send udp packet: 192.168.193.70,58276,12995475752800
+
+2024-04-16 22:47:29,604 INFO [PUSH-SUCC] 2ms, all delay time 523ms for subscriber 192.168.193.70, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=7}, originalSize=1, DataSize=1
+
+2024-04-16 22:47:30,099 WARN max re-push times reached, retry times 2, key: 192.168.193.70,61575,12975949398700
+
+2024-04-16 22:47:30,099 ERROR [PUSH-FAIL] 20024ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=7}, reason=null, target=192.168.193.70
+
+2024-04-16 22:47:30,099 WARN max re-push times reached, retry times 2, key: 192.168.193.70,61573,12975950881500
+
+2024-04-16 22:47:30,099 ERROR [PUSH-FAIL] 20023ms, Service{namespace='public', group='DEFAULT_GROUP', name='account-service', ephemeral=true, revision=7}, reason=null, target=192.168.193.70
+
+2024-04-16 22:47:32,953 INFO retry to push data, key: 192.168.193.70,61573,12988820823300
+
+2024-04-16 22:47:33,292 INFO retry to push data, key: 192.168.193.70,59122,12989145373200
+
+2024-04-16 22:47:33,294 INFO retry to push data, key: 192.168.193.70,61573,12989147472600
+
+2024-04-16 22:47:42,954 WARN max re-push times reached, retry times 2, key: 192.168.193.70,61573,12988820823300
+
+2024-04-16 22:47:42,954 ERROR [PUSH-FAIL] 20008ms, Service{namespace='public', group='DEFAULT_GROUP', name='order-service', ephemeral=true, revision=7}, reason=null, target=192.168.193.70
+
+2024-04-16 22:47:43,295 WARN max re-push times reached, retry times 2, key: 192.168.193.70,59122,12989145373200
+
+2024-04-16 22:47:43,295 ERROR [PUSH-FAIL] 20024ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=7}, reason=null, target=192.168.193.70
+
+2024-04-16 22:47:43,310 WARN max re-push times reached, retry times 2, key: 192.168.193.70,61573,12989147472600
+
+2024-04-16 22:47:43,310 ERROR [PUSH-FAIL] 20037ms, Service{namespace='public', group='DEFAULT_GROUP', name='storage-service', ephemeral=true, revision=7}, reason=null, target=192.168.193.70
+

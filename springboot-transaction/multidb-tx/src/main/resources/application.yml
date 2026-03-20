@@ -1,0 +1,43 @@
+server:
+    port: 8081
+spring:
+    application:
+        name: multidb-tx
+    profiles:
+        active: dev
+
+# PageHelper分页插件
+pagehelper:
+    autoRuntimeDialect: true
+    offsetAsPageNum: true
+    rowBoundsWithCount: true
+    reasonable: false
+    supportMethodsArguments: true
+    params: count=countSql
+
+#使用MybatisSqlSessionFactoryBean 需要通过代码设置参数
+#mybatis-plus:
+#    config-location: classpath:mybatis-config.xml
+#    mapper-locations: classpath*:mybatis/*.xml
+#    type-aliases-package: top.arhi.domain
+#    type-enums-package: top.arhi.domain
+#    configuration:
+#        map-underscore-to-camel-case: true
+#        cache-enabled: false
+#        use-generated-keys: true
+#    global-config:
+#        db-config:
+#            id-type: input
+#            table-prefix: tb_
+cpc:
+    mybatis:
+        location-pattern: classpath*:mapper/**/*Mapper.xml
+        type-enums-package: cc.ivera.enums
+        type-aliases-package: cc.ivera.domain
+
+table:
+    config:
+        table-prefix: tb_
+        logic-d0elete-field: enabled
+        logic-delete-value: 0
+        logic-not-delete-value: 1

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.LocationMapper">
+    <select id="selectByRange" parameterType="cc.ivera.dto.QueryDTO" resultType="cc.ivera.vo.LocationVo" >
+        select
+        temp.id,
+        temp.name,
+        temp.distance,
+        temp.longitude,
+        temp.latitude
+        from (
+        SELECT
+        id,
+        name,
+        longitude,
+        latitude,
+        st_distance(gis,POINT(#{longitude}, #{latitude})) / 0.0000111 as distance
+        FROM
+        tb_location
+        <trim prefix="having" suffixOverrides="and">
+            <if test="distance!=null">
+                <![CDATA[distance <= #{distance} ]]>
+            </if>
+        </trim>
+        ) temp order by temp.distance asc
+    </select>
+</mapper>

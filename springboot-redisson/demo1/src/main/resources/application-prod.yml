@@ -1,0 +1,22 @@
+# 集群模式
+spring:
+  redis:
+    timeout: 3000
+    cluster:
+      nodes:
+        - 101.32.189.58:7001
+        - 101.32.189.58:7002
+        - 101.32.189.58:7003
+        - 101.32.189.58:8001
+        - 101.32.189.58:8002
+        - 101.32.189.58:8003
+    # redis服务数据库下标
+    database: 0
+    password:
+    lettuce:
+      pool:
+        enabled: true
+        max-idle: 100
+        min-idle: 1
+        max-active: 10
+        max-wait: 5000

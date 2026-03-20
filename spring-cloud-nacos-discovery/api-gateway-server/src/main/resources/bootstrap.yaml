@@ -1,0 +1,23 @@
+#排查错误记录 https://blog.csdn.net/Kevinnsm/article/details/124345567
+server:
+  port: 80
+spring:
+  application:
+    name: api-gateway-server
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        # Nacos服务注册中心地址
+        server-addr: http://114.132.210.77:8848
+      config:
+        # 指定Nacos配置中心的地址
+        server-addr: http://114.132.210.77:8848
+        file-extension: yaml # 指定yaml格式的配置 默认properties
+        #命名空间名称
+        namespace: cfbb0e9f-046f-46a7-b0d8-b50a0c0fcec9
+        #组名
+        group: DEFAULT_GROUP
+#data id的命名规则
+#dataId:{spring.application.name}-{spring.profiles.active}.${file-extension}

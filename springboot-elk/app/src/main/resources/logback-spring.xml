@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+  <!-- ========================= -->
+  <!--         基础变量           -->
+  <!-- ========================= -->
+  <property name="APP_NAME" value="${spring.application.name:-app}"/>
+  <property name="LOGSTASH_HOST" value="${LOGSTASH_HOST:-192.168.220.200}"/>
+  <property name="LOGSTASH_PORT" value="${LOGSTASH_PORT:-5044}"/>
+
+  <!-- ========================= -->
+  <!--    Logstash TCP Appender  -->
+  <!-- ========================= -->
+  <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+
+    <!-- Logstash 地址 -->
+    <destination>${LOGSTASH_HOST}:${LOGSTASH_PORT}</destination>
+
+    <keepAliveDuration>5 minutes</keepAliveDuration>
+    <reconnectionDelay>3 seconds</reconnectionDelay>
+
+    <!-- JSON 编码器 -->
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+
+        <timestamp/>
+        <logLevel/>
+        <threadName/>
+        <loggerName/>
+        <message/>
+        <mdc/>
+        <stackTrace/>
+
+        <!-- 🚀 正确写法：globalCustomFields -->
+        <globalCustomFields>
+          {"service":"${APP_NAME}","env":"${SPRING_PROFILES_ACTIVE:-dev}"}
+        </globalCustomFields>
+
+      </providers>
+    </encoder>
+  </appender>
+
+  <!-- ========================= -->
+  <!--         控制台输出         -->
+  <!-- ========================= -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] [%X{traceId:-}] %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- ========================= -->
+  <!--          按环境输出        -->
+  <!-- ========================= -->
+
+  <springProfile name="dev">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="LOGSTASH"/>
+    </root>
+  </springProfile>
+
+  <springProfile name="prod">
+    <root level="INFO">
+      <appender-ref ref="LOGSTASH"/>
+    </root>
+  </springProfile>
+
+</configuration>

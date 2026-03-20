@@ -1,0 +1,9 @@
+server:
+  context-path: /${spring.application.name}
+  port: 8081
+spring:
+  application:
+    name: springboot-validation
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8

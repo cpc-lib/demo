@@ -1,0 +1,26 @@
+server:
+  port: 8000
+spring:
+  cloud:
+    stream:
+      # 定义绑定器，绑定到哪个消息中间件上
+      binders:
+        arhi_binder: # 自定义的绑定器名称
+          type: rabbit # 绑定器类型
+          environment: # 指定mq的环境
+            spring:
+              rabbitmq:
+                host: 114.132.210.77
+                port: 5672
+                username: admin
+                password: hjm029796
+                virtual-host: /
+      bindings:
+        output: #channel名称
+          binder: arhi_binder #指定使用哪一个binder
+          destination: arhi_exchange #消息目的地
+
+
+
+
+

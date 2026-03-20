@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                    http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+    <!--dbcp链接池-->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://114.132.210.77:3306/activiti?useUnicode=true&amp;characterEncoding=UTF-8&amp;useSSL=false&amp;nullCatalogMeansCurrent=true"/>
+        <property name="username" value="root"/>
+        <property name="password" value="cpc!23"/>
+        <property name="maxActive" value="3"/>
+        <property name="maxIdle" value="1"/>
+    </bean>
+
+    <!--在默认方式下 bean的id  固定为 processEngineConfiguration-->
+    <bean id="processEngineConfiguration"
+          class="org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration">
+        <!--配置数据库相关的信息-->
+        <!--数据库驱动
+        <property name="jdbcDriver" value="com.mysql.jdbc.Driver"/>-->
+        <!--数据库链接
+        <property name="jdbcUrl" value="jdbc:mysql://114.132.210.77:3306/activiti"/>-->
+        <!--数据库用户名
+        <property name="jdbcUsername" value="root"/>-->
+        <!--数据库密码
+        <property name="jdbcPassword" value="cpc!23"/>-->
+        <!--直接引用上面配置的链接池-->
+        <property name="dataSource" ref="dataSource"/>
+        <!--actviti数据库表在生成时的策略
+        true - 如果数据库中已经存在相应的表，那么直接使用，
+               如果不存在，那么会创建-->
+        <property name="databaseSchemaUpdate" value="true"/>
+    </bean>
+</beans>

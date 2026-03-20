@@ -1,0 +1,16 @@
+package cc.ivera.config;
+
+
+import com.alibaba.dashscope.aigc.generation.Generation;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class TongYiConfig {
+
+    @Bean
+    public Generation generation(){
+        return new Generation();
+    }
+
+}

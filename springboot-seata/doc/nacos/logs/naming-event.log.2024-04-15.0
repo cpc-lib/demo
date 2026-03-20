@@ -1,0 +1,4 @@
+2024-04-15 19:00:20,540 INFO {POS} {IP-DISABLED} valid: 10.1.2.232:8088@DEFAULT@orderservice, region: unknown, msg: client last beat: 1713178803098
+
+2024-04-15 19:00:32,630 INFO {POS} {IP-DISABLED} valid: 10.1.2.232:8081@DEFAULT@userservice, region: unknown, msg: client last beat: 1713178813270
+

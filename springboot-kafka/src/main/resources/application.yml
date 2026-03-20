@@ -1,0 +1,9 @@
+kafka:
+  brokerAddress: localhost:9092
+  topic: s1pTopic
+  fooTopic: s1pFooTopic
+spring:
+  jmx:
+    enabled: false
+  main:
+    allow-bean-definition-overriding: true

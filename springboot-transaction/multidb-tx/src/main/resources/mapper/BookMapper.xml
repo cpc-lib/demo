@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.BookMapper">
+
+    <insert id="saveBatch" parameterType="List">
+        INSERT INTO
+        book (book_id,book_name,book_author_name)
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.bookId},
+            #{item.bookName},
+            #{item.bookAuthorName}
+            )
+        </foreach>
+    </insert>
+
+
+    <update id="updateBatchA" parameterType="java.util.List" >
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update book
+            <set >
+                <if test="item.bookId != null" >
+                    book_id = #{item.bookId},
+                </if>
+                <if test="item.bookName != null" >
+                    book_name= #{item.bookName},
+                </if>
+                <if test="item.bookAuthorName != null" >
+                    book_author_name = #{item.bookAuthorName},
+                </if>
+                <if test="item.enabled != null" >
+                    enabled = #{item.enabled}
+                </if>
+            </set>
+            where book_id = #{item.bookId}
+        </foreach>
+    </update>
+
+
+    <!-- 批量更新第二种方法，通过 case when语句变相的进行批量更新 -->
+    <update id="updateBatchB" parameterType="java.util.List" >
+        update book
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="book_id =case" suffix="end,">
+                <foreach collection="list" item="i" index="index">
+                    <if test="i.bookId!=null">
+                        when book_id=#{i.bookId} then #{i.bookId}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="book_name =case" suffix="end,">
+                <foreach collection="list" item="i" index="index">
+                    <if test="i.bookName!=null">
+                        when book_id=#{i.bookId} then #{i.bookName}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="book_author_name =case" suffix="end,">
+                <foreach collection="list" item="i" index="index">
+                    <if test="i.bookAuthorName!=null">
+                        when book_id=#{i.bookId} then #{i.bookAuthorName}
+                    </if>
+                </foreach>
+            </trim>
+            <!--prefix=表字段名称,list中java中属性字段的实际名称-->
+            <trim prefix="enabled =case" suffix="end,">
+                <foreach collection="list" item="i" index="index">
+                    <if test="i.enabled!=null">
+                        when book_id=#{i.bookId} then #{i.enabled}
+                    </if>
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" separator="or" item="i" index="index" >
+            book_id=#{i.bookId}
+        </foreach>
+    </update>
+
+
+    <update id="updateC" parameterType="cc.ivera.domain.Book">
+        update book
+        set book_id=#{bookId},
+            book_name=#{bookName},
+            book_author_name=#{bookAuthorName},
+            enabled=#{enabled}
+        where book_id=#{bookId}
+    </update>
+
+</mapper>

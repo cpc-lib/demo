@@ -1,0 +1,27 @@
+server:
+  port: 8082
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/dubbo-demo?useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.jdbc.Driver
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+  application:
+    name: order-service
+#dubbo消费者
+dubbo:
+  registry:
+    address: spring-cloud://localhost
+  consumer:
+    check: false
+    retries: 0
+logging:
+  level:
+    cc.ivera: debug
+  pattern:
+    dateformat: HH:mm:ss:SSS
+

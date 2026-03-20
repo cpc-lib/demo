@@ -1,0 +1,39 @@
+#no server available的解决办法 https://blog.csdn.net/weixin_44556968/article/details/122889379
+spring:
+  application:
+    name: api-gateway-server
+  cloud:
+    nacos:
+      discovery:
+        # Nacos服务注册中心地址
+        server-addr: http://114.132.210.77:8848
+      config:
+        # 指定Nacos配置中心的地址
+        server-addr: http://114.132.210.77:8848
+    # 网关配置
+    gateway:
+      # 路由配置：转发规则
+      routes: #集合。
+      # id: 唯一标识。默认是一个UUID
+      # uri: 转发路径
+      # predicates: 条件,用于请求网关路径的匹配规则
+      # filters：配置局部过滤器的
+      - id: nacos-provider
+        # 静态路由
+        # uri: http://localhost:8001/
+        # 动态路由
+        uri: lb://nacos-provider
+        predicates:
+        - Path=/goods/**
+        filters:
+        - AddRequestParameter=username,zhangsan
+      - id: nacos-consumer
+        # uri: http://localhost:9000
+        uri: lb://nacos-consumer
+        predicates:
+        - Path=/order/**
+        # 微服务名称配置
+      discovery:
+        locator:
+          enabled: true # 设置为true 请求路径前可以添加微服务名称
+          lower-case-service-id: true # 允许为小写

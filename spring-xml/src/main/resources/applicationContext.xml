@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <bean id="userService" scope="singleton" class="cc.ivera.service.impl.UserServiceImpl" init-method="init" destroy-method="destroy"></bean>
+    <bean id="multiple" scope="prototype" class="cc.ivera.service.impl.LanguageServiceImpl"></bean>
+    <!--静态工厂-->
+    <bean id="staticFactory" class="cc.ivera.factory.StaticFactory" factory-method="getUserService"></bean>
+    <!--动态工厂-->
+    <bean id="dynamicFactory" class="cc.ivera.factory.DynamicFactory"></bean>
+    <bean id="getUserService" factory-bean="dynamicFactory" factory-method="getUserService2"></bean>
+
+
+    <bean id="person" class="cc.ivera.domain.Person">
+        <property name="name" value="何佳铭"></property>
+        <property name="age" value="25"></property>
+        <property name="dob" value="1997年6月6日"></property>
+    </bean>
+
+    <bean id="person2" class="cc.ivera.domain.Person">
+        <constructor-arg name="name" value="王雨婷"></constructor-arg>
+        <constructor-arg name="age" value="24"></constructor-arg>
+        <constructor-arg name="dob" value="1998年1月18日"></constructor-arg>
+    </bean>
+
+    <!--加载properties配置文件-->
+    <context:property-placeholder location="classpath*:*.properties" system-properties-mode="NEVER" ignore-unresolvable="true"/>
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="username" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+        <property name="url" value="${jdbc.url}"></property>
+        <property name="driverClassName" value="${jdbc.driver}"></property>
+    </bean>
+
+    <!--扫描component组件-->
+    <context:component-scan base-package="cc.ivera"/>
+</beans>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <title>后台登录</title>
+    <link href="/css/webbase.css" rel="stylesheet" type="text/css"/>
+    <link href="/css/pages-login-manage.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<div class="loginmanage" id="app">
+    <div class="py-container">
+        <h4 class="manage-title">后台管理</h4>
+        <div class="loginform">
+
+            <ul class="sui-nav nav-tabs tab-wraped">
+                <li class="active">
+                    <a data-toggle="tab" href="#profile">
+                        <h3>账户登录</h3>
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content tab-wraped">
+                <div class="tab-pane  active" id="profile">
+                    <form class="sui-form">
+                        <div class="input-prepend">
+                            <!--<span class="add-on loginname"></span>-->
+                            <input class="span2 input-xfat" placeholder="请输入用户名" type="text" v-model="username">
+                        </div>
+                        <div class="input-prepend">
+                            <!--<span class="add-on loginpwd"></span>-->
+                            <input class="span2 input-xfat" placeholder="请输入密码" type="password" v-model="password">
+                        </div>
+                        <div class="logined">
+                            <a @click="login();" class="sui-btn btn-block btn-xlarge btn-danger" target="_blank">登&nbsp;&nbsp;录</a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+    </div>
+</div>
+</body>
+</html>
+<!--vue和axios引入-->
+<script src="/js/vuejs-2.5.16.js"></script>
+<script src="/js/axios-0.18.0.js"></script>
+<script src="/js/login.js"></script>

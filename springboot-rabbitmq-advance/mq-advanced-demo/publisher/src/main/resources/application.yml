@@ -1,0 +1,16 @@
+logging:
+  pattern:
+    dateformat: HH:mm:ss:SSS
+  level:
+    cc.ivera: debug
+spring:
+  rabbitmq:
+    host: 192.168.83.129 # rabbitMQ的ip地址
+    port: 5673 # 端口
+    username: itcast
+    password: 123321
+    virtual-host: /
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
