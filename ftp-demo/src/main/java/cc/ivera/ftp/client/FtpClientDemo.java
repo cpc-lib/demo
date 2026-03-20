@@ -11,7 +11,7 @@ public class FtpClientDemo {
         String password = ConfigSupport.getString("ftp.client.password", "FTP_CLIENT_PASSWORD", "123456");
         String localUploadFile = ConfigSupport.getString("ftp.client.localUploadFile", "FTP_CLIENT_LOCAL_UPLOAD_FILE", "test.txt");
         String remoteFile = ConfigSupport.getString("ftp.client.remoteFile", "FTP_CLIENT_REMOTE_FILE", "test.txt");
-        String localDownloadFile = ConfigSupport.getString("ftp.client.localDownloadFile", "FTP_CLIENT_LOCAL_DOWNLOAD_FILE", "download/test.txt");
+        String localDownloadFile = ConfigSupport.getString("ftp.client.localDownloadFile", "FTP_CLIENT_LOCAL_DOWNLOAD_FILE", "download/temp.txt");
 
         try (FtpClient client = new FtpClient()) {
             client.connect(host, port, username, password);
