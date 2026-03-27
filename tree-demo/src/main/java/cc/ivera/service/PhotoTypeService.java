@@ -1,4 +1,3 @@
-
 package cc.ivera.service;
 
 import cc.ivera.dto.PhotoTypeSaveDTO;
@@ -30,30 +29,30 @@ public class PhotoTypeService {
     @Value("${photo.rule.enable-layer:3}")
     private Integer enableLayer;
 
-    @Transactional
+
+    @Transactional(rollbackFor = Throwable.class)
     public void save(PhotoTypeSaveDTO dto) {
 
-        int layer = "0".equals(dto.getParentId()) ? 1 :
-                Optional.ofNullable(mapper.selectById(dto.getParentId()))
-                        .map(p -> p.getLayer() + 1)
-                        .orElseThrow(() -> new BusinessException("父节点不存在"));
+        int layer = "0".equals(dto.getParentId()) ? 1 : Optional.ofNullable(mapper.selectById(dto.getParentId())).map(p -> p.getLayer() + 1).orElseThrow(() -> new BusinessException("父节点不存在"));
 
         if (layer > maxLayer) {
             throw new BusinessException("超过最大层级");
         }
 
-        boolean hasRule = (dto.getNameRule() != null && !dto.getNameRule().trim().isEmpty())
-                && (dto.getNameRuleEn() != null && !dto.getNameRuleEn().trim().isEmpty());
+        boolean hasRule = (dto.getNameRule() != null && !dto.getNameRule().trim().isEmpty()) && (dto.getNameRuleEn() != null && !dto.getNameRuleEn().trim().isEmpty());
 
-        if (!(layer >= 3 && hasRule)) {
-            throw new BusinessException("layer>=" + enableLayer + "才允许命名规则");
+        if (layer < 3) {
+            dto.setNameRule(null);
+            dto.setNameRuleEn(null);
+        } else {
+            if (hasRule) {
+                throw new BusinessException("layer>=" + enableLayer + "需要设置命名规则");
+            }
         }
 
         List<PhotoType> list = mapper.lockByParent(dto.getParentId());
 
-        boolean exist = list.stream()
-                .anyMatch(x -> x.getName().equals(dto.getName())
-                        && !Objects.equals(x.getId(), dto.getId()));
+        boolean exist = list.stream().anyMatch(x -> x.getName().equals(dto.getName()) && !Objects.equals(x.getId(), dto.getId()));
 
         if (exist) {
             throw new BusinessException("名称重复");
@@ -70,13 +69,13 @@ public class PhotoTypeService {
             entity.setUpdateTime(LocalDateTime.now());
         }
 
-        list = list.stream()
-                .filter(x -> !Objects.equals(x.getId(), entity.getId()))
-                .sorted(Comparator.comparing(PhotoType::getSort))
-                .collect(Collectors.toList());
+        list = list.stream().filter(x -> !Objects.equals(x.getId(), entity.getId())).sorted(Comparator.comparing(PhotoType::getSort)).collect(Collectors.toList());
 
-        int target = (entity.getSort() == null || entity.getSort() > list.size())
-                ? list.size() + 1 : entity.getSort();
+        int target = (entity.getSort() == null || entity.getSort() > list.size()) ? list.size() + 1 : entity.getSort();
+
+        if (target <= 0) {
+            target = 1;
+        }
 
         list.add(target - 1, entity);
 
@@ -95,8 +94,7 @@ public class PhotoTypeService {
     public List<PhotoTypeVO> tree() {
         List<PhotoType> all = mapper.selectList(null);
 
-        Map<String, List<PhotoType>> map =
-                all.stream().collect(Collectors.groupingBy(PhotoType::getParentId));
+        Map<String, List<PhotoType>> map = all.stream().collect(Collectors.groupingBy(PhotoType::getParentId));
 
         return build("0", map);
     }
@@ -117,9 +115,7 @@ public class PhotoTypeService {
 
         LambdaQueryWrapper<PhotoType> wrapper = new LambdaQueryWrapper<>();
 
-        wrapper.eq(PhotoType::getIsDeleted, 0)
-                .orderByAsc(PhotoType::getParentId)
-                .orderByAsc(PhotoType::getSort);
+        wrapper.eq(PhotoType::getIsDeleted, 0).orderByAsc(PhotoType::getParentId).orderByAsc(PhotoType::getSort);
 
         List<PhotoType> all = mapper.selectList(wrapper);
 
@@ -129,17 +125,14 @@ public class PhotoTypeService {
         }
 
         // 1. 找命中节点
-        List<PhotoType> matched = all.stream()
-                .filter(x -> x.getName() != null && x.getName().contains(name))
-                .toList();
+        List<PhotoType> matched = all.stream().filter(x -> x.getName() != null && x.getName().contains(name)).toList();
 
         if (matched.isEmpty()) {
             return List.of();
         }
 
         // 2. 收集所有父节点（递归向上）
-        Map<String, PhotoType> idMap =
-                all.stream().collect(Collectors.toMap(PhotoType::getId, x -> x));
+        Map<String, PhotoType> idMap = all.stream().collect(Collectors.toMap(PhotoType::getId, x -> x));
 
         Set<String> needIds = new HashSet<>();
 
@@ -148,17 +141,13 @@ public class PhotoTypeService {
         }
 
         // 3. 过滤出需要的节点
-        List<PhotoType> filtered = all.stream()
-                .filter(x -> needIds.contains(x.getId()))
-                .toList();
+        List<PhotoType> filtered = all.stream().filter(x -> needIds.contains(x.getId())).toList();
 
         return buildTree("0", group(filtered));
     }
 
 
-    private void collectParent(PhotoType node,
-                               Map<String, PhotoType> map,
-                               Set<String> set) {
+    private void collectParent(PhotoType node, Map<String, PhotoType> map, Set<String> set) {
 
         if (node == null || set.contains(node.getId())) return;
 
@@ -174,8 +163,7 @@ public class PhotoTypeService {
         return list.stream().collect(Collectors.groupingBy(PhotoType::getParentId));
     }
 
-    private List<PhotoTypeVO> buildTree(String parentId,
-                                        Map<String, List<PhotoType>> map) {
+    private List<PhotoTypeVO> buildTree(String parentId, Map<String, List<PhotoType>> map) {
 
         List<PhotoType> children = map.get(parentId);
         if (children == null) return List.of();
