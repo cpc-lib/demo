@@ -24,6 +24,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import cc.ivera.model.pojo.easyexcel.*;
 import cc.ivera.service.UserService2;
 
+import javax.annotation.Resource;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Demo65 {
 
-    @Autowired
+    @Resource
     private UserService2 userService2;
 
     //https://blog.csdn.net/u013044713/article/details/120249233
