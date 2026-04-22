@@ -1,4 +1,4 @@
-package cc.ivera.test.base;
+package cc.ivera.util;
 
 import cn.hutool.core.map.MapUtil;
 import com.drew.imaging.jpeg.JpegMetadataReader;
@@ -11,14 +11,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import cc.ivera.util.AmpUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class Demo30 {
+public class Demo01 {
     public static void main(String[] args) throws Exception {
         //智能手机拍摄的图片一般不会带有gps信息，
         //此处使用magicExif软件添加gps信息 下载与使用地址
@@ -26,7 +25,7 @@ public class Demo30 {
         //经纬度转度分秒工具 https://www.bejson.com/other/jwd/
         //坐标获取工具 https://api.map.baidu.com/lbsapi/getpoint/index.html
         //采用高德地图的第三方接口获取地址信息。
-        Resource resource = new ClassPathResource("demo1.jpg");
+        Resource resource = new ClassPathResource("picture.jpg");
         File file = resource.getFile();
         String path = file.getAbsolutePath();
         HashMap<String, Object> map = readPicInfo(path);
