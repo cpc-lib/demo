@@ -33,7 +33,7 @@ public class VideoUtils implements MultipartFile {
      *
      * @param args
      */
-    @Test
+
     public static void main(String[] args) throws Exception {
         String s = fetchFrame("https://dev-vedio-1303824005.cos.ap-beijing.myqcloud.com/video/51346c41-0ca0-4e74-9d50-b5393ba55535.mp4");
         System.out.println(s);
