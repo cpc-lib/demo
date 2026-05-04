@@ -10,17 +10,15 @@ public interface OrderInfoService extends IService<OrderInfo> {
 
     OrderInfo createOrReuseOrder(Long productId, String paymentType);
 
-    OrderInfo createOrderByProductId(Long productId, String paymentType);
-
     void saveCodeUrl(String orderNo, String codeUrl);
 
     List<OrderInfo> listOrderByCreateTimeDesc();
 
     void updateStatusByOrderNo(String orderNo, OrderStatus orderStatus);
 
-    String getOrderStatus(String orderNo);
+    boolean updateStatusByOrderNoIfStatus(String orderNo, OrderStatus currentStatus, OrderStatus targetStatus);
 
-    List<OrderInfo> getNoPayOrderByDuration(int minutes, String paymentType);
+    String getOrderStatus(String orderNo);
 
     OrderInfo getOrderByOrderNo(String orderNo);
 

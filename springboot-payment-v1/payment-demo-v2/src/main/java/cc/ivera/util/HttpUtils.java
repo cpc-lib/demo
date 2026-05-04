@@ -10,14 +10,12 @@ public class HttpUtils {
     /**
      * 将通知参数转化为字符串
      *
-     * @param request
-     * @return
+     * @param request 请求
+     * @return 请求体
      */
     public static String readData(HttpServletRequest request) {
-        BufferedReader br = null;
-        try {
+        try (BufferedReader br = request.getReader()) {
             StringBuilder result = new StringBuilder();
-            br = request.getReader();
             for (String line; (line = br.readLine()) != null; ) {
                 if (result.length() > 0) {
                     result.append("\n");
@@ -27,14 +25,6 @@ public class HttpUtils {
             return result.toString();
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 }

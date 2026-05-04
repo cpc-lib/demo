@@ -1,8 +1,10 @@
 package cc.ivera.service;
 
 import cc.ivera.entity.RefundInfo;
+import cc.ivera.enums.RefundStatus;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface RefundInfoService extends IService<RefundInfo> {
@@ -19,13 +21,12 @@ public interface RefundInfoService extends IService<RefundInfo> {
 
     void updateRefundToClosed(String refundNo, String content);
 
-    List<RefundInfo> getNoRefundOrderByDuration(int minutes);
-
-    int getSuccessRefundAmount(String orderNo);
-
-    int getOccupiedRefundAmount(String orderNo);
-
-    int getReservedRefundAmount(String orderNo);
+    boolean updateRefundIfStatusIn(String refundNo,
+                                   String refundId,
+                                   RefundStatus targetStatus,
+                                   String contentReturn,
+                                   String contentNotify,
+                                   Collection<RefundStatus> currentStatuses);
 
     RefundInfo getByRefundNo(String refundNo);
 

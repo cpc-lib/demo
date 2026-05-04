@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Map;
 
 @Api(tags = "测试控制器")
 @RestController
@@ -18,7 +19,7 @@ public class TestController {
     private WxPayConfig wxPayConfig;
 
     @GetMapping
-    public R getWxPayConfig() {
+    public R<Map<String, Object>> getWxPayConfig() {
 
         String mchId = wxPayConfig.getMchId();
         return R.ok().data("mchId", mchId);

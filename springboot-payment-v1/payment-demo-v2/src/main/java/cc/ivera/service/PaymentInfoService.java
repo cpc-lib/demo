@@ -6,5 +6,7 @@ public interface PaymentInfoService {
 
     void createPaymentInfo(String plainText);
 
-    void createPaymentInfoForAliPay(Map<String, String> params);
+    void createPaymentInfoForWxPayV2(Map<String, String> params, String content);
+
+    void createPaymentInfoForAliPay(Map<String, ?> params);
 }

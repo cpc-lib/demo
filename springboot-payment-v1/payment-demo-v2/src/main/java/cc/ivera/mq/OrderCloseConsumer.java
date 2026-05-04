@@ -27,7 +27,7 @@ public class OrderCloseConsumer {
     private AliPayService aliPayService;
 
     @RabbitListener(queues = OrderCloseRabbitConfig.ORDER_CLOSE_RELEASE_QUEUE)
-    public void handleOrderClose(OrderCloseMessage message) throws Exception {
+    public void handleOrderClose(OrderCloseMessage message) {
         if (message == null || message.getOrderNo() == null) {
             log.warn("收到空的延迟关单消息，忽略处理");
             return;

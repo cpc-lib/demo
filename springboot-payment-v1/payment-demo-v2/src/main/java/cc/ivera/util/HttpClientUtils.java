@@ -7,18 +7,16 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -66,8 +64,9 @@ public class HttpClientUtils {
     }
 
     public void addParameter(String key, String value) {
-        if (param == null)
-            param = new HashMap<String, String>();
+        if (param == null) {
+            param = new HashMap<>();
+        }
         param.put(key, value);
     }
 
@@ -107,9 +106,10 @@ public class HttpClientUtils {
      */
     private void setEntity(HttpEntityEnclosingRequestBase http) {
         if (param != null) {
-            List<NameValuePair> nvps = new LinkedList<NameValuePair>();
-            for (String key : param.keySet())
+            List<NameValuePair> nvps = new LinkedList<>();
+            for (String key : param.keySet()) {
                 nvps.add(new BasicNameValuePair(key, param.get(key))); // 参数
+            }
             http.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8)); // 设置参数
         }
         if (xmlParam != null) {
@@ -119,38 +119,28 @@ public class HttpClientUtils {
 
     private void execute(HttpUriRequest http) throws ClientProtocolException,
             IOException {
-        CloseableHttpClient httpClient = null;
-        try {
-            if (isHttps) {
-                SSLContext sslContext = new SSLContextBuilder()
-                        .loadTrustMaterial(null, new TrustStrategy() {
-                            // 信任所有
-                            public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                                return true;
-                            }
-                        }).build();
-                SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
-                httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-            } else {
-                httpClient = HttpClients.createDefault();
+        try (CloseableHttpClient httpClient = createHttpClient();
+             CloseableHttpResponse response = httpClient.execute(http)) {
+            if (response.getStatusLine() != null) {
+                statusCode = response.getStatusLine().getStatusCode();
             }
-            CloseableHttpResponse response = httpClient.execute(http);
-            try {
-                if (response != null) {
-                    if (response.getStatusLine() != null)
-                        statusCode = response.getStatusLine().getStatusCode();
-                    HttpEntity entity = response.getEntity();
-                    // 响应内容
-                    content = EntityUtils.toString(entity, Consts.UTF_8);
-                }
-            } finally {
-                response.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            httpClient.close();
+            HttpEntity entity = response.getEntity();
+            // 响应内容
+            content = entity == null ? "" : EntityUtils.toString(entity, Consts.UTF_8);
+        } catch (GeneralSecurityException e) {
+            throw new IOException("创建HTTP客户端失败", e);
         }
+    }
+
+    private CloseableHttpClient createHttpClient() throws GeneralSecurityException {
+        if (!isHttps) {
+            return HttpClients.createDefault();
+        }
+        SSLContext sslContext = SSLContexts.custom()
+                .loadTrustMaterial(null, (chain, authType) -> true)
+                .build();
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
+        return HttpClients.custom().setSSLSocketFactory(sslsf).build();
     }
 
     public int getStatusCode() {

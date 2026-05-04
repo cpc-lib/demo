@@ -8,7 +8,7 @@ public interface RefundApplicationService {
 
     RefundInfo createApplication(String orderNo, Integer refundAmount, String reason);
 
-    void approve(String refundNo, String approveRemark) throws Exception;
+    void approve(String refundNo, String approveRemark);
 
     void reject(String refundNo, String approveRemark);
 

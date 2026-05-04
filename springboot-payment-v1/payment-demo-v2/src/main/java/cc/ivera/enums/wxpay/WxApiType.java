@@ -18,6 +18,11 @@ public enum WxApiType {
     NATIVE_PAY_V2("/pay/unifiedorder"),
 
     /**
+     * JSAPI下单
+     */
+    JSAPI_PAY("/v3/pay/transactions/jsapi"),
+
+    /**
      * 查询订单
      */
     ORDER_QUERY_BY_NO("/v3/pay/transactions/out-trade-no/%s"),

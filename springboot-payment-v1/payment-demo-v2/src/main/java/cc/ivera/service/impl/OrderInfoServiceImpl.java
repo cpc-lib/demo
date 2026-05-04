@@ -10,14 +10,13 @@ import cc.ivera.service.OrderCloseMessageService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.util.OrderNoUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -65,11 +64,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     }
 
     @Override
-    public OrderInfo createOrderByProductId(Long productId, String paymentType) {
-        return createOrReuseOrder(productId, paymentType);
-    }
-
-    @Override
     public void saveCodeUrl(String orderNo, String codeUrl) {
         QueryWrapper<OrderInfo> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("order_no", orderNo);
@@ -100,21 +94,26 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     }
 
     @Override
-    public String getOrderStatus(String orderNo) {
-        OrderInfo orderInfo = getOrderByOrderNo(orderNo);
-        return orderInfo == null ? null : orderInfo.getOrderStatus();
+    public boolean updateStatusByOrderNoIfStatus(String orderNo, OrderStatus currentStatus, OrderStatus targetStatus) {
+        log.info("条件更新订单状态 ===> orderNo={}, {} -> {}",
+                orderNo,
+                currentStatus.getType(),
+                targetStatus.getType());
+
+        UpdateWrapper<OrderInfo> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("order_no", orderNo);
+        updateWrapper.eq("order_status", currentStatus.getType());
+
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setOrderStatus(targetStatus.getType());
+
+        return baseMapper.update(orderInfo, updateWrapper) > 0;
     }
 
     @Override
-    public List<OrderInfo> getNoPayOrderByDuration(int minutes, String paymentType) {
-        Instant instant = Instant.now().minus(Duration.ofMinutes(minutes));
-
-        QueryWrapper<OrderInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("order_status", OrderStatus.NOTPAY.getType());
-        queryWrapper.le("create_time", instant);
-        queryWrapper.eq("payment_type", paymentType);
-
-        return baseMapper.selectList(queryWrapper);
+    public String getOrderStatus(String orderNo) {
+        OrderInfo orderInfo = getOrderByOrderNo(orderNo);
+        return orderInfo == null ? null : orderInfo.getOrderStatus();
     }
 
     @Override

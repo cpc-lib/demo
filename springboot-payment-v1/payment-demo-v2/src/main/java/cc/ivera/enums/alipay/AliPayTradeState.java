@@ -1,4 +1,4 @@
-package cc.ivera.enums.wxpay;
+package cc.ivera.enums.alipay;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

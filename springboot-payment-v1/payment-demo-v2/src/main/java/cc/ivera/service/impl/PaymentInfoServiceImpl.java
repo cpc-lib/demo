@@ -4,13 +4,12 @@ import cc.ivera.service.PaymentInfoService;
 import cc.ivera.entity.PaymentInfo;
 import cc.ivera.enums.PayType;
 import cc.ivera.mapper.PaymentInfoMapper;
+import cc.ivera.util.JsonUtils;
+import cc.ivera.util.MoneyUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -26,8 +25,7 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMapper, Payme
     public void createPaymentInfo(String plainText) {
         log.info("记录支付日志");
 
-        Gson gson = new Gson();
-        HashMap plainTextMap = gson.fromJson(plainText, HashMap.class);
+        Map<String, Object> plainTextMap = JsonUtils.toObjectMap(plainText);
 
         //订单号
         String orderNo = (String) plainTextMap.get("out_trade_no");
@@ -38,8 +36,8 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMapper, Payme
         //交易状态
         String tradeState = (String) plainTextMap.get("trade_state");
         //用户实际支付金额
-        Map<String, Object> amount = (Map) plainTextMap.get("amount");
-        Integer payerTotal = ((Double) amount.get("payer_total")).intValue();
+        Map<String, Object> amount = JsonUtils.toObjectMap(plainTextMap.get("amount"));
+        Integer payerTotal = amount == null ? null : toInteger(amount.get("payer_total"));
 
         PaymentInfo paymentInfo = new PaymentInfo();
         paymentInfo.setOrderNo(orderNo);
@@ -54,23 +52,47 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMapper, Payme
     }
 
     /**
+     * 记录支付日志：微信支付 APIv2
+     *
+     * @param params 通知参数
+     * @param content 原始通知内容
+     */
+    @Override
+    public void createPaymentInfoForWxPayV2(Map<String, String> params, String content) {
+        log.info("记录支付日志");
+
+        String totalFee = params.get("total_fee");
+
+        PaymentInfo paymentInfo = new PaymentInfo();
+        paymentInfo.setOrderNo(params.get("out_trade_no"));
+        paymentInfo.setPaymentType(PayType.WXPAY.getType());
+        paymentInfo.setTransactionId(params.get("transaction_id"));
+        paymentInfo.setTradeType(params.get("trade_type"));
+        paymentInfo.setTradeState(params.get("result_code"));
+        paymentInfo.setPayerTotal(totalFee == null ? null : Integer.valueOf(totalFee));
+        paymentInfo.setContent(content);
+
+        baseMapper.insert(paymentInfo);
+    }
+
+    /**
      * 记录支付日志：支付宝
      *
      * @param params
      */
     @Override
-    public void createPaymentInfoForAliPay(Map<String, String> params) {
+    public void createPaymentInfoForAliPay(Map<String, ?> params) {
         log.info("记录支付日志");
 
         //获取订单号
-        String orderNo = params.get("out_trade_no");
+        String orderNo = getString(params, "out_trade_no");
         //业务编号
-        String transactionId = params.get("trade_no");
+        String transactionId = getString(params, "trade_no");
         //交易状态
-        String tradeStatus = params.get("trade_status");
+        String tradeStatus = getString(params, "trade_status");
         //交易金额
-        String totalAmount = params.get("total_amount");
-        int totalAmountInt = new BigDecimal(totalAmount).multiply(new BigDecimal("100")).intValue();
+        String totalAmount = getString(params, "total_amount");
+        int totalAmountInt = MoneyUtils.yuanToCents(totalAmount);
 
         PaymentInfo paymentInfo = new PaymentInfo();
         paymentInfo.setOrderNo(orderNo);
@@ -80,10 +102,23 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMapper, Payme
         paymentInfo.setTradeState(tradeStatus);
         paymentInfo.setPayerTotal(totalAmountInt);
 
-        Gson gson = new Gson();
-        String json = gson.toJson(params, HashMap.class);
-        paymentInfo.setContent(json);
+        paymentInfo.setContent(JsonUtils.toJson(params));
 
         baseMapper.insert(paymentInfo);
+    }
+
+    private Integer toInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return Integer.valueOf(value.toString());
+    }
+
+    private String getString(Map<String, ?> params, String key) {
+        Object value = params.get(key);
+        return value == null ? null : value.toString();
     }
 }
