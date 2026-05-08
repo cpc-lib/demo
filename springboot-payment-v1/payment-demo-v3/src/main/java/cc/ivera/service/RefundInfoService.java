@@ -18,10 +18,6 @@ public interface RefundInfoService extends IService<RefundInfo> {
 
     void updateRefundToFailed(String refundNo, String content);
 
-    void updateRefundToAbnormal(String refundNo, String content);
-
-    void updateRefundToClosed(String refundNo, String content);
-
     boolean updateRefundIfStatusIn(String refundNo,
                                    String refundId,
                                    RefundStatus targetStatus,
@@ -41,5 +37,4 @@ public interface RefundInfoService extends IService<RefundInfo> {
 
     void markApprovalRejected(String refundNo, String approveRemark);
 
-    void refreshOrderRefundStatus(String orderNo);
 }

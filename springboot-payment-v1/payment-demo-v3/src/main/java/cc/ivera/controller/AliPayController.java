@@ -1,8 +1,6 @@
 package cc.ivera.controller;
 
 import cc.ivera.config.AlipayProperties;
-import cc.ivera.dto.RefundRequest;
-import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.AliPayService;
 import cc.ivera.service.OrderInfoService;
 import com.alipay.api.AlipayConstants;
@@ -16,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Positive;
@@ -37,18 +34,14 @@ public class AliPayController {
 
     private final OrderInfoService orderInfoService;
 
-    private final RefundApplicationService refundApplicationService;
-
     public AliPayController(
         AliPayService aliPayService,
         AlipayProperties alipayProperties,
-        OrderInfoService orderInfoService,
-        RefundApplicationService refundApplicationService
+        OrderInfoService orderInfoService
     ) {
         this.aliPayService = aliPayService;
         this.alipayProperties = alipayProperties;
         this.orderInfoService = orderInfoService;
-        this.refundApplicationService = refundApplicationService;
     }
 
     @ApiOperation("统一收单下单并支付页面接口的调用")
@@ -172,30 +165,6 @@ public class AliPayController {
 
         String result = aliPayService.queryOrder(orderNo);
         return R.ok().setMessage("查询成功").data("result", result);
-    }
-
-    /**
-     * 申请退款
-     *
-     * @param orderNo
-     * @param reason
-     * @return
-     */
-    @ApiOperation("申请退款")
-    @PostMapping("/trade/refund")
-    public R<Map<String, Object>> refunds(@Valid @RequestBody RefundRequest request) {
-        log.info("申请退款");
-        refundApplicationService.createApplication(request.getOrderNo(), request.getRefundAmount(), request.getReason());
-        return R.ok().setMessage("退款申请单创建成功，待审核");
-    }
-
-    @ApiOperation("申请退款-兼容旧接口")
-    @PostMapping("/trade/refund/{orderNo}/{reason}")
-    public R<Map<String, Object>> refundsLegacy(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo,
-                                                @PathVariable @NotBlank(message = "退款原因不能为空") @Size(max = 50, message = "退款原因长度不能超过50个字符") String reason) {
-        log.info("申请退款(旧接口)");
-        refundApplicationService.createApplication(orderNo, null, reason);
-        return R.ok().setMessage("退款申请单创建成功，待审核");
     }
 
     /**

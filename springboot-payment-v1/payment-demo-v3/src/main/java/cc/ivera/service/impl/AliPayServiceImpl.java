@@ -40,20 +40,20 @@ public class AliPayServiceImpl implements AliPayService {
 
     private final PaymentInfoService paymentInfoService;
 
-    private final RefundInfoService refundsInfoService;
+    private final RefundInfoService refundInfoService;
 
     public AliPayServiceImpl(
         OrderInfoService orderInfoService,
         AlipayClient alipayClient,
         AlipayProperties alipayProperties,
         PaymentInfoService paymentInfoService,
-        RefundInfoService refundsInfoService
+        RefundInfoService refundInfoService
     ) {
         this.orderInfoService = orderInfoService;
         this.alipayClient = alipayClient;
         this.alipayProperties = alipayProperties;
         this.paymentInfoService = paymentInfoService;
-        this.refundsInfoService = refundsInfoService;
+        this.refundInfoService = refundInfoService;
     }
 
     @Override
@@ -107,8 +107,16 @@ public class AliPayServiceImpl implements AliPayService {
 
     @Override
     public void cancelOrder(String orderNo) {
+        if (!OrderStatus.NOTPAY.getType().equals(orderInfoService.getOrderStatus(orderNo))) {
+            log.info("订单当前状态不允许取消，orderNo={}", orderNo);
+            return;
+        }
+
         closeOrder(orderNo);
-        orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.CANCEL);
+        boolean updated = orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CANCEL);
+        if (!updated) {
+            log.info("订单取消状态更新被忽略，orderNo={}", orderNo);
+        }
     }
 
     @Override
@@ -195,12 +203,12 @@ public class AliPayServiceImpl implements AliPayService {
             AlipayTradeRefundResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
                 log.info("支付宝退款成功，返回结果 ===> {}", response.getBody());
-                refundsInfoService.updateRefundToSuccess(refundInfo.getRefundNo(), response.getTradeNo(), response.getBody());
+                refundInfoService.updateRefundToSuccess(refundInfo.getRefundNo(), response.getTradeNo(), response.getBody());
                 return;
             }
 
             log.info("支付宝退款失败，返回码 ===> {}, 返回描述 ===> {}", response.getCode(), response.getMsg());
-            refundsInfoService.updateRefundToFailed(refundInfo.getRefundNo(), response.getBody());
+            refundInfoService.updateRefundToFailed(refundInfo.getRefundNo(), response.getBody());
             throw new BizException("创建支付宝退款申请失败：" + response.getSubMsg());
         } catch (AlipayApiException e) {
             log.error("调用支付宝退款接口失败", e);
@@ -294,7 +302,7 @@ public class AliPayServiceImpl implements AliPayService {
     }
 
     private RefundInfo getRefundInfoOrThrow(String refundNo) {
-        RefundInfo refundInfo = refundsInfoService.getByRefundNo(refundNo);
+        RefundInfo refundInfo = refundInfoService.getByRefundNo(refundNo);
         if (refundInfo == null) {
             throw new BizException("退款单不存在");
         }

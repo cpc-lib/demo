@@ -10,6 +10,7 @@ import cc.ivera.enums.wxpay.WxTradeState;
 import cc.ivera.exception.BizException;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
+import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.util.HttpClientUtils;
 import cc.ivera.util.JsonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +34,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class WxPayOrderService {
+public class WxPayOrderService implements WxPayOrderFacade {
 
     private final WxPayConfig wxPayConfig;
 
@@ -59,6 +60,7 @@ public class WxPayOrderService {
         this.wxPayNotificationDecoder = wxPayNotificationDecoder;
     }
 
+    @Override
     public Map<String, Object> nativePay(Long productId) {
         log.info("生成订单");
 
@@ -105,6 +107,7 @@ public class WxPayOrderService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public void processOrder(Map<String, Object> bodyMap) {
         log.info("处理订单");
 
@@ -129,11 +132,21 @@ public class WxPayOrderService {
         paymentInfoService.createPaymentInfo(plainText);
     }
 
+    @Override
     public void cancelOrder(String orderNo) {
+        if (!OrderStatus.NOTPAY.getType().equals(orderInfoService.getOrderStatus(orderNo))) {
+            log.info("订单当前状态不允许取消，orderNo={}", orderNo);
+            return;
+        }
+
         closeOrder(orderNo);
-        orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.CANCEL);
+        boolean updated = orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CANCEL);
+        if (!updated) {
+            log.info("订单取消状态更新被忽略，orderNo={}", orderNo);
+        }
     }
 
+    @Override
     public String queryOrder(String orderNo) {
         log.info("查单接口调用 ===> {}", orderNo);
 
@@ -147,6 +160,7 @@ public class WxPayOrderService {
         }
     }
 
+    @Override
     public void checkOrderStatus(String orderNo) {
         log.warn("根据订单号核实订单状态 ===> {}", orderNo);
 
@@ -174,6 +188,7 @@ public class WxPayOrderService {
         }
     }
 
+    @Override
     public Map<String, Object> nativePayV2(Long productId, String remoteAddr) {
         log.info("生成订单");
 
@@ -230,6 +245,7 @@ public class WxPayOrderService {
         return buildNativePayResult(orderInfo.getOrderNo(), codeUrl);
     }
 
+    @Override
     public Map<String, Object> jsapiPay(OrderInfo orderInfo, String openid) {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();

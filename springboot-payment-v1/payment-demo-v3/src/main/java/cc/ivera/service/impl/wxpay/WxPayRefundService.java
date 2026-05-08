@@ -9,6 +9,7 @@ import cc.ivera.enums.wxpay.WxRefundStatus;
 import cc.ivera.exception.BizException;
 import cc.ivera.service.RefundInfoService;
 import cc.ivera.service.refund.RefundStatusSyncResult;
+import cc.ivera.service.wxpay.WxPayRefundFacade;
 import cc.ivera.util.HttpClientUtils;
 import cc.ivera.util.JsonUtils;
 import com.github.wxpay.sdk.WXPayUtil;
@@ -26,11 +27,11 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class WxPayRefundService {
+public class WxPayRefundService implements WxPayRefundFacade {
 
     private final WxPayConfig wxPayConfig;
 
-    private final RefundInfoService refundsInfoService;
+    private final RefundInfoService refundInfoService;
 
     private final WxPayHttpClient wxPayHttpClient;
 
@@ -38,16 +39,17 @@ public class WxPayRefundService {
 
     public WxPayRefundService(
         WxPayConfig wxPayConfig,
-        RefundInfoService refundsInfoService,
+        RefundInfoService refundInfoService,
         WxPayHttpClient wxPayHttpClient,
         WxPayNotificationDecoder wxPayNotificationDecoder
     ) {
         this.wxPayConfig = wxPayConfig;
-        this.refundsInfoService = refundsInfoService;
+        this.refundInfoService = refundInfoService;
         this.wxPayHttpClient = wxPayHttpClient;
         this.wxPayNotificationDecoder = wxPayNotificationDecoder;
     }
 
+    @Override
     public void executeRefund(RefundInfo refundInfo) {
         if (refundInfo == null) {
             throw new BizException("退款申请单不能为空");
@@ -75,19 +77,20 @@ public class WxPayRefundService {
         try {
             response = wxPayHttpClient.postJsonForResponse(url, jsonParams);
         } catch (IOException e) {
-            refundsInfoService.updateRefundToFailed(refundInfo.getRefundNo(), e.getMessage());
+            refundInfoService.updateRefundToFailed(refundInfo.getRefundNo(), e.getMessage());
             throw new BizException("微信退款异常", e);
         }
         if (response.isSuccessful()) {
             log.info("微信退款申请已受理，返回结果 = {}", response.getBody());
-            refundsInfoService.updateRefundToProcessing(refundInfo.getRefundNo(), response.getBody());
+            refundInfoService.updateRefundToProcessing(refundInfo.getRefundNo(), response.getBody());
             return;
         }
 
-        refundsInfoService.updateRefundToFailed(refundInfo.getRefundNo(), response.getBody());
+        refundInfoService.updateRefundToFailed(refundInfo.getRefundNo(), response.getBody());
         throw new BizException("微信退款异常，响应码 = " + response.getStatusCode() + ", 返回结果 = " + response.getBody());
     }
 
+    @Override
     public String queryRefund(String refundNo) {
         log.info("调用微信退款查询接口 ===> {}", refundNo);
 
@@ -101,6 +104,7 @@ public class WxPayRefundService {
         }
     }
 
+    @Override
     public RefundStatusSyncResult queryRefundStatusForSync(String refundNo) {
         String result = queryRefund(refundNo);
         log.info("微信退款查询结果 ===> {}", result);
@@ -113,6 +117,7 @@ public class WxPayRefundService {
         return buildRefundStatusSyncResult(resultMap, channelStatus, result);
     }
 
+    @Override
     public List<RefundStatusSyncResult> queryOrderRefundsForSync(String orderNo) {
         log.info("调用微信订单退款查询接口 ===> {}", orderNo);
 
@@ -167,6 +172,7 @@ public class WxPayRefundService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public void processRefund(Map<String, Object> bodyMap) {
         log.info("处理微信退款结果通知");
 
@@ -181,7 +187,7 @@ public class WxPayRefundService {
         String channelStatus = getString(plainTextMap, "refund_status");
         RefundStatusSyncResult syncResult = buildRefundStatusSyncResult(plainTextMap, channelStatus, plainText);
 
-        boolean updated = refundsInfoService.syncRefundStatus(syncResult);
+        boolean updated = refundInfoService.syncRefundStatus(syncResult);
         logRefundSyncIgnoredIfNeeded(updated, syncResult);
     }
 

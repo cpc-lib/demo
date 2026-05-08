@@ -9,6 +9,7 @@ import cc.ivera.exception.BizException;
 import cc.ivera.mapper.RefundInfoMapper;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundInfoService;
+import cc.ivera.service.refund.OrderRefundStatusService;
 import cc.ivera.service.refund.RefundStatusSyncResult;
 import cc.ivera.util.OrderNoUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -28,10 +29,14 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
 
     private final OrderInfoService orderInfoService;
 
+    private final OrderRefundStatusService orderRefundStatusService;
+
     public RefundInfoServiceImpl(
-        OrderInfoService orderInfoService
+        OrderInfoService orderInfoService,
+        OrderRefundStatusService orderRefundStatusService
     ) {
         this.orderInfoService = orderInfoService;
+        this.orderRefundStatusService = orderRefundStatusService;
     }
 
     @Override
@@ -106,18 +111,6 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateRefundToAbnormal(String refundNo, String content) {
-        updateRefund(refundNo, null, RefundStatus.ABNORMAL.getType(), content, content);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void updateRefundToClosed(String refundNo, String content) {
-        updateRefund(refundNo, null, RefundStatus.CLOSED.getType(), content, content);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     public boolean updateRefundIfStatusIn(String refundNo,
                                           String refundId,
                                           RefundStatus targetStatus,
@@ -154,7 +147,7 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
 
         boolean updated = baseMapper.update(refundInfo, queryWrapper) > 0;
         if (updated) {
-            refreshOrderRefundStatusByRefundNo(refundNo);
+            orderRefundStatusService.refreshOrderRefundStatusByRefundNo(refundNo);
         }
         return updated;
     }
@@ -185,7 +178,7 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
                 syncResult.getContent(),
                 currentStatuses);
         if (!updated) {
-            refreshOrderRefundStatusByRefundNo(syncResult.getRefundNo());
+            orderRefundStatusService.refreshOrderRefundStatusByRefundNo(syncResult.getRefundNo());
         }
         return updated;
     }
@@ -240,14 +233,6 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         return getByRefundNo(syncResult.getRefundNo());
     }
 
-    private int getSuccessRefundAmount(String orderNo) {
-        Integer amount = baseMapper.sumRefundAmountByOrderNoAndStatuses(
-                orderNo,
-                Collections.singletonList(RefundStatus.SUCCESS.getType())
-        );
-        return amount == null ? 0 : amount;
-    }
-
     private RefundInfo createRefundFromChannel(RefundStatusSyncResult syncResult) {
         OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(syncResult.getOrderNo());
         if (orderInfo == null) {
@@ -271,22 +256,6 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         refundInfo.setContentNotify(syncResult.getContent());
         baseMapper.insert(refundInfo);
         return refundInfo;
-    }
-
-    private int getProcessingRefundAmount(String orderNo) {
-        Integer amount = baseMapper.sumRefundAmountByOrderNoAndStatuses(
-                orderNo,
-                Collections.singletonList(RefundStatus.PROCESSING.getType())
-        );
-        return amount == null ? 0 : amount;
-    }
-
-    private int getAbnormalRefundAmount(String orderNo) {
-        Integer amount = baseMapper.sumRefundAmountByOrderNoAndStatuses(
-                orderNo,
-                Collections.singletonList(RefundStatus.ABNORMAL.getType())
-        );
-        return amount == null ? 0 : amount;
     }
 
     private int getReservedRefundAmount(String orderNo) {
@@ -376,40 +345,6 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         baseMapper.update(update, queryWrapper);
     }
 
-    @Override
-    public void refreshOrderRefundStatus(String orderNo) {
-        OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(orderNo);
-        if (orderInfo == null) {
-            return;
-        }
-
-        int successRefundAmount = getSuccessRefundAmount(orderNo);
-        int processingRefundAmount = getProcessingRefundAmount(orderNo);
-        int abnormalRefundAmount = getAbnormalRefundAmount(orderNo);
-
-        if (successRefundAmount >= orderInfo.getTotalFee()) {
-            orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.REFUND_SUCCESS);
-            return;
-        }
-
-        if (successRefundAmount > 0) {
-            orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.PARTIAL_REFUND);
-            return;
-        }
-
-        if (processingRefundAmount > 0) {
-            orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.REFUND_PROCESSING);
-            return;
-        }
-
-        if (abnormalRefundAmount > 0) {
-            orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.REFUND_ABNORMAL);
-            return;
-        }
-
-        orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.SUCCESS);
-    }
-
     private void updateRefund(String refundNo,
                               String refundId,
                               String refundStatus,
@@ -431,16 +366,7 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
 
         RefundInfo latestRefundInfo = baseMapper.selectOne(queryWrapper);
         if (latestRefundInfo != null) {
-            refreshOrderRefundStatus(latestRefundInfo.getOrderNo());
-        }
-    }
-
-    private void refreshOrderRefundStatusByRefundNo(String refundNo) {
-        QueryWrapper<RefundInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("refund_no", refundNo);
-        RefundInfo latestRefundInfo = baseMapper.selectOne(queryWrapper);
-        if (latestRefundInfo != null) {
-            refreshOrderRefundStatus(latestRefundInfo.getOrderNo());
+            orderRefundStatusService.refreshOrderRefundStatus(latestRefundInfo.getOrderNo());
         }
     }
 

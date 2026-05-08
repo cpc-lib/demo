@@ -5,7 +5,7 @@ import cc.ivera.entity.OrderInfo;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
-import cc.ivera.service.WxPayService;
+import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.util.HttpUtils;
 import cc.ivera.vo.R;
 import com.github.wxpay.sdk.WXPayUtil;
@@ -29,7 +29,7 @@ import java.util.Map;
 @Validated
 public class WxPayV2Controller {
 
-    private final WxPayService wxPayService;
+    private final WxPayOrderFacade wxPayOrderFacade;
 
     private final WxPayConfig wxPayConfig;
 
@@ -38,12 +38,12 @@ public class WxPayV2Controller {
     private final PaymentInfoService paymentInfoService;
 
     public WxPayV2Controller(
-        WxPayService wxPayService,
+        WxPayOrderFacade wxPayOrderFacade,
         WxPayConfig wxPayConfig,
         OrderInfoService orderInfoService,
         PaymentInfoService paymentInfoService
     ) {
-        this.wxPayService = wxPayService;
+        this.wxPayOrderFacade = wxPayOrderFacade;
         this.wxPayConfig = wxPayConfig;
         this.orderInfoService = orderInfoService;
         this.paymentInfoService = paymentInfoService;
@@ -62,7 +62,7 @@ public class WxPayV2Controller {
 
         String remoteAddr = request.getRemoteAddr();
         //修改code_url可以重新获取到新的地址信息
-        Map<String, Object> map = wxPayService.nativePayV2(productId, remoteAddr);
+        Map<String, Object> map = wxPayOrderFacade.nativePayV2(productId, remoteAddr);
         return R.ok().setData(map);
     }
 

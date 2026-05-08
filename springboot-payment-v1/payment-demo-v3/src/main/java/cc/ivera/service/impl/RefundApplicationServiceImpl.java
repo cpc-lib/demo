@@ -10,11 +10,13 @@ import cc.ivera.service.AliPayService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.RefundInfoService;
-import cc.ivera.service.WxPayService;
+import cc.ivera.service.refund.OrderRefundStatusService;
 import cc.ivera.service.refund.RefundStatusSyncResult;
+import cc.ivera.service.wxpay.WxPayRefundFacade;
 import cc.ivera.util.JsonUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
@@ -30,20 +32,24 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
     private final OrderInfoService orderInfoService;
 
-    private final WxPayService wxPayService;
+    private final WxPayRefundFacade wxPayRefundFacade;
 
     private final AliPayService aliPayService;
+
+    private final OrderRefundStatusService orderRefundStatusService;
 
     public RefundApplicationServiceImpl(
         RefundInfoService refundInfoService,
         OrderInfoService orderInfoService,
-        WxPayService wxPayService,
-        AliPayService aliPayService
+        WxPayRefundFacade wxPayRefundFacade,
+        AliPayService aliPayService,
+        OrderRefundStatusService orderRefundStatusService
     ) {
         this.refundInfoService = refundInfoService;
         this.orderInfoService = orderInfoService;
-        this.wxPayService = wxPayService;
+        this.wxPayRefundFacade = wxPayRefundFacade;
         this.aliPayService = aliPayService;
+        this.orderRefundStatusService = orderRefundStatusService;
     }
 
     @Override
@@ -53,6 +59,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void approve(String refundNo, String approveRemark) {
         RefundInfo refundInfo = refundInfoService.getByRefundNo(refundNo);
         if (refundInfo == null) {
@@ -104,6 +111,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public RefundInfo queryRefundStatus(String refundNo) {
         RefundInfo refundInfo = refundInfoService.getByRefundNo(refundNo);
         if (refundInfo == null) {
@@ -125,6 +133,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public List<RefundInfo> reconcileOrderRefundStatus(String orderNo) {
         OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(orderNo);
         if (orderInfo == null) {
@@ -134,7 +143,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
         Set<String> channelRefundNos = reconcileWxOrderRefundsIfNeeded(orderInfo);
         syncLocalRefundsForOrder(orderInfo, channelRefundNos);
-        refundInfoService.refreshOrderRefundStatus(orderNo);
+        orderRefundStatusService.refreshOrderRefundStatus(orderNo);
         return refundInfoService.listByOrderNo(orderNo);
     }
 
@@ -153,7 +162,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
     private void executeRefund(String paymentType, RefundInfo refundInfo) {
         if (PayType.WXPAY.getType().equals(paymentType)) {
-            wxPayService.executeRefund(refundInfo);
+            wxPayRefundFacade.executeRefund(refundInfo);
             return;
         }
         if (PayType.ALIPAY.getType().equals(paymentType)) {
@@ -183,7 +192,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
     private RefundStatusSyncResult queryRefundStatusFromChannel(String paymentType, String refundNo) {
         if (PayType.WXPAY.getType().equals(paymentType)) {
-            return wxPayService.queryRefundStatusForSync(refundNo);
+            return wxPayRefundFacade.queryRefundStatusForSync(refundNo);
         }
         if (PayType.ALIPAY.getType().equals(paymentType)) {
             return aliPayService.queryRefundStatusForSync(refundNo);
@@ -197,7 +206,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
             return channelRefundNos;
         }
 
-        List<RefundStatusSyncResult> syncResults = wxPayService.queryOrderRefundsForSync(orderInfo.getOrderNo());
+        List<RefundStatusSyncResult> syncResults = wxPayRefundFacade.queryOrderRefundsForSync(orderInfo.getOrderNo());
         for (RefundStatusSyncResult syncResult : syncResults) {
             validateChannelOrderResult(orderInfo, syncResult);
             refundInfoService.repairRefundFromChannel(syncResult);
