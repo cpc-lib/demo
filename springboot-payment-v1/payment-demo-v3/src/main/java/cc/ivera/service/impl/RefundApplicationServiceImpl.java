@@ -11,6 +11,7 @@ import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.RefundInfoService;
 import cc.ivera.service.WxPayService;
+import cc.ivera.service.refund.RefundStatusSyncResult;
 import cc.ivera.util.JsonUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class RefundApplicationServiceImpl implements RefundApplicationService {
@@ -100,6 +103,41 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         return refundInfoService.listByOrderNo(orderNo);
     }
 
+    @Override
+    public RefundInfo queryRefundStatus(String refundNo) {
+        RefundInfo refundInfo = refundInfoService.getByRefundNo(refundNo);
+        if (refundInfo == null) {
+            throw new BizException("退款申请单不存在");
+        }
+        if (!RefundApprovalStatus.APPROVED.getType().equals(refundInfo.getApprovalStatus())) {
+            throw new BizException("退款申请尚未提交支付渠道，不能主动查询渠道状态");
+        }
+
+        OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(refundInfo.getOrderNo());
+        if (orderInfo == null) {
+            throw new BizException("订单不存在");
+        }
+        validateSupportedPayType(orderInfo.getPaymentType());
+
+        syncRefundByChannel(orderInfo.getPaymentType(), refundInfo);
+
+        return refundInfoService.getByRefundNo(refundNo);
+    }
+
+    @Override
+    public List<RefundInfo> reconcileOrderRefundStatus(String orderNo) {
+        OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(orderNo);
+        if (orderInfo == null) {
+            throw new BizException("订单不存在");
+        }
+        validateSupportedPayType(orderInfo.getPaymentType());
+
+        Set<String> channelRefundNos = reconcileWxOrderRefundsIfNeeded(orderInfo);
+        syncLocalRefundsForOrder(orderInfo, channelRefundNos);
+        refundInfoService.refreshOrderRefundStatus(orderNo);
+        return refundInfoService.listByOrderNo(orderNo);
+    }
+
     private void claimRefundForExecution(String refundNo) {
         boolean updated = refundInfoService.updateRefundIfStatusIn(
                 refundNo,
@@ -141,5 +179,81 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
                 JsonUtils.toJson(Collections.singletonMap("message", message)),
                 null,
                 Arrays.asList(RefundStatus.CREATED, RefundStatus.PROCESSING));
+    }
+
+    private RefundStatusSyncResult queryRefundStatusFromChannel(String paymentType, String refundNo) {
+        if (PayType.WXPAY.getType().equals(paymentType)) {
+            return wxPayService.queryRefundStatusForSync(refundNo);
+        }
+        if (PayType.ALIPAY.getType().equals(paymentType)) {
+            return aliPayService.queryRefundStatusForSync(refundNo);
+        }
+        throw new BizException("不支持的支付方式：" + paymentType);
+    }
+
+    private Set<String> reconcileWxOrderRefundsIfNeeded(OrderInfo orderInfo) {
+        Set<String> channelRefundNos = new HashSet<>();
+        if (!PayType.WXPAY.getType().equals(orderInfo.getPaymentType())) {
+            return channelRefundNos;
+        }
+
+        List<RefundStatusSyncResult> syncResults = wxPayService.queryOrderRefundsForSync(orderInfo.getOrderNo());
+        for (RefundStatusSyncResult syncResult : syncResults) {
+            validateChannelOrderResult(orderInfo, syncResult);
+            refundInfoService.repairRefundFromChannel(syncResult);
+            refundInfoService.syncRefundStatus(syncResult);
+            if (syncResult.getRefundNo() != null) {
+                channelRefundNos.add(syncResult.getRefundNo());
+            }
+        }
+        return channelRefundNos;
+    }
+
+    private void syncLocalRefundsForOrder(OrderInfo orderInfo, Set<String> channelRefundNos) {
+        List<RefundInfo> refundInfoList = refundInfoService.listByOrderNo(orderInfo.getOrderNo());
+        for (RefundInfo refundInfo : refundInfoList) {
+            if (!shouldSyncLocalRefund(refundInfo)) {
+                continue;
+            }
+            if (channelRefundNos.contains(refundInfo.getRefundNo())) {
+                continue;
+            }
+            syncRefundByChannel(orderInfo.getPaymentType(), refundInfo);
+        }
+    }
+
+    private void syncRefundByChannel(String paymentType, RefundInfo refundInfo) {
+        RefundStatusSyncResult syncResult = queryRefundStatusFromChannel(paymentType, refundInfo.getRefundNo());
+        validateChannelResult(refundInfo, syncResult);
+        refundInfoService.repairRefundFromChannel(syncResult);
+        refundInfoService.syncRefundStatus(syncResult);
+    }
+
+    private boolean shouldSyncLocalRefund(RefundInfo refundInfo) {
+        return refundInfo != null
+                && refundInfo.getRefundNo() != null
+                && !refundInfo.getRefundNo().trim().isEmpty()
+                && RefundApprovalStatus.APPROVED.getType().equals(refundInfo.getApprovalStatus());
+    }
+
+    private void validateChannelOrderResult(OrderInfo orderInfo, RefundStatusSyncResult syncResult) {
+        if (syncResult == null) {
+            throw new BizException("退款查询结果不能为空");
+        }
+        if (syncResult.getOrderNo() != null && !orderInfo.getOrderNo().equals(syncResult.getOrderNo())) {
+            throw new BizException("渠道退款查询结果与本地订单不一致");
+        }
+    }
+
+    private void validateChannelResult(RefundInfo refundInfo, RefundStatusSyncResult syncResult) {
+        if (syncResult == null) {
+            throw new BizException("退款查询结果不能为空");
+        }
+        if (syncResult.getRefundNo() != null && !refundInfo.getRefundNo().equals(syncResult.getRefundNo())) {
+            throw new BizException("渠道退款查询结果与本地退款单不一致");
+        }
+        if (syncResult.getOrderNo() != null && !refundInfo.getOrderNo().equals(syncResult.getOrderNo())) {
+            throw new BizException("渠道退款查询结果与本地订单不一致");
+        }
     }
 }

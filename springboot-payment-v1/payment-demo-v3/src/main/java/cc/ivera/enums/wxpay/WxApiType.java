@@ -17,6 +17,8 @@ public enum WxApiType {
      */
     NATIVE_PAY_V2("/pay/unifiedorder"),
 
+    REFUND_QUERY_V2("/pay/refundquery"),
+
     /**
      * JSAPI下单
      */

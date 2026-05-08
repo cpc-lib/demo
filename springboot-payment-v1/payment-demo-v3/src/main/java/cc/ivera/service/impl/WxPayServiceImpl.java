@@ -6,8 +6,10 @@ import cc.ivera.service.WxPayService;
 import cc.ivera.service.impl.wxpay.WxPayBillService;
 import cc.ivera.service.impl.wxpay.WxPayOrderService;
 import cc.ivera.service.impl.wxpay.WxPayRefundService;
+import cc.ivera.service.refund.RefundStatusSyncResult;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -65,6 +67,16 @@ public class WxPayServiceImpl implements WxPayService {
     }
 
     @Override
+    public RefundStatusSyncResult queryRefundStatusForSync(String refundNo) {
+        return wxPayRefundService.queryRefundStatusForSync(refundNo);
+    }
+
+    @Override
+    public List<RefundStatusSyncResult> queryOrderRefundsForSync(String orderNo) {
+        return wxPayRefundService.queryOrderRefundsForSync(orderNo);
+    }
+
+    @Override
     public void processRefund(Map<String, Object> bodyMap) {
         wxPayRefundService.processRefund(bodyMap);
     }
@@ -75,8 +87,18 @@ public class WxPayServiceImpl implements WxPayService {
     }
 
     @Override
+    public String queryBill(String billDate, String type, String billType, String accountType, String tarType) {
+        return wxPayBillService.queryBill(billDate, type, billType, accountType, tarType);
+    }
+
+    @Override
     public String downloadBill(String billDate, String type) {
         return wxPayBillService.downloadBill(billDate, type);
+    }
+
+    @Override
+    public String downloadBill(String billDate, String type, String billType, String accountType, String tarType) {
+        return wxPayBillService.downloadBill(billDate, type, billType, accountType, tarType);
     }
 
     @Override

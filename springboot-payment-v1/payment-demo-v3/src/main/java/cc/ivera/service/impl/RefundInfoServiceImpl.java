@@ -9,6 +9,7 @@ import cc.ivera.exception.BizException;
 import cc.ivera.mapper.RefundInfoMapper;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundInfoService;
+import cc.ivera.service.refund.RefundStatusSyncResult;
 import cc.ivera.util.OrderNoUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -158,6 +159,87 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         return updated;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean syncRefundStatus(RefundStatusSyncResult syncResult) {
+        if (syncResult == null) {
+            throw new BizException("退款状态同步结果不能为空");
+        }
+        if (syncResult.getRefundNo() == null || syncResult.getRefundNo().trim().isEmpty()) {
+            throw new BizException("退款单号不能为空");
+        }
+        if (!syncResult.hasRefundStatus()) {
+            return false;
+        }
+
+        Collection<RefundStatus> currentStatuses = getSyncableCurrentStatuses(syncResult.getRefundStatus());
+        if (currentStatuses.isEmpty()) {
+            return false;
+        }
+
+        boolean updated = updateRefundIfStatusIn(
+                syncResult.getRefundNo(),
+                syncResult.getRefundId(),
+                syncResult.getRefundStatus(),
+                null,
+                syncResult.getContent(),
+                currentStatuses);
+        if (!updated) {
+            refreshOrderRefundStatusByRefundNo(syncResult.getRefundNo());
+        }
+        return updated;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public RefundInfo repairRefundFromChannel(RefundStatusSyncResult syncResult) {
+        if (syncResult == null) {
+            throw new BizException("渠道退款数据不能为空");
+        }
+        if (syncResult.getRefundNo() == null || syncResult.getRefundNo().trim().isEmpty()) {
+            throw new BizException("渠道退款单号不能为空");
+        }
+        if (syncResult.getOrderNo() == null || syncResult.getOrderNo().trim().isEmpty()) {
+            throw new BizException("渠道退款数据缺少订单号");
+        }
+
+        RefundInfo refundInfo = getByRefundNo(syncResult.getRefundNo());
+        if (refundInfo == null) {
+            return createRefundFromChannel(syncResult);
+        }
+
+        if (refundInfo.getOrderNo() != null && !refundInfo.getOrderNo().equals(syncResult.getOrderNo())) {
+            throw new BizException("本地退款单订单号与渠道不一致，refundNo=" + syncResult.getRefundNo());
+        }
+
+        QueryWrapper<RefundInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("refund_no", syncResult.getRefundNo());
+
+        RefundInfo update = new RefundInfo();
+        boolean changed = false;
+        if (shouldUpdateString(refundInfo.getOrderNo(), syncResult.getOrderNo())) {
+            update.setOrderNo(syncResult.getOrderNo());
+            changed = true;
+        }
+        if (shouldUpdateString(refundInfo.getRefundId(), syncResult.getRefundId())) {
+            update.setRefundId(syncResult.getRefundId());
+            changed = true;
+        }
+        if (shouldUpdateInteger(refundInfo.getTotalFee(), syncResult.getTotalFee())) {
+            update.setTotalFee(syncResult.getTotalFee());
+            changed = true;
+        }
+        if (shouldUpdateInteger(refundInfo.getRefund(), syncResult.getRefundAmount())) {
+            update.setRefund(syncResult.getRefundAmount());
+            changed = true;
+        }
+
+        if (changed) {
+            baseMapper.update(update, queryWrapper);
+        }
+        return getByRefundNo(syncResult.getRefundNo());
+    }
+
     private int getSuccessRefundAmount(String orderNo) {
         Integer amount = baseMapper.sumRefundAmountByOrderNoAndStatuses(
                 orderNo,
@@ -166,10 +248,43 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         return amount == null ? 0 : amount;
     }
 
-    private int getOccupiedRefundAmount(String orderNo) {
+    private RefundInfo createRefundFromChannel(RefundStatusSyncResult syncResult) {
+        OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(syncResult.getOrderNo());
+        if (orderInfo == null) {
+            throw new BizException("渠道退款对应订单不存在，orderNo=" + syncResult.getOrderNo());
+        }
+        if (syncResult.getRefundAmount() == null || syncResult.getRefundAmount() <= 0) {
+            throw new BizException("渠道退款缺少退款金额，无法补录退款单");
+        }
+
+        RefundInfo refundInfo = new RefundInfo();
+        refundInfo.setOrderNo(syncResult.getOrderNo());
+        refundInfo.setRefundNo(syncResult.getRefundNo());
+        refundInfo.setRefundId(syncResult.getRefundId());
+        refundInfo.setTotalFee(syncResult.getTotalFee() == null ? orderInfo.getTotalFee() : syncResult.getTotalFee());
+        refundInfo.setRefund(syncResult.getRefundAmount());
+        refundInfo.setReason("渠道对账补录");
+        refundInfo.setApprovalStatus(RefundApprovalStatus.APPROVED.getType());
+        refundInfo.setApproveRemark("渠道对账补录");
+        refundInfo.setApprovedTime(new Date());
+        refundInfo.setRefundStatus(RefundStatus.CREATED.getType());
+        refundInfo.setContentNotify(syncResult.getContent());
+        baseMapper.insert(refundInfo);
+        return refundInfo;
+    }
+
+    private int getProcessingRefundAmount(String orderNo) {
         Integer amount = baseMapper.sumRefundAmountByOrderNoAndStatuses(
                 orderNo,
-                Arrays.asList(RefundStatus.PROCESSING.getType(), RefundStatus.SUCCESS.getType())
+                Collections.singletonList(RefundStatus.PROCESSING.getType())
+        );
+        return amount == null ? 0 : amount;
+    }
+
+    private int getAbnormalRefundAmount(String orderNo) {
+        Integer amount = baseMapper.sumRefundAmountByOrderNoAndStatuses(
+                orderNo,
+                Collections.singletonList(RefundStatus.ABNORMAL.getType())
         );
         return amount == null ? 0 : amount;
     }
@@ -269,7 +384,8 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         }
 
         int successRefundAmount = getSuccessRefundAmount(orderNo);
-        int occupiedRefundAmount = getOccupiedRefundAmount(orderNo);
+        int processingRefundAmount = getProcessingRefundAmount(orderNo);
+        int abnormalRefundAmount = getAbnormalRefundAmount(orderNo);
 
         if (successRefundAmount >= orderInfo.getTotalFee()) {
             orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.REFUND_SUCCESS);
@@ -281,8 +397,13 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
             return;
         }
 
-        if (occupiedRefundAmount > 0) {
+        if (processingRefundAmount > 0) {
             orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.REFUND_PROCESSING);
+            return;
+        }
+
+        if (abnormalRefundAmount > 0) {
+            orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.REFUND_ABNORMAL);
             return;
         }
 
@@ -321,5 +442,51 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         if (latestRefundInfo != null) {
             refreshOrderRefundStatus(latestRefundInfo.getOrderNo());
         }
+    }
+
+    private boolean shouldUpdateString(String currentValue, String channelValue) {
+        return channelValue != null
+                && !channelValue.trim().isEmpty()
+                && !channelValue.equals(currentValue);
+    }
+
+    private boolean shouldUpdateInteger(Integer currentValue, Integer channelValue) {
+        return channelValue != null
+                && channelValue > 0
+                && !channelValue.equals(currentValue);
+    }
+
+    private Collection<RefundStatus> getSyncableCurrentStatuses(RefundStatus targetStatus) {
+        if (RefundStatus.SUCCESS.equals(targetStatus)) {
+            return Arrays.asList(
+                    RefundStatus.CREATED,
+                    RefundStatus.PROCESSING,
+                    RefundStatus.FAILED,
+                    RefundStatus.ABNORMAL);
+        }
+        if (RefundStatus.PROCESSING.equals(targetStatus)) {
+            return Arrays.asList(
+                    RefundStatus.CREATED,
+                    RefundStatus.FAILED);
+        }
+        if (RefundStatus.ABNORMAL.equals(targetStatus)) {
+            return Arrays.asList(
+                    RefundStatus.CREATED,
+                    RefundStatus.PROCESSING,
+                    RefundStatus.FAILED);
+        }
+        if (RefundStatus.CLOSED.equals(targetStatus)) {
+            return Arrays.asList(
+                    RefundStatus.CREATED,
+                    RefundStatus.PROCESSING,
+                    RefundStatus.FAILED,
+                    RefundStatus.ABNORMAL);
+        }
+        if (RefundStatus.FAILED.equals(targetStatus)) {
+            return Arrays.asList(
+                    RefundStatus.CREATED,
+                    RefundStatus.PROCESSING);
+        }
+        return Collections.emptyList();
     }
 }

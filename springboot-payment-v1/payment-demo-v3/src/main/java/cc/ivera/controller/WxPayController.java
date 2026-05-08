@@ -219,9 +219,12 @@ public class WxPayController {
     @GetMapping("/querybill/{billDate}/{type}")
     public R<Map<String, Object>> queryTradeBill(
             @PathVariable @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "账单日期格式必须为yyyy-MM-dd") String billDate,
-            @PathVariable @Pattern(regexp = "tradebill|fundflowbill", message = "微信账单类型只支持tradebill或fundflowbill") String type) {
+            @PathVariable @Pattern(regexp = "tradebill|fundflowbill", message = "微信账单类型只支持tradebill或fundflowbill") String type,
+            @RequestParam(required = false) @Pattern(regexp = "ALL|SUCCESS|REFUND", message = "交易账单billType只支持ALL、SUCCESS或REFUND") String billType,
+            @RequestParam(required = false) @Pattern(regexp = "BASIC|OPERATION|FEES", message = "资金账单accountType只支持BASIC、OPERATION或FEES") String accountType,
+            @RequestParam(required = false) @Pattern(regexp = "GZIP", message = "tarType只支持GZIP") String tarType) {
         log.info("获取账单url");
-        String downloadUrl = wxPayService.queryBill(billDate, type);
+        String downloadUrl = wxPayService.queryBill(billDate, type, billType, accountType, tarType);
         return R.ok().setMessage("获取账单url成功").data("downloadUrl", downloadUrl);
     }
 
@@ -229,9 +232,12 @@ public class WxPayController {
     @GetMapping("/downloadbill/{billDate}/{type}")
     public R<Map<String, Object>> downloadBill(
             @PathVariable @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "账单日期格式必须为yyyy-MM-dd") String billDate,
-            @PathVariable @Pattern(regexp = "tradebill|fundflowbill", message = "微信账单类型只支持tradebill或fundflowbill") String type) {
+            @PathVariable @Pattern(regexp = "tradebill|fundflowbill", message = "微信账单类型只支持tradebill或fundflowbill") String type,
+            @RequestParam(required = false) @Pattern(regexp = "ALL|SUCCESS|REFUND", message = "交易账单billType只支持ALL、SUCCESS或REFUND") String billType,
+            @RequestParam(required = false) @Pattern(regexp = "BASIC|OPERATION|FEES", message = "资金账单accountType只支持BASIC、OPERATION或FEES") String accountType,
+            @RequestParam(required = false) @Pattern(regexp = "GZIP", message = "tarType只支持GZIP") String tarType) {
         log.info("下载账单");
-        String result = wxPayService.downloadBill(billDate, type);
+        String result = wxPayService.downloadBill(billDate, type, billType, accountType, tarType);
 
         return R.ok().data("result", result);
     }

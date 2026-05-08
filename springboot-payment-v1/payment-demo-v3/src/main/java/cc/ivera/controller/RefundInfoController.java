@@ -59,4 +59,17 @@ public class RefundInfoController {
         refundApplicationService.reject(refundNo, request == null ? null : request.getApproveRemark());
         return R.ok().setMessage("退款申请已拒绝");
     }
+
+    @ApiOperation("主动查询退款状态并更新")
+    @PostMapping("/query/{refundNo}")
+    public R<Map<String, Object>> queryRefundStatus(@PathVariable @NotBlank(message = "退款单号不能为空") @Size(max = 50, message = "退款单号长度不能超过50个字符") String refundNo) {
+        RefundInfo refundInfo = refundApplicationService.queryRefundStatus(refundNo);
+        return R.ok().data("refundInfo", refundInfo).setMessage("退款状态查询完成");
+    }
+    @ApiOperation("主动对账订单全部退款状态并更新")
+    @PostMapping("/reconcile/{orderNo}")
+    public R<Map<String, Object>> reconcileOrderRefundStatus(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
+        List<RefundInfo> list = refundApplicationService.reconcileOrderRefundStatus(orderNo);
+        return R.ok().data("list", list).setMessage("订单退款状态对账完成");
+    }
 }

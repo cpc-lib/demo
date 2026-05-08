@@ -1,6 +1,7 @@
 package cc.ivera.service;
 
 import cc.ivera.entity.RefundInfo;
+import cc.ivera.service.refund.RefundStatusSyncResult;
 
 import java.util.Map;
 
@@ -18,6 +19,8 @@ public interface AliPayService {
     void executeRefund(RefundInfo refundInfo);
 
     String queryRefund(String refundNo);
+
+    RefundStatusSyncResult queryRefundStatusForSync(String refundNo);
 
     String queryBill(String billDate, String type);
 

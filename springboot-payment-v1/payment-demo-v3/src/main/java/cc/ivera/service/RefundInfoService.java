@@ -2,6 +2,7 @@ package cc.ivera.service;
 
 import cc.ivera.entity.RefundInfo;
 import cc.ivera.enums.RefundStatus;
+import cc.ivera.service.refund.RefundStatusSyncResult;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.Collection;
@@ -27,6 +28,10 @@ public interface RefundInfoService extends IService<RefundInfo> {
                                    String contentReturn,
                                    String contentNotify,
                                    Collection<RefundStatus> currentStatuses);
+
+    boolean syncRefundStatus(RefundStatusSyncResult syncResult);
+
+    RefundInfo repairRefundFromChannel(RefundStatusSyncResult syncResult);
 
     RefundInfo getByRefundNo(String refundNo);
 

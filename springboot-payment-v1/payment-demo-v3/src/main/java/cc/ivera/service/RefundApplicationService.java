@@ -15,4 +15,8 @@ public interface RefundApplicationService {
     List<RefundInfo> listAll();
 
     List<RefundInfo> listByOrderNo(String orderNo);
+
+    RefundInfo queryRefundStatus(String refundNo);
+
+    List<RefundInfo> reconcileOrderRefundStatus(String orderNo);
 }
