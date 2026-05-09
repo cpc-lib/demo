@@ -15,6 +15,12 @@ spring:
     username: guest
     password: guest
 
+  redis:
+    host: 192.168.220.200
+    port: 6379
+    database: 0
+    password: cpc!23#@
+
   datasource:
     #    driver-class-name: com.mysql.cj.jdbc.Driver
     driver-class-name: com.mysql.jdbc.Driver

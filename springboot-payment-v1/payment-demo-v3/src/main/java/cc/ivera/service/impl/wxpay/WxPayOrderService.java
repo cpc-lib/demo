@@ -11,6 +11,8 @@ import cc.ivera.exception.BizException;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
+import cc.ivera.support.DistributedLockExecutor;
+import cc.ivera.support.PaymentLockKeys;
 import cc.ivera.util.HttpClientUtils;
 import cc.ivera.util.JsonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +20,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.wxpay.sdk.WXPayUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -46,18 +47,26 @@ public class WxPayOrderService implements WxPayOrderFacade {
 
     private final WxPayNotificationDecoder wxPayNotificationDecoder;
 
+    private final WxPayOrderNotifyService wxPayOrderNotifyService;
+
+    private final DistributedLockExecutor distributedLockExecutor;
+
     public WxPayOrderService(
         WxPayConfig wxPayConfig,
         OrderInfoService orderInfoService,
         PaymentInfoService paymentInfoService,
         WxPayHttpClient wxPayHttpClient,
-        WxPayNotificationDecoder wxPayNotificationDecoder
+        WxPayNotificationDecoder wxPayNotificationDecoder,
+        WxPayOrderNotifyService wxPayOrderNotifyService,
+        DistributedLockExecutor distributedLockExecutor
     ) {
         this.wxPayConfig = wxPayConfig;
         this.orderInfoService = orderInfoService;
         this.paymentInfoService = paymentInfoService;
         this.wxPayHttpClient = wxPayHttpClient;
         this.wxPayNotificationDecoder = wxPayNotificationDecoder;
+        this.wxPayOrderNotifyService = wxPayOrderNotifyService;
+        this.distributedLockExecutor = distributedLockExecutor;
     }
 
     @Override
@@ -106,7 +115,6 @@ public class WxPayOrderService implements WxPayOrderFacade {
         return buildNativePayResult(orderInfo.getOrderNo(), codeUrl);
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void processOrder(Map<String, Object> bodyMap) {
         log.info("处理订单");
@@ -120,16 +128,23 @@ public class WxPayOrderService implements WxPayOrderFacade {
         Map<String, Object> plainTextMap = JsonUtils.toObjectMap(plainText);
         String orderNo = (String) plainTextMap.get("out_trade_no");
 
-        boolean updated = orderInfoService.updateStatusByOrderNoIfStatus(
-                orderNo,
-                OrderStatus.NOTPAY,
-                OrderStatus.SUCCESS);
-        if (!updated) {
-            log.info("微信支付通知重复或订单状态已变化，忽略处理 ===> {}", orderNo);
-            return;
-        }
+        executeOrderNotifyInLock(orderNo,
+                () -> wxPayOrderNotifyService.processNativeNotifyInTransaction(orderNo, plainText));
+    }
 
-        paymentInfoService.createPaymentInfo(plainText);
+    @Override
+    public void processOrderV2(Map<String, String> notifyMap, String content) {
+        String orderNo = notifyMap.get("out_trade_no");
+
+        executeOrderNotifyInLock(orderNo,
+                () -> wxPayOrderNotifyService.processNativeV2NotifyInTransaction(orderNo, notifyMap, content));
+    }
+
+    private void executeOrderNotifyInLock(String orderNo, Runnable action) {
+        if (!StringUtils.hasText(orderNo)) {
+            throw new BizException("订单号不能为空");
+        }
+        distributedLockExecutor.execute(PaymentLockKeys.wxPayOrder(orderNo), action);
     }
 
     @Override

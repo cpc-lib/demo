@@ -10,6 +10,8 @@ public interface WxPayOrderFacade {
 
     void processOrder(Map<String, Object> bodyMap);
 
+    void processOrderV2(Map<String, String> notifyMap, String content);
+
     void cancelOrder(String orderNo);
 
     String queryOrder(String orderNo);

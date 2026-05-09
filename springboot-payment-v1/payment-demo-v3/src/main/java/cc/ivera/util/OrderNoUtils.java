@@ -1,6 +1,8 @@
 package cc.ivera.util;
 
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
 
 /**
  * 订单号工具类
@@ -10,13 +12,16 @@ import java.util.UUID;
  */
 public class OrderNoUtils {
 
+    private static final Random RANDOM = new Random();
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
+
     /**
      * 获取订单编号
      *
      * @return
      */
     public static String getOrderNo() {
-        return "ORDER_" + getNo();
+        return "ORD" + getNo();
     }
 
     /**
@@ -25,7 +30,7 @@ public class OrderNoUtils {
      * @return
      */
     public static String getRefundNo() {
-        return "REFUND_" + getNo();
+        return "RFD" + getNo();
     }
 
     /**
@@ -34,7 +39,9 @@ public class OrderNoUtils {
      * @return
      */
     public static String getNo() {
-        return UUID.randomUUID().toString().replace("-", "").toUpperCase();
+        String timestamp = DATE_FORMAT.format(new Date());
+        int random = RANDOM.nextInt(10000);
+        return timestamp + String.format("%04d", random);
     }
 
 }

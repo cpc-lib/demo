@@ -9,13 +9,16 @@ import cc.ivera.enums.wxpay.WxRefundStatus;
 import cc.ivera.exception.BizException;
 import cc.ivera.service.RefundInfoService;
 import cc.ivera.service.refund.RefundStatusSyncResult;
+import cc.ivera.service.refund.RefundStatusSyncService;
 import cc.ivera.service.wxpay.WxPayRefundFacade;
+import cc.ivera.support.DistributedLockExecutor;
+import cc.ivera.support.PaymentLockKeys;
 import cc.ivera.util.HttpClientUtils;
 import cc.ivera.util.JsonUtils;
 import com.github.wxpay.sdk.WXPayUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -33,20 +36,28 @@ public class WxPayRefundService implements WxPayRefundFacade {
 
     private final RefundInfoService refundInfoService;
 
+    private final RefundStatusSyncService refundStatusSyncService;
+
     private final WxPayHttpClient wxPayHttpClient;
 
     private final WxPayNotificationDecoder wxPayNotificationDecoder;
 
+    private final DistributedLockExecutor distributedLockExecutor;
+
     public WxPayRefundService(
         WxPayConfig wxPayConfig,
         RefundInfoService refundInfoService,
+        RefundStatusSyncService refundStatusSyncService,
         WxPayHttpClient wxPayHttpClient,
-        WxPayNotificationDecoder wxPayNotificationDecoder
+        WxPayNotificationDecoder wxPayNotificationDecoder,
+        DistributedLockExecutor distributedLockExecutor
     ) {
         this.wxPayConfig = wxPayConfig;
         this.refundInfoService = refundInfoService;
+        this.refundStatusSyncService = refundStatusSyncService;
         this.wxPayHttpClient = wxPayHttpClient;
         this.wxPayNotificationDecoder = wxPayNotificationDecoder;
+        this.distributedLockExecutor = distributedLockExecutor;
     }
 
     @Override
@@ -171,7 +182,6 @@ public class WxPayRefundService implements WxPayRefundFacade {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void processRefund(Map<String, Object> bodyMap) {
         log.info("处理微信退款结果通知");
@@ -187,8 +197,17 @@ public class WxPayRefundService implements WxPayRefundFacade {
         String channelStatus = getString(plainTextMap, "refund_status");
         RefundStatusSyncResult syncResult = buildRefundStatusSyncResult(plainTextMap, channelStatus, plainText);
 
-        boolean updated = refundInfoService.syncRefundStatus(syncResult);
-        logRefundSyncIgnoredIfNeeded(updated, syncResult);
+        executeRefundNotifyInLock(syncResult.getRefundNo(), () -> {
+            boolean updated = refundStatusSyncService.syncStatus(syncResult);
+            logRefundSyncIgnoredIfNeeded(updated, syncResult);
+        });
+    }
+
+    private void executeRefundNotifyInLock(String refundNo, Runnable action) {
+        if (!StringUtils.hasText(refundNo)) {
+            throw new BizException("退款单号不能为空");
+        }
+        distributedLockExecutor.execute(PaymentLockKeys.refund(refundNo), action);
     }
 
     private RefundStatusSyncResult buildRefundStatusSyncResult(Map<String, Object> refundMap,

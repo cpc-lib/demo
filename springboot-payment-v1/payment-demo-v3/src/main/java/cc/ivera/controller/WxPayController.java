@@ -1,7 +1,7 @@
 package cc.ivera.controller;
 
-import cc.ivera.entity.OrderInfo;
 import cc.ivera.controller.support.WxPayNotifyHandler;
+import cc.ivera.entity.OrderInfo;
 import cc.ivera.service.wxpay.WxPayBillFacade;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.service.wxpay.WxPayRefundFacade;
@@ -10,7 +10,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,9 +27,9 @@ import javax.validation.constraints.Size;
 import java.util.Map;
 
 /**
- * 缺陷没有主动查询机制 都是采用微信通知来修改订单的状态 退款单的状态
+ * 微信支付 APIv3 接口，通知回调负责同步支付和退款状态。
  */
-@CrossOrigin //跨域
+@CrossOrigin
 @RestController
 @RequestMapping("/api/wx-pay")
 @Api(tags = "网站微信支付APIv3")
@@ -81,7 +87,7 @@ public class WxPayController {
     }
 
     /**
-     * TODO 用户取消订单
+     * 用户取消订单
      * 做了两件时间 -> 主动调用微信支付单
      * 修改了本地之歌订单orderNo地状态为主动关闭
      *

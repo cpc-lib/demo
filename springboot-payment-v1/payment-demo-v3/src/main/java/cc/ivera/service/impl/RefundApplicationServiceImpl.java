@@ -12,18 +12,23 @@ import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.RefundInfoService;
 import cc.ivera.service.refund.OrderRefundStatusService;
 import cc.ivera.service.refund.RefundStatusSyncResult;
+import cc.ivera.service.refund.RefundStatusSyncService;
 import cc.ivera.service.wxpay.WxPayRefundFacade;
+import cc.ivera.support.DistributedLockExecutor;
+import cc.ivera.support.PaymentLockKeys;
 import cc.ivera.util.JsonUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 @Service
 public class RefundApplicationServiceImpl implements RefundApplicationService {
@@ -38,18 +43,26 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
     private final OrderRefundStatusService orderRefundStatusService;
 
+    private final RefundStatusSyncService refundStatusSyncService;
+
+    private final DistributedLockExecutor distributedLockExecutor;
+
     public RefundApplicationServiceImpl(
         RefundInfoService refundInfoService,
         OrderInfoService orderInfoService,
         WxPayRefundFacade wxPayRefundFacade,
         AliPayService aliPayService,
-        OrderRefundStatusService orderRefundStatusService
+        OrderRefundStatusService orderRefundStatusService,
+        RefundStatusSyncService refundStatusSyncService,
+        DistributedLockExecutor distributedLockExecutor
     ) {
         this.refundInfoService = refundInfoService;
         this.orderInfoService = orderInfoService;
         this.wxPayRefundFacade = wxPayRefundFacade;
         this.aliPayService = aliPayService;
         this.orderRefundStatusService = orderRefundStatusService;
+        this.refundStatusSyncService = refundStatusSyncService;
+        this.distributedLockExecutor = distributedLockExecutor;
     }
 
     @Override
@@ -113,6 +126,10 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public RefundInfo queryRefundStatus(String refundNo) {
+        return executeWithRefundLock(refundNo, () -> queryRefundStatusInLock(refundNo));
+    }
+
+    private RefundInfo queryRefundStatusInLock(String refundNo) {
         RefundInfo refundInfo = refundInfoService.getByRefundNo(refundNo);
         if (refundInfo == null) {
             throw new BizException("退款申请单不存在");
@@ -209,8 +226,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         List<RefundStatusSyncResult> syncResults = wxPayRefundFacade.queryOrderRefundsForSync(orderInfo.getOrderNo());
         for (RefundStatusSyncResult syncResult : syncResults) {
             validateChannelOrderResult(orderInfo, syncResult);
-            refundInfoService.repairRefundFromChannel(syncResult);
-            refundInfoService.syncRefundStatus(syncResult);
+            repairAndSyncRefundInLock(syncResult);
             if (syncResult.getRefundNo() != null) {
                 channelRefundNos.add(syncResult.getRefundNo());
             }
@@ -227,15 +243,36 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
             if (channelRefundNos.contains(refundInfo.getRefundNo())) {
                 continue;
             }
-            syncRefundByChannel(orderInfo.getPaymentType(), refundInfo);
+            syncRefundByChannelInLock(orderInfo.getPaymentType(), refundInfo);
         }
+    }
+
+    private void syncRefundByChannelInLock(String paymentType, RefundInfo refundInfo) {
+        executeWithRefundLock(refundInfo.getRefundNo(), () -> syncRefundByChannel(paymentType, refundInfo));
     }
 
     private void syncRefundByChannel(String paymentType, RefundInfo refundInfo) {
         RefundStatusSyncResult syncResult = queryRefundStatusFromChannel(paymentType, refundInfo.getRefundNo());
         validateChannelResult(refundInfo, syncResult);
-        refundInfoService.repairRefundFromChannel(syncResult);
-        refundInfoService.syncRefundStatus(syncResult);
+        refundStatusSyncService.repairAndSync(syncResult);
+    }
+
+    private void repairAndSyncRefundInLock(RefundStatusSyncResult syncResult) {
+        executeWithRefundLock(syncResult.getRefundNo(), () -> refundStatusSyncService.repairAndSync(syncResult));
+    }
+
+    private void executeWithRefundLock(String refundNo, Runnable action) {
+        executeWithRefundLock(refundNo, () -> {
+            action.run();
+            return null;
+        });
+    }
+
+    private <T> T executeWithRefundLock(String refundNo, Supplier<T> action) {
+        if (!StringUtils.hasText(refundNo)) {
+            throw new BizException("退款单号不能为空");
+        }
+        return distributedLockExecutor.execute(PaymentLockKeys.refund(refundNo), action);
     }
 
     private boolean shouldSyncLocalRefund(RefundInfo refundInfo) {
