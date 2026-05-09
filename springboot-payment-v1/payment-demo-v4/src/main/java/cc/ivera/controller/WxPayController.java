@@ -112,6 +112,21 @@ public class WxPayController {
     }
 
     /**
+     * 主动查询微信支付状态，并在支付成功或已关闭时同步本地订单状态。
+     *
+     * @param orderNo
+     * @return
+     */
+    @ApiOperation("主动查询微信支付状态")
+    @GetMapping("/check-order-status/{orderNo}")
+    public R<Map<String, Object>> checkOrderStatus(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
+        log.info("主动查询微信支付状态");
+
+        Map<String, Object> result = wxPayOrderFacade.queryPaymentStatus(orderNo);
+        return R.ok().setMessage("查询成功").setData(result);
+    }
+
+    /**
      * 查询退款
      *
      * @param refundNo

@@ -234,6 +234,39 @@ public class WxPayOrderService implements WxPayOrderFacade {
     }
 
     @Override
+    public Map<String, Object> queryPaymentStatus(String orderNo) {
+        if (!StringUtils.hasText(orderNo)) {
+            throw new BizException("订单号不能为空");
+        }
+
+        OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(orderNo);
+        if (orderInfo == null) {
+            throw new BizException("订单不存在，orderNo=" + orderNo);
+        }
+        if (!PayType.WXPAY.getType().equals(orderInfo.getPaymentType())) {
+            throw new BizException("订单不是微信支付订单，orderNo=" + orderNo);
+        }
+
+        log.info("主动查询微信支付状态 ===> {}", orderNo);
+
+        String result = queryOrder(orderNo);
+        Map<String, Object> resultMap = JsonUtils.toObjectMap(result);
+        String tradeState = getString(resultMap, "trade_state");
+        String tradeStateDesc = getString(resultMap, "trade_state_desc");
+        String localStatusBefore = orderInfo.getOrderStatus();
+
+        distributedLockTemplate.execute("payment:wx:query:order:" + orderNo, 5000L, -1L, () ->
+                transactionTemplate.execute(status -> {
+                    doSyncOrderStatusFromWxQuery(orderNo, resultMap, result, tradeState, false);
+                    return null;
+                })
+        );
+
+        String localStatusAfter = orderInfoService.getOrderStatus(orderNo);
+        return buildPaymentStatusResult(orderNo, tradeState, tradeStateDesc, localStatusBefore, localStatusAfter, resultMap);
+    }
+
+    @Override
     public void checkOrderStatus(String orderNo) {
         log.warn("根据订单号核实订单状态 ===> {}", orderNo);
 
@@ -243,7 +276,7 @@ public class WxPayOrderService implements WxPayOrderFacade {
 
         distributedLockTemplate.execute("payment:wx:check:order:" + orderNo, 5000L, -1L, () ->
                 transactionTemplate.execute(status -> {
-                    doSyncOrderStatusFromWxQuery(orderNo, resultMap, result, tradeState);
+                    doSyncOrderStatusFromWxQuery(orderNo, resultMap, result, tradeState, true);
                     return null;
                 })
         );
@@ -252,7 +285,8 @@ public class WxPayOrderService implements WxPayOrderFacade {
     private void doSyncOrderStatusFromWxQuery(String orderNo,
                                               Map<String, Object> resultMap,
                                               String result,
-                                              String tradeState) {
+                                              String tradeState,
+                                              boolean closeUnpaidOrder) {
         OrderInfo lockedOrder = orderInfoService.getOrderByOrderNoForUpdate(orderNo);
         if (lockedOrder == null) {
             throw new BizException("查单同步对应订单不存在，orderNo=" + orderNo);
@@ -278,7 +312,12 @@ public class WxPayOrderService implements WxPayOrderFacade {
             paymentInfoService.createPaymentInfo(result);
         } else if (WxTradeState.NOTPAY.getType().equals(tradeState)) {
             log.warn("核实订单未支付 ===> {}", orderNo);
-            closeOrder(orderNo);
+            if (closeUnpaidOrder) {
+                closeOrder(orderNo);
+                orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CLOSED);
+            }
+        } else if (WxTradeState.CLOSED.getType().equals(tradeState)) {
+            log.warn("核实订单已关闭 ===> {}", orderNo);
             orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CLOSED);
         }
     }
@@ -442,6 +481,22 @@ public class WxPayOrderService implements WxPayOrderFacade {
         Map<String, Object> map = new HashMap<>();
         map.put("codeUrl", codeUrl);
         map.put("orderNo", orderNo);
+        return map;
+    }
+
+    private Map<String, Object> buildPaymentStatusResult(String orderNo,
+                                                         String tradeState,
+                                                         String tradeStateDesc,
+                                                         String localStatusBefore,
+                                                         String localStatusAfter,
+                                                         Map<String, Object> wxPayResult) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderNo", orderNo);
+        map.put("tradeState", tradeState);
+        map.put("tradeStateDesc", tradeStateDesc);
+        map.put("localStatusBefore", localStatusBefore);
+        map.put("localStatus", localStatusAfter);
+        map.put("wxPayResult", wxPayResult);
         return map;
     }
 

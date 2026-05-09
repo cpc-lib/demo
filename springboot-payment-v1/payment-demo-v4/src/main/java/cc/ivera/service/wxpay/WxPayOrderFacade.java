@@ -14,6 +14,8 @@ public interface WxPayOrderFacade {
 
     String queryOrder(String orderNo);
 
+    Map<String, Object> queryPaymentStatus(String orderNo);
+
     void checkOrderStatus(String orderNo);
 
     Map<String, Object> nativePayV2(Long productId, String remoteAddr);

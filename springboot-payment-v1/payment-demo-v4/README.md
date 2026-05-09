@@ -201,7 +201,7 @@ distributedLockTemplate.execute(lockKey, waitTime, leaseTime, () -> {
 | `/api/wx-pay/refunds/{orderNo}/{reason}` | POST | 申请退款 |
 | `/api/wx-pay/refunds/notify` | POST | 退款结果通知 |
 | `/api/wx-pay/cancel/{orderNo}` | POST | 取消订单 |
-| `/api/wx-pay/check-order-status/{orderNo}` | GET | 查询订单状态 |
+| `/api/wx-pay/check-order-status/{orderNo}` | GET | 主动查询并同步支付状态 |
 
 #### 微信支付 V2
 
