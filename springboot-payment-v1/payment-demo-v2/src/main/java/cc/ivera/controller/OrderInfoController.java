@@ -3,30 +3,31 @@ package cc.ivera.controller;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.service.OrderInfoService;
-import cc.ivera.service.WxPayService;
 import cc.ivera.vo.R;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin //开放前端的跨域访问
 @Api(tags = "商品订单管理")
 @RestController
 @RequestMapping("/api/order-info")
+@Validated
 public class OrderInfoController {
 
     @Resource
     private OrderInfoService orderInfoService;
 
-    @Resource
-    private WxPayService wxPayService;
-
     @ApiOperation("订单列表")
     @GetMapping("/list")
-    public R list() {
+    public R<Map<String, Object>> list() {
         List<OrderInfo> list = orderInfoService.listOrderByCreateTimeDesc();
         return R.ok().data("list", list);
     }
@@ -41,7 +42,7 @@ public class OrderInfoController {
      */
     @ApiOperation("查询本地订单状态")
     @GetMapping("/query-order-status/{orderNo}")
-    public R queryOrderStatus(@PathVariable String orderNo) throws Exception {
+    public R<Map<String, Object>> queryOrderStatus(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
         String orderStatus = orderInfoService.getOrderStatus(orderNo);
         if (OrderStatus.SUCCESS.getType().equals(orderStatus)) {
             return R.ok().setMessage("支付成功"); //支付成功

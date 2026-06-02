@@ -1,42 +1,41 @@
 package cc.ivera.config;
 
 import com.alipay.api.*;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
 
 import javax.annotation.Resource;
 
 @Configuration
 //加载配置文件
 @PropertySource("classpath:alipay-sandbox.properties")
+@EnableConfigurationProperties(AlipayProperties.class)
 public class AlipayClientConfig {
 
     @Resource
-    private Environment config;
+    private AlipayProperties alipayProperties;
 
     @Bean
     public AlipayClient alipayClient() throws AlipayApiException {
         AlipayConfig alipayConfig = new AlipayConfig();
 
         //设置网关地址
-        alipayConfig.setServerUrl(config.getProperty("alipay.gateway-url"));
+        alipayConfig.setServerUrl(alipayProperties.getGatewayUrl());
         //设置应用Id
-        alipayConfig.setAppId(config.getProperty("alipay.app-id"));
+        alipayConfig.setAppId(alipayProperties.getAppId());
         //设置应用私钥
-        alipayConfig.setPrivateKey(config.getProperty("alipay.merchant-private-key"));
+        alipayConfig.setPrivateKey(alipayProperties.getMerchantPrivateKey());
         //设置请求格式，固定值json
         alipayConfig.setFormat(AlipayConstants.FORMAT_JSON);
         //设置字符集
         alipayConfig.setCharset(AlipayConstants.CHARSET_UTF8);
         //设置支付宝公钥
-        alipayConfig.setAlipayPublicKey(config.getProperty("alipay.alipay-public-key"));
+        alipayConfig.setAlipayPublicKey(alipayProperties.getAlipayPublicKey());
         //设置签名类型
         alipayConfig.setSignType(AlipayConstants.SIGN_TYPE_RSA2);
         //构造client
-        AlipayClient alipayClient = new DefaultAlipayClient(alipayConfig);
-
-        return alipayClient;
+        return new DefaultAlipayClient(alipayConfig);
     }
 }

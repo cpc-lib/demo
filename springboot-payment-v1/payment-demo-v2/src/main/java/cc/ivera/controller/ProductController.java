@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin //开放前端的跨域访问
 @Api(tags = "商品管理")
@@ -25,13 +26,13 @@ public class ProductController {
 
     @ApiOperation("测试接口")
     @GetMapping("/test")
-    public R test() {
+    public R<Map<String, Object>> test() {
         return R.ok().data("message", "hello").data("now", new Date());
     }
 
     @ApiOperation("商品列表")
     @GetMapping("/list")
-    public R list() {
+    public R<Map<String, Object>> list() {
 
         List<Product> list = productService.list();
         return R.ok().data("productList", list);

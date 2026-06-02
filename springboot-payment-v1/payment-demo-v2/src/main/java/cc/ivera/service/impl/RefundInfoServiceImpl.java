@@ -16,12 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundInfo> implements RefundInfoService {
@@ -82,41 +82,79 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateRefundToProcessing(String refundNo, String contentReturn) {
         updateRefund(refundNo, null, RefundStatus.PROCESSING.getType(), contentReturn, null);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateRefundToSuccess(String refundNo, String refundId, String content) {
         updateRefund(refundNo, refundId, RefundStatus.SUCCESS.getType(), content, content);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateRefundToFailed(String refundNo, String content) {
         updateRefund(refundNo, null, RefundStatus.FAILED.getType(), content, null);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateRefundToAbnormal(String refundNo, String content) {
         updateRefund(refundNo, null, RefundStatus.ABNORMAL.getType(), content, content);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateRefundToClosed(String refundNo, String content) {
         updateRefund(refundNo, null, RefundStatus.CLOSED.getType(), content, content);
     }
 
     @Override
-    public List<RefundInfo> getNoRefundOrderByDuration(int minutes) {
-        Instant instant = Instant.now().minus(Duration.ofMinutes(minutes));
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateRefundIfStatusIn(String refundNo,
+                                          String refundId,
+                                          RefundStatus targetStatus,
+                                          String contentReturn,
+                                          String contentNotify,
+                                          Collection<RefundStatus> currentStatuses) {
+        if (refundNo == null || refundNo.trim().isEmpty()) {
+            throw new BizException("退款单号不能为空");
+        }
+        if (targetStatus == null) {
+            throw new BizException("目标退款状态不能为空");
+        }
+        if (currentStatuses == null || currentStatuses.isEmpty()) {
+            throw new BizException("当前退款状态不能为空");
+        }
+
+        List<String> currentStatusTypes = currentStatuses.stream()
+                .map(RefundStatus::getType)
+                .collect(Collectors.toList());
+
         QueryWrapper<RefundInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("refund_status", RefundStatus.PROCESSING.getType());
-        queryWrapper.le("create_time", instant);
-        return baseMapper.selectList(queryWrapper);
+        queryWrapper.eq("refund_no", refundNo)
+                .in("refund_status", currentStatusTypes);
+
+        RefundInfo refundInfo = new RefundInfo();
+        refundInfo.setRefundId(refundId);
+        refundInfo.setRefundStatus(targetStatus.getType());
+        if (contentReturn != null) {
+            refundInfo.setContentReturn(contentReturn);
+        }
+        if (contentNotify != null) {
+            refundInfo.setContentNotify(contentNotify);
+        }
+
+        boolean updated = baseMapper.update(refundInfo, queryWrapper) > 0;
+        if (updated) {
+            refreshOrderRefundStatusByRefundNo(refundNo);
+        }
+        return updated;
     }
 
-    @Override
-    public int getSuccessRefundAmount(String orderNo) {
+    private int getSuccessRefundAmount(String orderNo) {
         Integer amount = baseMapper.sumRefundAmountByOrderNoAndStatuses(
                 orderNo,
                 Collections.singletonList(RefundStatus.SUCCESS.getType())
@@ -124,8 +162,7 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         return amount == null ? 0 : amount;
     }
 
-    @Override
-    public int getOccupiedRefundAmount(String orderNo) {
+    private int getOccupiedRefundAmount(String orderNo) {
         Integer amount = baseMapper.sumRefundAmountByOrderNoAndStatuses(
                 orderNo,
                 Arrays.asList(RefundStatus.PROCESSING.getType(), RefundStatus.SUCCESS.getType())
@@ -133,8 +170,7 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         return amount == null ? 0 : amount;
     }
 
-    @Override
-    public int getReservedRefundAmount(String orderNo) {
+    private int getReservedRefundAmount(String orderNo) {
         List<RefundInfo> refundInfoList = listByOrderNo(orderNo);
         int total = 0;
         for (RefundInfo refundInfo : refundInfoList) {
@@ -167,6 +203,7 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void markApprovalPassed(String refundNo, String approveRemark) {
         RefundInfo refundInfo = getByRefundNo(refundNo);
         if (refundInfo == null) {
@@ -177,6 +214,12 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         }
         if (RefundApprovalStatus.APPROVED.getType().equals(refundInfo.getApprovalStatus())) {
             return;
+        }
+        if (RefundStatus.SUCCESS.getType().equals(refundInfo.getRefundStatus())) {
+            throw new BizException("该退款申请单已退款成功，请勿重复处理");
+        }
+        if (RefundStatus.PROCESSING.getType().equals(refundInfo.getRefundStatus())) {
+            throw new BizException("该退款申请单已在退款处理中，请勿重复处理");
         }
 
         QueryWrapper<RefundInfo> queryWrapper = new QueryWrapper<>();
@@ -190,6 +233,7 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void markApprovalRejected(String refundNo, String approveRemark) {
         RefundInfo refundInfo = getByRefundNo(refundNo);
         if (refundInfo == null) {
@@ -260,6 +304,15 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
         }
         baseMapper.update(refundInfo, queryWrapper);
 
+        RefundInfo latestRefundInfo = baseMapper.selectOne(queryWrapper);
+        if (latestRefundInfo != null) {
+            refreshOrderRefundStatus(latestRefundInfo.getOrderNo());
+        }
+    }
+
+    private void refreshOrderRefundStatusByRefundNo(String refundNo) {
+        QueryWrapper<RefundInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("refund_no", refundNo);
         RefundInfo latestRefundInfo = baseMapper.selectOne(queryWrapper);
         if (latestRefundInfo != null) {
             refreshOrderRefundStatus(latestRefundInfo.getOrderNo());

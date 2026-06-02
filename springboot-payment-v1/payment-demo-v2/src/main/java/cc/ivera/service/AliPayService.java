@@ -15,13 +15,7 @@ public interface AliPayService {
 
     void checkOrderStatus(String orderNo);
 
-    void refund(String orderNo, Integer refundAmount, String reason);
-
     void executeRefund(RefundInfo refundInfo);
-
-    default void refund(String orderNo, String reason) {
-        refund(orderNo, null, reason);
-    }
 
     String queryRefund(String refundNo);
 

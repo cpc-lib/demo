@@ -1,22 +1,27 @@
 package cc.ivera.controller;
 
+import cc.ivera.config.AlipayProperties;
 import cc.ivera.dto.RefundRequest;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.AliPayService;
 import cc.ivera.service.OrderInfoService;
-import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayConstants;
 import com.alipay.api.internal.util.AlipaySignature;
 import cc.ivera.entity.OrderInfo;
+import cc.ivera.util.MoneyUtils;
 import cc.ivera.vo.R;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.Environment;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.util.Map;
 
 @CrossOrigin
@@ -24,13 +29,14 @@ import java.util.Map;
 @RequestMapping("/api/ali-pay")
 @Api(tags = "网站支付宝支付")
 @Slf4j
+@Validated
 public class AliPayController {
 
     @Resource
     private AliPayService aliPayService;
 
     @Resource
-    private Environment config;
+    private AlipayProperties alipayProperties;
 
     @Resource
     private OrderInfoService orderInfoService;
@@ -40,7 +46,7 @@ public class AliPayController {
 
     @ApiOperation("统一收单下单并支付页面接口的调用")
     @PostMapping("/trade/page/pay/{productId}")
-    public R tradePagePay(@PathVariable Long productId) {
+    public R<Map<String, Object>> tradePagePay(@PathVariable @Positive(message = "商品ID必须大于0") Long productId) {
         log.info("统一收单下单并支付页面接口的调用");
         //支付宝开放平台接受 request 请求对象后
         // 会为开发者生成一个html 形式的 form表单，包含自动提交的脚本
@@ -62,7 +68,7 @@ public class AliPayController {
             //异步通知验签
             boolean signVerified = AlipaySignature.rsaCheckV1(
                     params,
-                    config.getProperty("alipay.alipay-public-key"),
+                    alipayProperties.getAlipayPublicKey(),
                     AlipayConstants.CHARSET_UTF8,
                     AlipayConstants.SIGN_TYPE_RSA2); //调用SDK验证签名
 
@@ -86,7 +92,11 @@ public class AliPayController {
 
             //2 判断 total_amount 是否确实为该订单的实际金额（即商户订单创建时的金额）
             String totalAmount = params.get("total_amount");
-            int totalAmountInt = new BigDecimal(totalAmount).multiply(new BigDecimal("100")).intValue();
+            int totalAmountInt = MoneyUtils.yuanToCents(totalAmount);
+            if (order.getTotalFee() == null) {
+                log.error("订单金额为空");
+                return result;
+            }
             int totalFeeInt = order.getTotalFee().intValue();
             if (totalAmountInt != totalFeeInt) {
                 log.error("金额校验失败");
@@ -95,16 +105,16 @@ public class AliPayController {
 
             //3 校验通知中的 seller_id（或者 seller_email) 是否为 out_trade_no 这笔单据的对应的操作方
             String sellerId = params.get("seller_id");
-            String sellerIdProperty = config.getProperty("alipay.seller-id");
-            if (!sellerId.equals(sellerIdProperty)) {
+            String sellerIdProperty = alipayProperties.getSellerId();
+            if (sellerId == null || !sellerId.equals(sellerIdProperty)) {
                 log.error("商家pid校验失败");
                 return result;
             }
 
             //4 验证 app_id 是否为该商户本身
             String appId = params.get("app_id");
-            String appIdProperty = config.getProperty("alipay.app-id");
-            if (!appId.equals(appIdProperty)) {
+            String appIdProperty = alipayProperties.getAppId();
+            if (appId == null || !appId.equals(appIdProperty)) {
                 log.error("appid校验失败");
                 return result;
             }
@@ -122,8 +132,8 @@ public class AliPayController {
 
             //校验成功后在response中返回success并继续商户自身业务处理，校验失败返回failure
             result = "success";
-        } catch (AlipayApiException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error("处理支付宝异步通知失败", e);
         }
         return result;
     }
@@ -136,7 +146,7 @@ public class AliPayController {
      */
     @ApiOperation("用户取消订单")
     @PostMapping("/trade/close/{orderNo}")
-    public R cancel(@PathVariable String orderNo) {
+    public R<Map<String, Object>> cancel(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
         log.info("取消订单");
         aliPayService.cancelOrder(orderNo);
         return R.ok().setMessage("订单已取消");
@@ -150,7 +160,7 @@ public class AliPayController {
      */
     @ApiOperation("查询订单：测试订单状态用")
     @GetMapping("/trade/query/{orderNo}")
-    public R queryOrder(@PathVariable String orderNo) {
+    public R<Map<String, Object>> queryOrder(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
         log.info("查询订单");
 
         String result = aliPayService.queryOrder(orderNo);
@@ -166,7 +176,7 @@ public class AliPayController {
      */
     @ApiOperation("申请退款")
     @PostMapping("/trade/refund")
-    public R refunds(@RequestBody RefundRequest request) {
+    public R<Map<String, Object>> refunds(@Valid @RequestBody RefundRequest request) {
         log.info("申请退款");
         refundApplicationService.createApplication(request.getOrderNo(), request.getRefundAmount(), request.getReason());
         return R.ok().setMessage("退款申请单创建成功，待审核");
@@ -174,7 +184,8 @@ public class AliPayController {
 
     @ApiOperation("申请退款-兼容旧接口")
     @PostMapping("/trade/refund/{orderNo}/{reason}")
-    public R refundsLegacy(@PathVariable String orderNo, @PathVariable String reason) {
+    public R<Map<String, Object>> refundsLegacy(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo,
+                                                @PathVariable @NotBlank(message = "退款原因不能为空") @Size(max = 50, message = "退款原因长度不能超过50个字符") String reason) {
         log.info("申请退款(旧接口)");
         refundApplicationService.createApplication(orderNo, null, reason);
         return R.ok().setMessage("退款申请单创建成功，待审核");
@@ -185,11 +196,10 @@ public class AliPayController {
      *
      * @param orderNo
      * @return
-     * @throws Exception
      */
     @ApiOperation("查询退款：测试用")
     @GetMapping("/trade/fastpay/refund/{refundNo}")
-    public R queryRefund(@PathVariable String refundNo) throws Exception {
+    public R<Map<String, Object>> queryRefund(@PathVariable @NotBlank(message = "退款单号不能为空") @Size(max = 50, message = "退款单号长度不能超过50个字符") String refundNo) {
         log.info("查询退款");
 
         String result = aliPayService.queryRefund(refundNo);
@@ -205,9 +215,9 @@ public class AliPayController {
      */
     @ApiOperation("获取账单url")
     @GetMapping("/bill/downloadurl/query/{billDate}/{type}")
-    public R queryTradeBill(
-            @PathVariable String billDate,
-            @PathVariable String type) {
+    public R<Map<String, Object>> queryTradeBill(
+            @PathVariable @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "账单日期格式必须为yyyy-MM-dd") String billDate,
+            @PathVariable @Pattern(regexp = "trade|signcustomer", message = "支付宝账单类型只支持trade或signcustomer") String type) {
         log.info("获取账单url");
         String downloadUrl = aliPayService.queryBill(billDate, type);
         return R.ok().setMessage("获取账单url成功").data("downloadUrl", downloadUrl);

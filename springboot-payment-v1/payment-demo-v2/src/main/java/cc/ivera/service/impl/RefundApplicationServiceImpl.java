@@ -11,11 +11,14 @@ import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.RefundInfoService;
 import cc.ivera.service.WxPayService;
+import cc.ivera.util.JsonUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -40,8 +43,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void approve(String refundNo, String approveRemark) throws Exception {
+    public void approve(String refundNo, String approveRemark) {
         RefundInfo refundInfo = refundInfoService.getByRefundNo(refundNo);
         if (refundInfo == null) {
             throw new BizException("退款申请单不存在");
@@ -60,19 +62,18 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         if (orderInfo == null) {
             throw new BizException("订单不存在");
         }
+        validateSupportedPayType(orderInfo.getPaymentType());
 
         refundInfoService.markApprovalPassed(refundNo, approveRemark);
+        claimRefundForExecution(refundNo);
         RefundInfo latestRefundInfo = refundInfoService.getByRefundNo(refundNo);
 
-        if (PayType.WXPAY.getType().equals(orderInfo.getPaymentType())) {
-            wxPayService.executeRefund(latestRefundInfo);
-            return;
+        try {
+            executeRefund(orderInfo.getPaymentType(), latestRefundInfo);
+        } catch (RuntimeException e) {
+            markRefundSubmitFailed(refundNo, e);
+            throw e;
         }
-        if (PayType.ALIPAY.getType().equals(orderInfo.getPaymentType())) {
-            aliPayService.executeRefund(latestRefundInfo);
-            return;
-        }
-        throw new BizException("不支持的支付方式：" + orderInfo.getPaymentType());
     }
 
     @Override
@@ -90,5 +91,48 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
     @Override
     public List<RefundInfo> listByOrderNo(String orderNo) {
         return refundInfoService.listByOrderNo(orderNo);
+    }
+
+    private void claimRefundForExecution(String refundNo) {
+        boolean updated = refundInfoService.updateRefundIfStatusIn(
+                refundNo,
+                null,
+                RefundStatus.PROCESSING,
+                null,
+                null,
+                Arrays.asList(RefundStatus.CREATED, RefundStatus.FAILED, RefundStatus.ABNORMAL));
+        if (!updated) {
+            throw new BizException("该退款申请单状态已变化，请勿重复处理");
+        }
+    }
+
+    private void executeRefund(String paymentType, RefundInfo refundInfo) {
+        if (PayType.WXPAY.getType().equals(paymentType)) {
+            wxPayService.executeRefund(refundInfo);
+            return;
+        }
+        if (PayType.ALIPAY.getType().equals(paymentType)) {
+            aliPayService.executeRefund(refundInfo);
+            return;
+        }
+        throw new BizException("不支持的支付方式：" + paymentType);
+    }
+
+    private void validateSupportedPayType(String paymentType) {
+        if (!PayType.WXPAY.getType().equals(paymentType)
+                && !PayType.ALIPAY.getType().equals(paymentType)) {
+            throw new BizException("不支持的支付方式：" + paymentType);
+        }
+    }
+
+    private void markRefundSubmitFailed(String refundNo, Exception exception) {
+        String message = exception.getMessage() == null ? "退款提交失败" : exception.getMessage();
+        refundInfoService.updateRefundIfStatusIn(
+                refundNo,
+                null,
+                RefundStatus.FAILED,
+                JsonUtils.toJson(Collections.singletonMap("message", message)),
+                null,
+                Arrays.asList(RefundStatus.CREATED, RefundStatus.PROCESSING));
     }
 }

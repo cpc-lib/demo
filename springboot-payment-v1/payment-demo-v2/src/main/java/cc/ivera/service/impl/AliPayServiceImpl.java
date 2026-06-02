@@ -1,32 +1,29 @@
 package cc.ivera.service.impl;
 
+import cc.ivera.config.AlipayProperties;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.RefundInfo;
 import cc.ivera.exception.BizException;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.PayType;
-import cc.ivera.enums.wxpay.AliPayTradeState;
+import cc.ivera.enums.alipay.AliPayTradeState;
 import cc.ivera.service.AliPayService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.RefundInfoService;
-import com.alibaba.fastjson.JSONObject;
+import cc.ivera.util.JsonUtils;
+import cc.ivera.util.MoneyUtils;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.request.*;
 import com.alipay.api.response.*;
-import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
@@ -39,7 +36,7 @@ public class AliPayServiceImpl implements AliPayService {
     private AlipayClient alipayClient;
 
     @Resource
-    private Environment config;
+    private AlipayProperties alipayProperties;
 
     @Resource
     private PaymentInfoService paymentInfoService;
@@ -47,9 +44,6 @@ public class AliPayServiceImpl implements AliPayService {
     @Resource
     private RefundInfoService refundsInfoService;
 
-    private final ReentrantLock lock = new ReentrantLock();
-
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public String tradeCreate(Long productId) {
         try {
@@ -61,35 +55,34 @@ public class AliPayServiceImpl implements AliPayService {
             AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
             //配置需要的公共请求参数
             //支付完成后，支付宝向谷粒学院发起异步通知的地址
-            request.setNotifyUrl(config.getProperty("alipay.notify-url"));
+            request.setNotifyUrl(alipayProperties.getNotifyUrl());
             //支付完成后，我们想让页面跳转回谷粒学院的页面，配置returnUrl
-            request.setReturnUrl(config.getProperty("alipay.return-url"));
+            request.setReturnUrl(alipayProperties.getReturnUrl());
 
             //组装当前业务方法的请求参数
-            JSONObject bizContent = new JSONObject();
+            Map<String, Object> bizContent = new HashMap<>();
             //订单信息
             bizContent.put("out_trade_no", orderInfo.getOrderNo());
             //支付宝支付单位为元
-            BigDecimal total = new BigDecimal(orderInfo.getTotalFee().toString()).divide(new BigDecimal("100"));
-            bizContent.put("total_amount", total);
+            bizContent.put("total_amount", MoneyUtils.centsToYuan(orderInfo.getTotalFee()));
             bizContent.put("subject", orderInfo.getTitle());
             bizContent.put("product_code", "FAST_INSTANT_TRADE_PAY");
 
-            request.setBizContent(bizContent.toString());
+            request.setBizContent(JsonUtils.toJson(bizContent));
 
             //执行请求，调用支付宝接口
             AlipayTradePagePayResponse response = alipayClient.pageExecute(request);
 
             if (response.isSuccess()) {
-                log.info("调用成功，返回结果 ===> " + response.getBody());
+                log.info("调用成功，返回结果 ===> {}", response.getBody());
                 return response.getBody();
             } else {
-                log.info("调用失败，返回码 ===> " + response.getCode() + ", 返回描述 ===> " + response.getMsg());
-                throw new RuntimeException("创建支付交易失败");
+                log.info("调用失败，返回码 ===> {}, 返回描述 ===> {}", response.getCode(), response.getMsg());
+                throw new BizException("创建支付交易失败");
             }
         } catch (AlipayApiException e) {
-            e.printStackTrace();
-            throw new RuntimeException("创建支付交易失败");
+            log.error("创建支付宝支付交易失败", e);
+            throw new BizException("创建支付交易失败", e);
         }
     }
 
@@ -106,27 +99,17 @@ public class AliPayServiceImpl implements AliPayService {
         //获取订单号
         String orderNo = params.get("out_trade_no");
 
-        /*在对业务数据进行状态检查和处理之前，要采用数据锁进行并发控制，以避免函数重入造成的数据混乱*/
-        //尝试获取锁：成功获取则立即返回true，获取失败则立即返回false。不必一直等待锁的释放
-        if (lock.tryLock()) {
-            try {
-                //处理重复通知
-                //接口调用的幂等性：无论接口被调用多少次，以下业务执行一次
-                String orderStatus = orderInfoService.getOrderStatus(orderNo);
-                if (!OrderStatus.NOTPAY.getType().equals(orderStatus)) {
-                    return;
-                }
-
-                //更新订单状态
-                orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.SUCCESS);
-
-                //记录支付日志
-                paymentInfoService.createPaymentInfoForAliPay(params);
-            } finally {
-                //要主动释放锁
-                lock.unlock();
-            }
+        boolean updated = orderInfoService.updateStatusByOrderNoIfStatus(
+                orderNo,
+                OrderStatus.NOTPAY,
+                OrderStatus.SUCCESS);
+        if (!updated) {
+            log.info("支付宝支付通知重复或订单状态已变化，忽略处理 ===> {}", orderNo);
+            return;
         }
+
+        //记录支付日志
+        paymentInfoService.createPaymentInfoForAliPay(params);
     }
 
     /**
@@ -155,22 +138,21 @@ public class AliPayServiceImpl implements AliPayService {
             log.info("查单接口调用 ===> {}", orderNo);
 
             AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
-            JSONObject bizContent = new JSONObject();
+            Map<String, Object> bizContent = new HashMap<>();
             bizContent.put("out_trade_no", orderNo);
-            request.setBizContent(bizContent.toString());
+            request.setBizContent(JsonUtils.toJson(bizContent));
 
             AlipayTradeQueryResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
-                log.info("调用成功，返回结果 ===> " + response.getBody());
-                System.out.println(response.getBody());
+                log.info("调用成功，返回结果 ===> {}", response.getBody());
                 return response.getBody();
             } else {
-                log.info("调用失败，返回码 ===> " + response.getCode() + ", 返回描述 ===> " + response.getMsg());
+                log.info("调用失败，返回码 ===> {}, 返回描述 ===> {}", response.getCode(), response.getMsg());
                 return null;//订单不存在
             }
         } catch (AlipayApiException e) {
-            e.printStackTrace();
-            throw new RuntimeException("查单接口的调用失败");
+            log.error("调用支付宝查单接口失败", e);
+            throw new BizException("查单接口的调用失败", e);
         }
     }
 
@@ -192,13 +174,17 @@ public class AliPayServiceImpl implements AliPayService {
         if (result == null) {
             log.warn("核实订单未创建 ===> {}", orderNo);
             //更新本地订单状态
-            orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.CLOSED);
+            orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CLOSED);
+            return;
         }
 
         //解析查单响应结果
-        Gson gson = new Gson();
-        HashMap<String, LinkedTreeMap> resultMap = gson.fromJson(result, HashMap.class);
-        LinkedTreeMap alipayTradeQueryResponse = resultMap.get("alipay_trade_query_response");
+        Map<String, Object> resultMap = JsonUtils.toObjectMap(result);
+        Map<String, Object> alipayTradeQueryResponse = JsonUtils.toObjectMap(resultMap.get("alipay_trade_query_response"));
+        if (alipayTradeQueryResponse == null) {
+            log.warn("支付宝查单响应缺少交易信息 ===> {}", orderNo);
+            return;
+        }
 
         String tradeStatus = (String) alipayTradeQueryResponse.get("trade_status");
         if (AliPayTradeState.NOTPAY.getType().equals(tradeStatus)) {
@@ -208,12 +194,19 @@ public class AliPayServiceImpl implements AliPayService {
             this.closeOrder(orderNo);
 
             // 并更新商户端订单状态
-            orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.CLOSED);
+            orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CLOSED);
         } else if (AliPayTradeState.SUCCESS.getType().equals(tradeStatus)) {
             log.warn("核实订单已支付 ===> {}", orderNo);
 
             //如果订单已支付，则更新商户端订单状态
-            orderInfoService.updateStatusByOrderNo(orderNo, OrderStatus.SUCCESS);
+            boolean updated = orderInfoService.updateStatusByOrderNoIfStatus(
+                    orderNo,
+                    OrderStatus.NOTPAY,
+                    OrderStatus.SUCCESS);
+            if (!updated) {
+                log.info("支付宝查单确认支付成功，但订单已处理，忽略支付日志 ===> {}", orderNo);
+                return;
+            }
 
             //并记录支付日志
             paymentInfoService.createPaymentInfoForAliPay(alipayTradeQueryResponse);
@@ -233,33 +226,20 @@ public class AliPayServiceImpl implements AliPayService {
             //只有用户扫码了(不需要确认支付)或在支付页面登录了，才会创建订单。
             //如果用户没有扫码，此时会出现订单不存在
             AlipayTradeCloseRequest request = new AlipayTradeCloseRequest();
-            JSONObject bizContent = new JSONObject();
+            Map<String, Object> bizContent = new HashMap<>();
             bizContent.put("out_trade_no", orderNo);
-            request.setBizContent(bizContent.toString());
+            request.setBizContent(JsonUtils.toJson(bizContent));
             AlipayTradeCloseResponse response = alipayClient.execute(request);
 
             if (response.isSuccess()) {
-                log.info("调用成功，返回结果 ===> " + response.getBody());
+                log.info("调用成功，返回结果 ===> {}", response.getBody());
             } else {
-                log.info("调用失败，返回码 ===> " + response.getCode() + ", 返回描述 ===> " + response.getMsg());
+                log.info("调用失败，返回码 ===> {}, 返回描述 ===> {}", response.getCode(), response.getMsg());
             }
         } catch (AlipayApiException e) {
-            e.printStackTrace();
-            throw new RuntimeException("关单接口的调用失败");
+            log.error("调用支付宝关单接口失败", e);
+            throw new BizException("关单接口的调用失败", e);
         }
-    }
-
-    /**
-     * 退款
-     *
-     * @param orderNo
-     * @param reason
-     */
-    @Transactional(rollbackFor = Exception.class, noRollbackFor = BizException.class)
-    @Override
-    public void refund(String orderNo, Integer refundAmount, String reason) {
-        RefundInfo refundInfo = refundsInfoService.createRefundApplication(orderNo, refundAmount, reason);
-        executeRefund(refundInfo);
     }
 
     @Override
@@ -272,13 +252,12 @@ public class AliPayServiceImpl implements AliPayService {
             log.info("调用退款API, refundNo = {}", refundInfo.getRefundNo());
 
             AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
-            JSONObject bizContent = new JSONObject();
+            Map<String, Object> bizContent = new HashMap<>();
             bizContent.put("out_trade_no", refundInfo.getOrderNo());
             bizContent.put("out_request_no", refundInfo.getRefundNo());
-            BigDecimal refund = new BigDecimal(refundInfo.getRefund().toString()).divide(new BigDecimal("100"));
-            bizContent.put("refund_amount", refund);
+            bizContent.put("refund_amount", MoneyUtils.centsToYuan(refundInfo.getRefund()));
             bizContent.put("refund_reason", refundInfo.getReason());
-            request.setBizContent(bizContent.toString());
+            request.setBizContent(JsonUtils.toJson(bizContent));
 
             AlipayTradeRefundResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
@@ -290,8 +269,8 @@ public class AliPayServiceImpl implements AliPayService {
                 throw new BizException("创建退款申请失败：" + response.getSubMsg());
             }
         } catch (AlipayApiException e) {
-            e.printStackTrace();
-            throw new RuntimeException("创建退款申请失败");
+            log.error("调用支付宝退款接口失败", e);
+            throw new BizException("创建退款申请失败", e);
         }
     }
 
@@ -311,14 +290,14 @@ public class AliPayServiceImpl implements AliPayService {
             queryWrapper.eq("refund_no", refundNo);
             RefundInfo refundInfo = refundsInfoService.getOne(queryWrapper);
             if (refundInfo == null) {
-                throw new RuntimeException("退款单不存在");
+                throw new BizException("退款单不存在");
             }
 
             AlipayTradeFastpayRefundQueryRequest request = new AlipayTradeFastpayRefundQueryRequest();
-            JSONObject bizContent = new JSONObject();
+            Map<String, Object> bizContent = new HashMap<>();
             bizContent.put("out_trade_no", refundInfo.getOrderNo());
             bizContent.put("out_request_no", refundNo);
-            request.setBizContent(bizContent.toString());
+            request.setBizContent(JsonUtils.toJson(bizContent));
 
             AlipayTradeFastpayRefundQueryResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
@@ -329,8 +308,8 @@ public class AliPayServiceImpl implements AliPayService {
                 return null;
             }
         } catch (AlipayApiException e) {
-            e.printStackTrace();
-            throw new RuntimeException("查单接口的调用失败");
+            log.error("调用支付宝退款查询接口失败", e);
+            throw new BizException("查单接口的调用失败", e);
         }
     }
 
@@ -345,29 +324,35 @@ public class AliPayServiceImpl implements AliPayService {
     public String queryBill(String billDate, String type) {
         try {
             AlipayDataDataserviceBillDownloadurlQueryRequest request = new AlipayDataDataserviceBillDownloadurlQueryRequest();
-            JSONObject bizContent = new JSONObject();
+            Map<String, Object> bizContent = new HashMap<>();
             bizContent.put("bill_type", type);
             bizContent.put("bill_date", billDate);
-            request.setBizContent(bizContent.toString());
+            request.setBizContent(JsonUtils.toJson(bizContent));
             AlipayDataDataserviceBillDownloadurlQueryResponse response = alipayClient.execute(request);
 
             if (response.isSuccess()) {
-                log.info("调用成功，返回结果 ===> " + response.getBody());
+                log.info("调用成功，返回结果 ===> {}", response.getBody());
 
                 //获取账单下载地址
-                Gson gson = new Gson();
-                HashMap<String, LinkedTreeMap> resultMap = gson.fromJson(response.getBody(), HashMap.class);
-                LinkedTreeMap billDownloadurlResponse = resultMap.get("alipay_data_dataservice_bill_downloadurl_query_response");
+                Map<String, Object> resultMap = JsonUtils.toObjectMap(response.getBody());
+                Map<String, Object> billDownloadurlResponse = JsonUtils.toObjectMap(
+                        resultMap.get("alipay_data_dataservice_bill_downloadurl_query_response"));
+                if (billDownloadurlResponse == null) {
+                    throw new BizException("申请账单失败");
+                }
                 String billDownloadUrl = (String) billDownloadurlResponse.get("bill_download_url");
+                if (billDownloadUrl == null || billDownloadUrl.trim().isEmpty()) {
+                    throw new BizException("申请账单失败");
+                }
 
                 return billDownloadUrl;
             } else {
-                log.info("调用失败，返回码 ===> " + response.getCode() + ", 返回描述 ===> " + response.getMsg());
-                throw new RuntimeException("申请账单失败");
+                log.info("调用失败，返回码 ===> {}, 返回描述 ===> {}", response.getCode(), response.getMsg());
+                throw new BizException("申请账单失败");
             }
         } catch (AlipayApiException e) {
-            e.printStackTrace();
-            throw new RuntimeException("申请账单失败");
+            log.error("调用支付宝账单接口失败", e);
+            throw new BizException("申请账单失败", e);
         }
     }
 }
