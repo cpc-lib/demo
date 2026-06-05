@@ -1,0 +1,33 @@
+package cc.ivera.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.Version;
+import lombok.Data;
+
+@Data
+@TableName("t_order_info")
+public class OrderInfo extends BaseEntity {
+
+    private String title;//订单标题
+
+    private String orderNo;//商户订单编号
+
+    private Long userId;//用户id
+
+    private Long productId;//支付产品id
+
+    private Integer totalFee;//订单金额(分)
+
+    private String codeUrl;//订单二维码连接
+
+    private String orderStatus;//订单状态
+
+    private String paymentType;//支付方式
+
+    private Long paymentAppId;//支付应用ID
+
+    private String paymentChannelCode;//支付渠道编码
+
+    @Version
+    private Integer version;//乐观锁版本号
+}
