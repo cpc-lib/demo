@@ -1,0 +1,21 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.220.200:3308/migration_demo?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true&useServerPrepStmts=false&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: "cpc!23#@"
+    hikari:
+      maximum-pool-size: 40
+      minimum-idle: 10
+      connection-timeout: 30000
+      max-lifetime: 1800000
+      idle-timeout: 600000
+migration:
+  default-shard-size: 50000
+  default-batch-size: 5000
+  default-thread-size: 16
+  max-thread-size: 32
+  max-retry-times: 3
+  table-name-regex: "^[a-zA-Z0-9_]+$"
