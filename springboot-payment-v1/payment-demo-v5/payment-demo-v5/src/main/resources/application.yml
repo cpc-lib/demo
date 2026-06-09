@@ -42,3 +42,5 @@ logging:
 payment:
   order:
     close-delay-ms: 60000
+  refund:
+    status-sync-delay-ms: 60000

@@ -82,6 +82,8 @@ spring:
     password: guest
 ```
 
+RabbitMQ 队列、exchange、routing key 和延迟参数的部署/运维清单见 [docs/RABBITMQ_OPERATIONS.md](docs/RABBITMQ_OPERATIONS.md)。
+
 #### 4. 配置支付信息
 
 **微信支付配置** (`src/main/resources/wxpay.properties`)：
