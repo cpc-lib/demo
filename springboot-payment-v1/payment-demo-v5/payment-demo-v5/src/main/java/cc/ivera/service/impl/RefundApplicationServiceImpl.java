@@ -11,6 +11,7 @@ import cc.ivera.service.AliPayService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.RefundInfoService;
+import cc.ivera.service.RefundStatusSyncMessageService;
 import cc.ivera.service.refund.OrderRefundStatusService;
 import cc.ivera.service.refund.RefundStatusSyncResult;
 import cc.ivera.service.wxpay.WxPayRefundFacade;
@@ -37,13 +38,16 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
     private final DistributedLockTemplate distributedLockTemplate;
 
+    private final RefundStatusSyncMessageService refundStatusSyncMessageService;
+
     public RefundApplicationServiceImpl(
         RefundInfoService refundInfoService,
         OrderInfoService orderInfoService,
         WxPayRefundFacade wxPayRefundFacade,
         AliPayService aliPayService,
         OrderRefundStatusService orderRefundStatusService,
-        DistributedLockTemplate distributedLockTemplate
+        DistributedLockTemplate distributedLockTemplate,
+        RefundStatusSyncMessageService refundStatusSyncMessageService
     ) {
         this.refundInfoService = refundInfoService;
         this.orderInfoService = orderInfoService;
@@ -51,6 +55,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         this.aliPayService = aliPayService;
         this.orderRefundStatusService = orderRefundStatusService;
         this.distributedLockTemplate = distributedLockTemplate;
+        this.refundStatusSyncMessageService = refundStatusSyncMessageService;
     }
 
     @Override
@@ -94,6 +99,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
                 markRefundSubmitFailed(refundNo, e);
                 throw e;
             }
+            refundStatusSyncMessageService.sendRefundStatusSyncMessage(refundNo);
             return null;
         });
     }
