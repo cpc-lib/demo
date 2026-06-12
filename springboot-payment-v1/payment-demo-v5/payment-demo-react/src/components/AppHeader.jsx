@@ -15,8 +15,8 @@ export default function AppHeader() {
     <header id="header">
       <section className="container">
         <h1 id="logo">
-          <Link to="/" title="谷粒学院">
-            <img src={logo} width="100%" alt="谷粒学院" />
+          <Link to="/" title="苏三的开发日记">
+            <img src={logo} width="100%" alt="苏三的开发日记" />
           </Link>
         </h1>
         <div>

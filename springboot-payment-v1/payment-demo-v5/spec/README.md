@@ -1,6 +1,6 @@
 # Spec State Ledger
 
-> Updated: 2026-06-09
+> Updated: 2026-06-12
 
 `spec/` is the project state ledger for behavior, contracts, architecture boundaries, and governance. It is intentionally small: every entry should help future changes answer "what is the current contract, where is it implemented, and how do we prove it?"
 
@@ -20,6 +20,8 @@
 | `spec/governance/ISSUE_LEDGER.md` | governance | Current issue classification for the discovered legacy behavior. |
 | `spec/governance/PR_SPEC_RECONCILIATION_CHECKLIST.md` | governance | Checklist to run before PR merge. |
 | `spec/implemented/current-behavior/PAYMENT_DEMO_CURRENT_BEHAVIOR_SPEC.md` | implemented | Current behavior contract for public API, state effects, events, logs, and characterization tests. |
+| `spec/implemented/frontend/REACT_LOGO_BRANDING_UPDATE_SPEC.md` | implemented | React header logo brand text update. |
+| `spec/implemented/frontend/VUE_LOGO_BRANDING_UPDATE_SPEC.md` | implemented | Vue header logo brand text update. |
 
 ## Directory Layout
 
@@ -31,8 +33,11 @@ spec/
 |   `-- PR_SPEC_RECONCILIATION_CHECKLIST.md
 |-- planned/
 |-- implemented/
-|   `-- current-behavior/
-|       `-- PAYMENT_DEMO_CURRENT_BEHAVIOR_SPEC.md
+|   |-- current-behavior/
+|   |   `-- PAYMENT_DEMO_CURRENT_BEHAVIOR_SPEC.md
+|   `-- frontend/
+|       |-- REACT_LOGO_BRANDING_UPDATE_SPEC.md
+|       `-- VUE_LOGO_BRANDING_UPDATE_SPEC.md
 `-- archived/
     |-- deferred/
     `-- deprecated/
