@@ -1,0 +1,157 @@
+# Spec 状态账本
+
+> 本文档跟踪项目中所有 spec 的状态，确保 spec 不退化为过期文档。
+
+---
+
+## 状态说明
+
+| 状态 | 目录 | 含义 |
+|------|------|------|
+| 🟢 **Implemented** | `implemented/` | 已实现，有测试，有实现锚点 |
+| 🟡 **Planned** | `planned/` | 已设计，未实现 |
+| ⚫ **Archived** | `archived/` | 废弃或搁置 |
+| 📋 **Governance** | `governance/` | 长期治理规则，不迁移 |
+
+---
+
+## 📋 Governance (治理规则)
+
+| Spec | 描述 | 状态 |
+|------|------|------|
+| [TESTING_GOVERNANCE_SPEC.md](governance/TESTING_GOVERNANCE_SPEC.md) | 测试治理规则：特征测试、单元测试、集成测试分层 | ✅ 活跃 |
+
+---
+
+## 🟢 Implemented (已实现)
+
+| Spec ID | 标题 | 状态 | 实现锚点 | 测试覆盖 | 最后更新 |
+|---------|------|------|---------|---------|---------|
+| SPEC-001 | [支付核心流程行为规格](implemented/current-behavior/PAYMENT_DEMO_CURRENT_BEHAVIOR_SPEC.md) | ✅ 已实现 | 见锚点 | 24个特征测试 | 2026-06-14 |
+
+### SPEC-001 详情
+
+**标题**: 支付核心流程行为规格
+
+**状态**: implemented
+
+**描述**: 支付系统核心流程的当前行为，包括订单创建、微信支付V2/V3、支付宝、退款、通知处理、分布式锁、配置加载等模块。
+
+**实现锚点**:
+| 模块 | 文件 | 关键方法 |
+|------|------|---------|
+| 订单创建 | `OrderInfoServiceImpl.java` | `createOrReuseOrder()` |
+| 微信V3下单 | `WxPayOrderService.java` | `nativePay()`, `doNativePay()` |
+| 微信V3通知 | `WxPayNotifyHandler.java`, `WxPayOrderService.java` | `handle()`, `processOrder()` |
+| 微信V2通知 | `WxPayV2Controller.java` | `wxNotify()` |
+| 退款申请 | `RefundInfoServiceImpl.java` | `createRefundApplication()` |
+| 退款审核 | `RefundInfoServiceImpl.java` | `approveRefund()` |
+| 订单状态查询 | `OrderInfoController.java` | `queryOrderStatus()` |
+| 分布式锁 | `RedissonDistributedLockTemplate.java` | `execute()` |
+| 配置加载 | `PaymentConfigLoader.java` | `listAppConfigsByChannelCode()` |
+
+**测试覆盖**: 24个特征测试 (见 `CHARACTERIZATION_TESTS.md`)
+
+**可疑行为** (已锁住):
+1. 已关闭订单查询返回"支付中" (Test 5.3)
+2. 配置修改后不自动刷新 (Test 7.2)
+3. V2/V3响应格式不一致 (Test 3.1)
+4. V2/V3幂等Key字段不同 (Test 3.2)
+5. 退款计算并发安全 (Test 4.3)
+6. 分布式锁中断处理 (Test 6.2)
+
+---
+
+## 🟡 Planned (已设计未实现)
+
+| Spec ID | 标题 | 优先级 | 依赖 | 计划版本 |
+|---------|------|--------|------|---------|
+| SPEC-002 | V2通知处理器提取重构 | 中 | SPEC-001测试全绿 | v0.0.2 |
+| SPEC-003 | 配置热更新机制 | 低 | 无 | v0.1.0 |
+| SPEC-004 | 退款并发安全加固 | 高 | SPEC-001测试全绿 | v0.0.3 |
+
+### SPEC-002 详情
+
+**标题**: V2通知处理器提取重构
+
+**状态**: planned
+
+**描述**: 将 `WxPayV2Controller.wxNotify()` 内联逻辑提取到 `WxPayV2NotifyHandler`，与V3保持一致的处理器架构。
+
+**目标**:
+- Controller方法简化为 3-5 行委托调用
+- 新增 `WxPayV2NotifyHandler` 类
+- 公共 API、响应格式、幂等Key、锁参数全部不变
+
+**风险**: 低 (仅结构变化，特征测试已覆盖)
+
+**验收标准**:
+- [ ] 特征测试全绿 (24个测试)
+- [ ] V2通知响应格式不变 (XML)
+- [ ] 幂等Key不变 (`payment:wx:v2:notify:processed:{transactionId}`)
+
+### SPEC-003 详情
+
+**标题**: 配置热更新机制
+
+**状态**: planned
+
+**描述**: 实现数据库配置修改后自动刷新内存缓存，无需重启服务。
+
+**目标**:
+- 监听 `t_payment_app` 和 `t_payment_channel` 表变更
+- 自动刷新 `PaymentConfigLoader` 内存缓存
+- 刷新 `WxPayNotifyHandler.verifierCache` 验签器缓存
+
+**风险**: 中 (影响多商户配置加载)
+
+**验收标准**:
+- [ ] 配置修改后 5 秒内生效
+- [ ] 刷新过程不中断服务
+- [ ] 刷新失败时回滚到旧配置
+
+### SPEC-004 详情
+
+**标题**: 退款并发安全加固
+
+**状态**: planned
+
+**描述**: 修复退款申请计算可退金额和插入记录之间的并发安全漏洞。
+
+**目标**:
+- 在退款申请创建时获取订单行锁
+- 计算和插入在同一事务和锁范围内
+- 防止超退
+
+**风险**: 高 (改变退款流程锁范围)
+
+**验收标准**:
+- [ ] 并发退款申请不会超退
+- [ ] 特征测试全绿
+- [ ] 性能影响 < 10%
+
+---
+
+## ⚫ Archived (废弃)
+
+| Spec ID | 标题 | 废弃原因 | 废弃日期 |
+|---------|------|---------|---------|
+| (暂无) | - | - | - |
+
+---
+
+## Spec 状态迁移记录
+
+| 日期 | Spec ID | 旧状态 | 新状态 | 原因 |
+|------|---------|--------|--------|------|
+| 2026-06-14 | SPEC-001 | - | implemented | 初始创建，覆盖核心流程 |
+
+---
+
+## 维护规则
+
+1. **每次 PR 必须更新 spec 状态** (如适用)
+2. **实现完成**: spec 从 `planned` 移到 `implemented`
+3. **设计废弃**: spec 移到 `archived/deprecated/`
+4. **实现变更**: 更新 `implemented/` 中的实现锚点
+5. **定期清理**: 每季度检查 `planned/` 中超过 3 个月未动的 spec
