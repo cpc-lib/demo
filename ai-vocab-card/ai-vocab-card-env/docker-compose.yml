@@ -1,0 +1,227 @@
+services:
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mysql:8.0
+    container_name: ai-vocab-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ai_vocab
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/redis:7.2-alpine
+    container_name: ai-vocab-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/rabbitmq:3.13-management
+    container_name: ai-vocab-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/minio:RELEASE.2024-04-18T19-09-19Z
+    container_name: ai-vocab-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  etcd:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/etcd:v3.5.18
+    container_name: ai-vocab-etcd
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls=http://0.0.0.0:2379 --data-dir=/etcd
+    volumes:
+      - etcd-data:/etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  milvus:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/milvus:v2.5.4
+    container_name: ai-vocab-milvus
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MINIO_ACCESS_KEY_ID: minioadmin
+      MINIO_SECRET_ACCESS_KEY: minioadmin
+      MINIO_USE_SSL: "false"
+      COMMON_STORAGETYPE: minio
+    volumes:
+      - milvus-data:/var/lib/milvus
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  attu:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/attu:v2.4.12
+    container_name: ai-vocab-attu
+    environment:
+      MILVUS_URL: milvus:19530
+    depends_on:
+      milvus:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  milvus-adapter:
+    build: ./milvus-adapter
+    container_name: ai-vocab-milvus-adapter
+    environment:
+      MILVUS_HOST: milvus
+      MILVUS_PORT: "19530"
+      MILVUS_DIMENSION: "1024"
+    depends_on:
+      milvus:
+        condition: service_healthy
+    ports:
+      - "19531:19531"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:19531/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+
+  elasticsearch:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/elasticsearch:8.15.3
+    container_name: ai-vocab-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  kibana:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/kibana:8.15.3
+    container_name: ai-vocab-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "5601:5601"
+
+#  backend:
+#    build: ../backend
+#    container_name: ai-vocab-backend
+#    depends_on:
+#      mysql:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      rabbitmq:
+#        condition: service_healthy
+#      minio:
+#        condition: service_healthy
+#      elasticsearch:
+#        condition: service_healthy
+#      milvus-adapter:
+#        condition: service_healthy
+#    environment:
+#      DB_URL: jdbc:mysql://mysql:3306/ai_vocab?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+#      DB_USERNAME: root
+#      DB_PASSWORD: root
+#      REDIS_HOST: redis
+#      RABBITMQ_HOST: rabbitmq
+#      MINIO_ENDPOINT: http://minio:9000
+#      MINIO_ACCESS_KEY: minioadmin
+#      MINIO_SECRET_KEY: minioadmin
+#      MINIO_BUCKET: ai-vocab-export
+#      ELASTICSEARCH_URIS: http://elasticsearch:9200
+#      SEARCH_PROVIDER: ${SEARCH_PROVIDER:-mysql}
+#      SEARCH_SYNC_ELASTICSEARCH: ${SEARCH_SYNC_ELASTICSEARCH:-false}
+#      JWT_SECRET: ai-vocabulary-studio-v3-change-me-change-me-32bytes
+#      LLM_ENABLED: ${LLM_ENABLED:-true}
+#      LLM_API_KEY: ${LLM_API_KEY:-}
+#      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+#      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+#      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+#      IDEMPOTENCY_ENABLED: ${IDEMPOTENCY_ENABLED:-true}
+#      VECTOR_PROVIDER: ${VECTOR_PROVIDER:-milvus-adapter}
+#      MILVUS_ENABLED: ${MILVUS_ENABLED:-true}
+#      MILVUS_ENDPOINT: ${MILVUS_ENDPOINT:-http://milvus-adapter:19531}
+#      MILVUS_COLLECTION: ${MILVUS_COLLECTION:-word_card_vectors}
+#      MILVUS_DIMENSION: ${MILVUS_DIMENSION:-1024}
+#    ports:
+#      - "8080:8080"
+
+#  frontend:
+#    build: ../frontend
+#    container_name: ai-vocab-frontend
+#    depends_on:
+#      - backend
+#    ports:
+#      - "5173:80"
+
+volumes:
+  mysql-data:
+  minio-data:
+  es-data:
+  etcd-data:
+  milvus-data:

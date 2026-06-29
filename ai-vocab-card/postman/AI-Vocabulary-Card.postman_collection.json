@@ -1,0 +1,8 @@
+{
+  "info": {"name": "AI Vocabulary Card", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
+  "item": [
+    {"name": "Generate Word", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "url": "http://localhost:8080/api/words/generate", "body": {"mode":"raw", "raw":"{\"word\":\"awesome\"}"}}},
+    {"name": "Search Words", "request": {"method": "GET", "url": "http://localhost:8080/api/words/search?keyword=很棒&page=1&size=20"}},
+    {"name": "Get Detail", "request": {"method": "GET", "url": "http://localhost:8080/api/words/1"}}
+  ]
+}

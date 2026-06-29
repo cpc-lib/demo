@@ -1,0 +1,71 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://192.168.220.200:3306/ai_vocab?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  data:
+    redis:
+      host: ${REDIS_HOST:192.168.220.200}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://192.168.220.200:9200}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:192.168.220.200}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+  sql:
+    init:
+      mode: never
+  jackson:
+    default-property-inclusion: non_null
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+app:
+  jwt:
+    secret: ${JWT_SECRET:HhYUnsL-Qc94TWy4MnUPKH_r2kjL_70ZgqAnSoKDbac}
+    expire-hours: ${JWT_EXPIRE_HOURS:168}
+  llm:
+    enabled: ${LLM_ENABLED:true}
+    api-key: ${LLM_API_KEY:} #LLM_API_KEY未配置时为空字符串
+    base-url: ${LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    model: ${LLM_MODEL:qwen-plus}
+    temperature: ${LLM_TEMPERATURE:0.2}
+    timeout-seconds: ${LLM_TIMEOUT_SECONDS:45}
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://192.168.220.200:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket: ${MINIO_BUCKET:ai-vocab-export}
+  search:
+    provider: ${SEARCH_PROVIDER:mysql} # mysql | elasticsearch
+    sync-elasticsearch: ${SEARCH_SYNC_ELASTICSEARCH:false}
+  vector:
+    provider: ${VECTOR_PROVIDER:milvus-adapter} # local | milvus-adapter
+    top-k: ${VECTOR_TOP_K:10}
+  prompt:
+    default-version: ${PROMPT_DEFAULT_VERSION:v1}
+
+  milvus:
+    enabled: ${MILVUS_ENABLED:true}
+    endpoint: ${MILVUS_ENDPOINT:http://192.168.220.200:19531}
+    collection: ${MILVUS_COLLECTION:word_card_vectors}
+    token: ${MILVUS_TOKEN:}
+    dimension: ${MILVUS_DIMENSION:1024}
+  quality:
+    rate-limit-enabled: ${RATE_LIMIT_ENABLED:true}
+    rate-limit-per-minute: ${RATE_LIMIT_PER_MINUTE:60}
+    idempotency-enabled: ${IDEMPOTENCY_ENABLED:true}
+    idempotency-expire-seconds: ${IDEMPOTENCY_EXPIRE_SECONDS:300}
+  outbox:
+    dispatch-interval-ms: ${OUTBOX_DISPATCH_INTERVAL_MS:5000}
