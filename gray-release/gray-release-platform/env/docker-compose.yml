@@ -1,0 +1,183 @@
+services:
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mysql:8.0
+    container_name: gray-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: gray_release
+      MYSQL_USER: gray
+      MYSQL_PASSWORD: gray123456
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - gray-mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/redis:7.2
+    container_name: gray-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - gray-redis-data:/data
+
+  nacos:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/nacos-server:v2.3.2
+    container_name: gray-nacos
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      JVM_XMN: 128m
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8848/nacos/v1/console/health/readiness"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  sentinel-dashboard:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/sentinel-dashboard:1.8.8
+    container_name: gray-sentinel
+    ports:
+      - "8858:8858"
+
+#  gray-admin:
+#    build:
+#      context: ./backend
+#      dockerfile: gray-admin/Dockerfile
+#    container_name: gray-admin
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gray_release?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+#      SPRING_DATASOURCE_USERNAME: gray
+#      SPRING_DATASOURCE_PASSWORD: gray123456
+#      SPRING_DATA_REDIS_HOST: redis
+#      SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR: nacos:8848
+#      SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR: nacos:8848
+#      GRAY_JWT_SECRET: gray-release-platform-prod-secret-32bytes
+#      GRAY_ALERT_WEBHOOK_URL: ""
+#    ports:
+#      - "18080:18080"
+#    depends_on:
+#      mysql:
+#        condition: service_healthy
+#      redis:
+#        condition: service_started
+#      nacos:
+#        condition: service_healthy
+
+#  demo-order-v1:
+#    build:
+#      context: ./backend
+#      dockerfile: demo-order-v1/Dockerfile
+#    container_name: demo-order-v1
+#    environment:
+#      SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR: nacos:8848
+#      SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR: nacos:8848
+#    ports:
+#      - "18081:18081"
+#    depends_on:
+#      nacos:
+#        condition: service_healthy
+#
+#  demo-order-v2:
+#    build:
+#      context: ./backend
+#      dockerfile: demo-order-v2/Dockerfile
+#    container_name: demo-order-v2
+#    environment:
+#      SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR: nacos:8848
+#      SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR: nacos:8848
+#    ports:
+#      - "18082:18082"
+#    depends_on:
+#      nacos:
+#        condition: service_healthy
+
+#  gray-gateway:
+#    build:
+#      context: ./backend
+#      dockerfile: gray-gateway/Dockerfile
+#    container_name: gray-gateway
+#    environment:
+#      SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR: nacos:8848
+#      SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR: nacos:8848
+#      SPRING_CLOUD_SENTINEL_TRANSPORT_DASHBOARD: sentinel-dashboard:8858
+#      GRAY_ADMIN_BASE_URL: http://gray-admin:18080
+#      DEMO_ORDER_SERVICE_V1_URL: http://demo-order-v1:18081
+#      DEMO_ORDER_SERVICE_V2_URL: http://demo-order-v2:18082
+#    ports:
+#      - "18000:18000"
+#    depends_on:
+#      gray-admin:
+#        condition: service_started
+#      demo-order-v1:
+#        condition: service_started
+#      demo-order-v2:
+#        condition: service_started
+#      sentinel-dashboard:
+#        condition: service_started
+#
+#  frontend:
+#    build:
+#      context: ./frontend
+#    container_name: gray-frontend
+#    environment:
+#      VITE_API_BASE_URL: http://localhost:18080
+#      VITE_GATEWAY_BASE_URL: http://localhost:18000
+#    ports:
+#      - "3000:80"
+#    depends_on:
+#      gray-admin:
+#        condition: service_started
+#      gray-gateway:
+#        condition: service_started
+
+  prometheus:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/prometheus:v2.55.1
+    container_name: gray-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "19090:9090"
+    depends_on:
+      gray-admin:
+        condition: service_started
+      gray-gateway:
+        condition: service_started
+
+  grafana:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/grafana:11.4.0
+    container_name: gray-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123456
+    ports:
+      - "13000:3000"
+    volumes:
+      - gray-grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+
+volumes:
+  gray-mysql-data:
+  gray-redis-data:
+  gray-grafana-data:

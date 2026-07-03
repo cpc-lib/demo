@@ -1,0 +1,225 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f5f7fb;
+  color: #172033;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+}
+
+.loginPage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #101827;
+}
+
+.loginCard {
+  width: min(420px, 100%);
+  border-radius: 8px;
+}
+
+.brandBadge {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  background: #155dfc;
+  color: #fff;
+  font-weight: 800;
+}
+
+.appSider {
+  position: fixed !important;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  height: 100vh;
+  overflow-y: auto;
+  background: #fff !important;
+  border-right: 1px solid #e5e7eb;
+  box-shadow: 1px 0 0 rgba(15, 23, 42, 0.02);
+}
+
+.mainLayout {
+  min-height: 100vh;
+  height: 100vh;
+  margin-left: 248px;
+  overflow: hidden;
+  background: #f6f8fb;
+}
+
+.brandLine {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  color: #172033;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.brandLine strong,
+.brandLine small {
+  display: block;
+}
+
+.brandLine small {
+  color: #64748b;
+}
+
+.appHeader {
+  height: 72px;
+  padding: 0 24px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #edf1f7;
+  flex: 0 0 auto;
+  z-index: 10;
+  line-height: normal;
+}
+
+.appContent {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+  height: calc(100vh - 72px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-padding-top: 24px;
+}
+
+.sideMenu {
+  border-inline-end: 0 !important;
+  padding: 10px 10px 18px;
+  background: transparent;
+}
+
+.sideMenu .ant-menu-item {
+  height: 40px;
+  line-height: 40px;
+  margin-inline: 0;
+  width: 100%;
+  color: #334155;
+  border-radius: 8px;
+}
+
+.sideMenu .ant-menu-item a {
+  color: inherit;
+}
+
+.sideMenu .ant-menu-item-selected {
+  color: #155dfc;
+  background: #eaf1ff;
+  font-weight: 600;
+}
+
+.sideMenu .ant-menu-item-selected a {
+  color: #155dfc;
+}
+
+.sideMenu .ant-menu-item:hover {
+  color: #155dfc;
+  background: #f3f7ff;
+}
+
+.ant-card {
+  border-color: #e9eef5;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.resultPre {
+  min-height: 280px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 8px;
+  background: #101827;
+  color: #d6e4ff;
+}
+
+@media (max-width: 900px) {
+  .appSider {
+    width: 72px !important;
+    max-width: 72px !important;
+    min-width: 72px !important;
+    flex: 0 0 72px !important;
+  }
+
+  .mainLayout {
+    margin-left: 72px;
+  }
+
+  .brandLine {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .brandLine > div {
+    display: none;
+  }
+
+  .sideMenu {
+    padding: 10px 8px;
+  }
+
+  .sideMenu .ant-menu-item {
+    display: flex;
+    justify-content: center;
+    padding-inline: 0 !important;
+  }
+
+  .sideMenu .ant-menu-item .ant-menu-title-content {
+    display: none;
+  }
+
+  .appHeader {
+    height: auto;
+    padding: 16px;
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .appContent {
+    height: calc(100vh - 105px);
+    padding: 16px;
+  }
+
+  .appContent .ant-form-inline {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .appContent .ant-form-inline .ant-form-item {
+    margin-inline-end: 0;
+    margin-bottom: 0;
+    width: 100%;
+  }
+
+  .appContent .ant-form-inline .ant-form-item-control,
+  .appContent .ant-form-inline .ant-input,
+  .appContent .ant-form-inline .ant-input-number,
+  .appContent .ant-form-inline .ant-select {
+    width: 100% !important;
+  }
+
+  .appContent .ant-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .appContent .ant-table {
+    min-width: 720px;
+  }
+}

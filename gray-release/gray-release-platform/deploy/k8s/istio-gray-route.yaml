@@ -1,0 +1,43 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: demo-order
+  namespace: gray-release
+spec:
+  host: demo-order.gray-release.svc.cluster.local
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+    - name: v2
+      labels:
+        version: v2
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: demo-order
+  namespace: gray-release
+spec:
+  hosts:
+    - demo-order.gray-release.svc.cluster.local
+  http:
+    - match:
+        - headers:
+            x-gray:
+              exact: "true"
+      route:
+        - destination:
+            host: demo-order.gray-release.svc.cluster.local
+            subset: v2
+          weight: 100
+    - route:
+        - destination:
+            host: demo-order.gray-release.svc.cluster.local
+            subset: v1
+          weight: 90
+        - destination:
+            host: demo-order.gray-release.svc.cluster.local
+            subset: v2
+          weight: 10
+

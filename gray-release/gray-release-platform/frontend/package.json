@@ -1,0 +1,24 @@
+{
+  "name": "gray-release-platform-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "test": "node --test src/ruleEditor.test.js",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.6.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "antd": "^5.22.5",
+    "vite": "^6.0.7",
+    "typescript": "^5.7.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "lucide-react": "^0.468.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {}
+}

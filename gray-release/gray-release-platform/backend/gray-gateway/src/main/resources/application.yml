@@ -1,0 +1,36 @@
+server:
+  port: 18000
+
+spring:
+  application:
+    name: gray-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.220.200:8848
+      config:
+        server-addr: 192.168.220.200:8848
+        import-check:
+          enabled: false
+    sentinel:
+      transport:
+        dashboard: localhost:8858
+      eager: true
+
+gray:
+  admin:
+    base-url: ${GRAY_ADMIN_BASE_URL:http://localhost:18080}
+  upstream:
+    demo-order-service:
+      v1: ${DEMO_ORDER_SERVICE_V1_URL:http://localhost:18081}
+      v2: ${DEMO_ORDER_SERVICE_V2_URL:http://localhost:18082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+feign:
+  sentinel:
+    enabled: true

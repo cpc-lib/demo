@@ -1,0 +1,1187 @@
+{
+  "info": {
+    "_postman_id": "7f12f642-3e6e-4f3e-8f70-3e0c1e96f22b",
+    "name": "Gray Release Platform",
+    "description": "Postman collection for local gray-release-platform API testing. Run Auth/Login first to save {{token}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:18080",
+      "type": "string"
+    },
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:18000",
+      "type": "string"
+    },
+    {
+      "key": "orderV1Url",
+      "value": "http://localhost:18081",
+      "type": "string"
+    },
+    {
+      "key": "orderV2Url",
+      "value": "http://localhost:18082",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "serviceId",
+      "value": "demo-order-service",
+      "type": "string"
+    },
+    {
+      "key": "operator",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "ruleId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "taskId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "approvalId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login - Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('token exists', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data.token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('token', json.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actuator Health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "summary"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gray Rules",
+      "item": [
+        {
+          "name": "List Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rules?serviceId={{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rules"
+              ],
+              "query": [
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Rule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('ruleId', String(json.data.id));",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruleName\": \"postman-user-rule\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"targetVersion\": \"v2\",\n  \"ruleType\": \"USER\",\n  \"conditionKey\": \"userId\",\n  \"conditionValue\": \"user-1001\",\n  \"trafficPercent\": 0,\n  \"priority\": 10,\n  \"enabled\": true,\n  \"description\": \"Created from Postman collection\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rules"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Rule Conflicts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{ruleId}},\n  \"ruleName\": \"postman-user-rule\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"targetVersion\": \"v2\",\n  \"ruleType\": \"USER\",\n  \"conditionKey\": \"userId\",\n  \"conditionValue\": \"user-1001\",\n  \"trafficPercent\": 0,\n  \"priority\": 10,\n  \"enabled\": true,\n  \"description\": \"Conflict check candidate\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rules/conflicts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rules",
+                "conflicts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Publish Rules",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rules/publish?serviceId={{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rules",
+                "publish"
+              ],
+              "query": [
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Rule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruleName\": \"postman-user-rule-updated\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"targetVersion\": \"v2\",\n  \"ruleType\": \"USER\",\n  \"conditionKey\": \"userId\",\n  \"conditionValue\": \"user-1001\",\n  \"trafficPercent\": 0,\n  \"priority\": 5,\n  \"enabled\": true,\n  \"description\": \"Updated from Postman collection\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rules/{{ruleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rules",
+                "{{ruleId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Rule",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rules/{{ruleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rules",
+                "{{ruleId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Diagnosis",
+      "item": [
+        {
+          "name": "Match Diagnosis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"userId\": \"user-1001\",\n  \"tenantId\": \"tenant-a\",\n  \"ip\": \"192.168.1.20\",\n  \"appVersion\": \"2.1.0\",\n  \"region\": \"east\",\n  \"headers\": {\n    \"X-Canary\": \"true\"\n  },\n  \"cookies\": {\n    \"gray\": \"v2\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/diagnosis/match",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diagnosis",
+                "match"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Internal Match",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"userId\": \"user-1001\",\n  \"tenantId\": \"tenant-a\",\n  \"ip\": \"192.168.1.20\",\n  \"appVersion\": \"2.1.0\",\n  \"region\": \"east\",\n  \"headers\": {},\n  \"cookies\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/internal/match",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "internal",
+                "match"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Release Tasks",
+      "item": [
+        {
+          "name": "List Releases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/releases?serviceId={{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "releases"
+              ],
+              "query": [
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Release",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('taskId', String(json.data.id));",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskName\": \"postman-canary-release\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"fromVersion\": \"v1\",\n  \"targetVersion\": \"v2\",\n  \"strategy\": \"CANARY\",\n  \"currentPercent\": 0,\n  \"owner\": \"{{operator}}\",\n  \"stagesJson\": \"[1,5,20,50,100]\",\n  \"autoRollbackEnabled\": true,\n  \"errorRateThreshold\": 0.05,\n  \"p99LatencyThresholdMs\": 1200\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/releases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "releases"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Release",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/releases/{{taskId}}/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "releases",
+                "{{taskId}}",
+                "start"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pause Release",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/releases/{{taskId}}/pause",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "releases",
+                "{{taskId}}",
+                "pause"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Complete Release",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/releases/{{taskId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "releases",
+                "{{taskId}}",
+                "complete"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rollback Release",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"manual rollback from Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/releases/{{taskId}}/rollback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "releases",
+                "{{taskId}}",
+                "rollback"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Advance Release",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"percent\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/releases/{{taskId}}/advance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "releases",
+                "{{taskId}}",
+                "advance"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Report Release Metrics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"errorRate\": 0.01,\n  \"p99LatencyMs\": 480\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/releases/{{taskId}}/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "releases",
+                "{{taskId}}",
+                "metrics"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Approvals",
+      "item": [
+        {
+          "name": "List Approvals",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.data && json.data.length > 0 && json.data[0].id) {",
+                  "    pm.collectionVariables.set('approvalId', String(json.data[0].id));",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/approvals?taskId={{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "approvals"
+              ],
+              "query": [
+                {
+                  "key": "taskId",
+                  "value": "{{taskId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"approved from Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/approvals/{{approvalId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "approvals",
+                "{{approvalId}}",
+                "approve"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"rejected from Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/approvals/{{approvalId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "approvals",
+                "{{approvalId}}",
+                "reject"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Service Policies",
+      "item": [
+        {
+          "name": "Get Policy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/policies?serviceId={{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "policies"
+              ],
+              "query": [
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Blue Green Switch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"activeColor\": \"green\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/policies/blue-green/switch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "policies",
+                "blue-green",
+                "switch"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Configure AB",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Operator",
+                "value": "{{operator}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"enabled\": true,\n  \"percentB\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/policies/ab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "policies",
+                "ab"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AB Metrics",
+      "item": [
+        {
+          "name": "List AB Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ab-metrics?serviceId={{serviceId}}&experimentKey=default-exp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ab-metrics"
+              ],
+              "query": [
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}"
+                },
+                {
+                  "key": "experimentKey",
+                  "value": "default-exp"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record AB Metric",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"experimentKey\": \"default-exp\",\n  \"variant\": \"B\",\n  \"converted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ab-metrics/record",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ab-metrics",
+                "record"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Latest Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alerts"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gateway",
+      "item": [
+        {
+          "name": "Gateway Order Health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "user-1001"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "tenant-a"
+              },
+              {
+                "key": "X-App-Version",
+                "value": "2.1.0"
+              },
+              {
+                "key": "X-Region",
+                "value": "east"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayUrl}}/api/order/health",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "api",
+                "order",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Gateway Orders",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "user-1001"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "tenant-a"
+              },
+              {
+                "key": "X-App-Version",
+                "value": "2.1.0"
+              },
+              {
+                "key": "X-Region",
+                "value": "east"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayUrl}}/api/order/orders",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "api",
+                "order",
+                "orders"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Demo Order Services",
+      "item": [
+        {
+          "name": "Order V1 Health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Trace-Id",
+                "value": "postman-trace-v1"
+              }
+            ],
+            "url": {
+              "raw": "{{orderV1Url}}/api/order/health",
+              "host": [
+                "{{orderV1Url}}"
+              ],
+              "path": [
+                "api",
+                "order",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Order V1 Orders",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orderV1Url}}/api/order/orders",
+              "host": [
+                "{{orderV1Url}}"
+              ],
+              "path": [
+                "api",
+                "order",
+                "orders"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Order V2 Health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Trace-Id",
+                "value": "postman-trace-v2"
+              }
+            ],
+            "url": {
+              "raw": "{{orderV2Url}}/api/order/health",
+              "host": [
+                "{{orderV2Url}}"
+              ],
+              "path": [
+                "api",
+                "order",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Order V2 Orders",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orderV2Url}}/api/order/orders",
+              "host": [
+                "{{orderV2Url}}"
+              ],
+              "path": [
+                "api",
+                "order",
+                "orders"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
