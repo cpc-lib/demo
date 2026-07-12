@@ -1,0 +1,3 @@
+CREATE DATABASE IF NOT EXISTS order_demo_v2
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
