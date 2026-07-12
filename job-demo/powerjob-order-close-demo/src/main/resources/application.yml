@@ -6,7 +6,7 @@ spring:
     name: powerjob-order-close-demo
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST:192.168.220.200}:${DB_PORT:3306}/${DB_NAME:order_demo}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+    url: jdbc:mysql://${DB_HOST:192.168.220.200}:${DB_PORT:3306}/${DB_NAME:order_demo_v1}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root123456}
     hikari:
@@ -36,7 +36,7 @@ powerjob:
   worker:
     enabled: ${POWERJOB_ENABLED:true}
     app-name: ${POWERJOB_APP_NAME:order-close-worker}
-    server-address: ${POWERJOB_SERVER:192.168.220.200:7700}
+    server-address: ${POWERJOB_SERVER:127.0.0.1:7700}
     protocol: http
     port: ${POWERJOB_WORKER_PORT:27777}
     allow-lazy-connect-server: false
