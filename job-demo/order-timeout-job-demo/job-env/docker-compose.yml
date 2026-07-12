@@ -1,0 +1,69 @@
+services:
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mysql:8.0.36
+    container_name: order-job-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_ROOT_HOST: "%"
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - order-job-network
+
+  nacos:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/nacos-server:v2.3.2
+    container_name: order-job-nacos
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: order_demo
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: root123456
+      MYSQL_SERVICE_DB_PARAM: characterEncoding=utf8&connectTimeout=10000&socketTimeout=30000&autoReconnect=true&useUnicode=true&serverTimezone=Asia/Shanghai
+      NACOS_AUTH_ENABLE: "false"
+      TZ: Asia/Shanghai
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    networks:
+      - order-job-network
+
+  zookeeper:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/zookeeper:3.9
+    container_name: order-job-zookeeper
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "2181:2181"
+    networks:
+      - order-job-network
+
+volumes:
+  mysql-data:
+
+networks:
+  order-job-network:
+    driver: bridge

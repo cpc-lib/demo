@@ -1,0 +1,51 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: powerjob-order-close-demo
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:192.168.220.200}:${DB_PORT:3306}/${DB_NAME:order_demo}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root123456}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+      validation-timeout: 3000
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+      continue-on-error: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+powerjob:
+  worker:
+    enabled: ${POWERJOB_ENABLED:true}
+    app-name: ${POWERJOB_APP_NAME:order-close-worker}
+    server-address: ${POWERJOB_SERVER:192.168.220.200:7700}
+    protocol: http
+    port: ${POWERJOB_WORKER_PORT:27777}
+    allow-lazy-connect-server: false
+    store-strategy: memory
+    max-result-length: 8192
+    health-report-interval: 10
+
+logging:
+  level:
+    root: INFO
+    com.example.orderjob: INFO
+    tech.powerjob: INFO
