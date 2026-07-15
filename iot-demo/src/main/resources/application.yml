@@ -1,0 +1,33 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  config:
+    import: optional:file:./env/.env[.properties]
+  application:
+    name: iot-temperature-platform
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+influxdb:
+  url: ${INFLUXDB_URL:http://192.168.220.200:8086}
+  token: ${INFLUXDB_TOKEN:iot-super-secret-token}
+  org: ${INFLUXDB_ORG:iot-org}
+  bucket: ${INFLUXDB_BUCKET:iot-temperature}
+
+simulator:
+  interval-ms: ${SIMULATOR_INTERVAL_MS:5000}
+  initial-delay-ms: ${SIMULATOR_INITIAL_DELAY_MS:5000}
+  low-threshold: ${LOW_THRESHOLD:5}
+  high-threshold: ${HIGH_THRESHOLD:35}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

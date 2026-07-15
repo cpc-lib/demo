@@ -1,0 +1,27 @@
+services:
+  influxdb:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/influxdb:2.7-alpine
+    container_name: iot-influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD:-Admin123456!}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-iot-org}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-iot-temperature}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-iot-super-secret-token}
+      DOCKER_INFLUXDB_INIT_RETENTION: 30d
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping", "--host", "http://localhost:8086"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  influxdb-data:
+  influxdb-config:
