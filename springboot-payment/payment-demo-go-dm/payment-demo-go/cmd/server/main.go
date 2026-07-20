@@ -66,6 +66,9 @@ func main() {
 	if err := mqClient.ConsumeRefundQuery(context.Background(), svc.HandleRefundQueryMessage); err != nil {
 		log.Fatalf("启动退款自动查询消费者失败: %v", err)
 	}
+	if err := mqClient.ConsumeReconciliationTask(context.Background(), svc.HandleReconciliationTaskMessage); err != nil {
+		log.Fatalf("启动对账任务消费者失败: %v", err)
+	}
 
 	r := gin.Default()
 	handler.New(svc).Register(r)

@@ -72,3 +72,55 @@ const (
 	WxNotifyNativeV2 = "/api/wx-pay-v2/native/notify"
 	WxNotifyRefund   = "/api/wx-pay/refunds/notify"
 )
+
+const (
+	ReconciliationTaskStatusPending             = "PENDING"
+	ReconciliationTaskStatusProcessing          = "PROCESSING"
+	ReconciliationTaskStatusCompleted           = "COMPLETED"
+	ReconciliationTaskStatusCompletedWithWarning = "COMPLETED_WITH_WARNING"
+	ReconciliationTaskStatusFailed              = "FAILED"
+)
+
+const (
+	ReconciliationBillTypeTrade  = "trade"
+	ReconciliationBillTypeRefund = "refund"
+	ReconciliationBillTypeAll    = "all"
+)
+
+const (
+	ReconciliationDetailTypeOrder  = "order"
+	ReconciliationDetailTypeRefund = "refund"
+)
+
+const (
+	ReconciliationMatchStatusMatched     = "MATCHED"
+	ReconciliationMatchStatusDiff        = "DIFF"
+	ReconciliationMatchStatusLocalOnly   = "LOCAL_ONLY"
+	ReconciliationMatchStatusChannelOnly = "CHANNEL_ONLY"
+)
+
+const (
+	ReconciliationDiffTypeAmountMismatch = "AMOUNT_MISMATCH"
+	ReconciliationDiffTypeStatusMismatch = "STATUS_MISMATCH"
+	ReconciliationDiffTypeLocalOnly      = "LOCAL_ONLY"
+	ReconciliationDiffTypeChannelOnly    = "CHANNEL_ONLY"
+)
+
+const (
+	ReconciliationHandleStatusPending  = "PENDING"
+	ReconciliationHandleStatusHandled  = "HANDLED"
+	ReconciliationHandleStatusIgnored  = "IGNORED"
+	ReconciliationHandleStatusResolved = "RESOLVED"
+)
+
+const (
+	ReconciliationHandleTypeSupplement    = "SUPPLEMENT"
+	ReconciliationHandleTypeMarkRefunded  = "MARK_REFUNDED"
+	ReconciliationHandleTypeIgnore        = "IGNORE"
+	ReconciliationHandleTypeManualProcess = "MANUAL_PROCESS"
+)
+
+const (
+	ReconciliationTriggerManual    = "manual"
+	ReconciliationTriggerScheduled = "scheduled"
+)

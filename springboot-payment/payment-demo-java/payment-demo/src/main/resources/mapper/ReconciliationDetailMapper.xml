@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.ReconciliationDetailMapper">
+
+    <resultMap id="BaseResultMap" type="cc.ivera.entity.ReconciliationDetail">
+        <id column="id" property="id"/>
+        <result column="reconciliation_id" property="reconciliationId"/>
+        <result column="diff_type" property="diffType"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="transaction_id" property="transactionId"/>
+        <result column="channel_amount" property="channelAmount"/>
+        <result column="local_amount" property="localAmount"/>
+        <result column="channel_status" property="channelStatus"/>
+        <result column="local_status" property="localStatus"/>
+        <result column="diff_amount" property="diffAmount"/>
+        <result column="channel_trade_time" property="channelTradeTime"/>
+        <result column="local_trade_time" property="localTradeTime"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectPageByReconciliationId" resultMap="BaseResultMap">
+        select *
+        from t_reconciliation_detail
+        where reconciliation_id = #{reconciliationId}
+        <if test="diffType != null and diffType != ''">
+            and diff_type = #{diffType}
+        </if>
+        order by id asc
+    </select>
+
+    <select id="selectDiffPage" resultMap="BaseResultMap">
+        select *
+        from t_reconciliation_detail
+        where reconciliation_id = #{reconciliationId}
+          and diff_type != 'MATCH'
+        order by diff_type, id asc
+    </select>
+
+    <select id="selectAllByReconciliationId" resultMap="BaseResultMap">
+        select *
+        from t_reconciliation_detail
+        where reconciliation_id = #{reconciliationId}
+        order by id asc
+    </select>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        insert into t_reconciliation_detail (
+            reconciliation_id, diff_type, order_no, transaction_id,
+            channel_amount, local_amount, channel_status, local_status,
+            diff_amount, channel_trade_time, local_trade_time, remark, create_time
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.reconciliationId}, #{item.diffType}, #{item.orderNo}, #{item.transactionId},
+                #{item.channelAmount}, #{item.localAmount}, #{item.channelStatus}, #{item.localStatus},
+                #{item.diffAmount}, #{item.channelTradeTime}, #{item.localTradeTime}, #{item.remark}, now()
+            )
+        </foreach>
+    </insert>
+
+</mapper>

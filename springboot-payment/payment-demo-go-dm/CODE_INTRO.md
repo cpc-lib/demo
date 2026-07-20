@@ -1,8 +1,8 @@
 # Payment Demo 代码导览
 
-更新时间：2026-06-13
+更新时间：2026-07-20
 
-本文件按当前源码、`spec/README.md` 和已落地 spec 重新生成，用作进入项目时的第一份代码地图。项目主体是支付演示系统：一个 Go 后端、两套前端实现（React 与 Vue）、达梦 DM8 数据库脚本，以及围绕支付配置、订单、退款、MQ 补偿和 spec 治理的一组文档与测试。
+本文件按当前源码、`spec/README.md` 和已落地 spec 重新生成，用作进入项目时的第一份代码地图。项目主体是支付演示系统：一个 Go 后端、两套前端实现（React 与 Vue）、达梦 DM8 数据库脚本，以及围绕支付配置、订单、退款、对账、MQ 补偿和 spec 治理的一组文档与测试。
 
 ## 1. 项目结构
 
@@ -15,6 +15,7 @@
 |   +-- README.md                     # spec 索引
 |   +-- governance/                   # 治理规范
 |   +-- implemented/                  # 已实现且测试锁住的行为
+|   +-- planned/                      # 设计完成待实现或实现中
 +-- live_spec_template/               # live spec 模板与参考
 +-- payment-demo-go/                  # Go 后端
 +-- payment-demo-react/               # React 18 + Vite 前端
@@ -23,16 +24,17 @@
 
 `spec/` 不是一次性文档，而是项目状态账本。新增功能、公共接口、状态机、DB、MQ、配置或兼容变化，都要先查 `spec/README.md`，必要时先补 `spec/planned/`，实现完成后再进入 `spec/implemented/`。
 
-当前关键 implemented spec：
+当前关键 spec：
 
-| 领域 | 文件 | 说明 |
-|---|---|---|
-| current behavior | `spec/implemented/current-behavior/PAYMENT_DEMO_GO_CURRENT_BEHAVIOR_SPEC.md` | Go 后端当前行为快照 |
-| database | `spec/implemented/database/DAMENG_DATABASE_MIGRATION_SPEC.md` | 默认数据库迁移到达梦 DM8 |
-| payment config | `spec/implemented/payment-config/PAYMENT_CONFIG_MANAGEMENT_SPEC.md` | 支付渠道和支付应用配置管理 |
-| payment config | `spec/implemented/payment-config/REQUIRED_PAYMENT_APP_ID_ORDER_BINDING_SPEC.md` | 新订单强制绑定支付应用 ID |
-| payment config | `spec/implemented/payment-config/PAYMENT_APP_ONLY_FRONTEND_SELECTION_SPEC.md` | 前端只展示支付应用，不再单独展示支付方式 |
-| refund | `spec/implemented/refund/REFUND_AUTO_QUERY_AFTER_APPROVAL_SPEC.md` | 退款审核后通过 RabbitMQ 自动查询退款结果 |
+| 领域 | 状态 | 文件 | 说明 |
+|---|---|---|---|
+| current behavior | implemented | `spec/implemented/current-behavior/PAYMENT_DEMO_GO_CURRENT_BEHAVIOR_SPEC.md` | Go 后端当前行为快照 |
+| database | implemented | `spec/implemented/database/DAMENG_DATABASE_MIGRATION_SPEC.md` | 默认数据库迁移到达梦 DM8 |
+| payment config | implemented | `spec/implemented/payment-config/PAYMENT_CONFIG_MANAGEMENT_SPEC.md` | 支付渠道和支付应用配置管理 |
+| payment config | implemented | `spec/implemented/payment-config/REQUIRED_PAYMENT_APP_ID_ORDER_BINDING_SPEC.md` | 新订单强制绑定支付应用 ID |
+| payment config | implemented | `spec/implemented/payment-config/PAYMENT_APP_ONLY_FRONTEND_SELECTION_SPEC.md` | 前端只展示支付应用，不再单独展示支付方式 |
+| refund | implemented | `spec/implemented/refund/REFUND_AUTO_QUERY_AFTER_APPROVAL_SPEC.md` | 退款审核后通过 RabbitMQ 自动查询退款结果 |
+| reconciliation | planned | `spec/planned/PAYMENT_RECONCILIATION_SPEC.md` | 支付对账功能：任务调度、账单下载、差异处理 |
 
 ## 2. 后端总览
 
@@ -43,7 +45,7 @@
 - Go + Gin
 - GORM + 达梦 DM8 driver：`github.com/godoes/gorm-dameng`
 - Redis：通知幂等、分布式锁
-- RabbitMQ：延迟关单、退款自动查询
+- RabbitMQ：延迟关单、退款自动查询、对账任务调度
 - 微信支付 V3/V2、支付宝沙箱
 - 特征测试和回归测试：`go test ./...`
 
@@ -51,14 +53,22 @@
 
 ```text
 payment-demo-go/
-+-- cmd/server/main.go                # 启动入口
-+-- config/application.yml            # 运行配置
-+-- config/alipay-sandbox.properties  # 支付宝沙箱配置材料
-+-- config/apiclient_key.pem          # 微信支付私钥文件
-+-- docker-compose.yml                # DM8 容器示例
++-- cmd/
+|   +-- server/main.go                # 启动入口
+|   +-- initdb/main.go                # 数据库初始化工具（schema、表、索引、种子数据）
++-- config/
+|   +-- application.yml               # 运行配置
+|   +-- alipay-sandbox.properties     # 支付宝沙箱配置材料
+|   +-- apiclient_key.pem             # 微信支付私钥文件
+|   +-- wxpay.properties               # 微信支付配置材料
++-- env/                               # 基础设施启动环境
+|   +-- docker-compose.yml            # DM8 + Redis + RabbitMQ + db-init
+|   +-- sql/
+|       +-- payment_demo.sql           # 达梦初始化脚本（9 张表）
+|       +-- init-db.sh                # 容器内等待达梦就绪并执行 SQL
 +-- internal/
-|   +-- config/                       # yml 加载、DM DSN 转换
-|   +-- constant/                     # 订单、退款、支付类型、渠道状态常量
+|   +-- config/                       # yml 加载、DM DSN 转换、ReconciliationConfig
+|   +-- constant/                     # 订单、退款、支付类型、对账状态枚举
 |   +-- db/                           # GORM 达梦连接
 |   +-- handler/                      # Gin HTTP 路由
 |   +-- lock/                         # Redis 分布式锁
@@ -69,7 +79,6 @@ payment-demo-go/
 |   +-- service/                      # 业务服务
 |   +-- types/                        # ID、时间 JSON 类型
 |   +-- util/                         # 单号、金额、JSON、业务错误工具
-+-- sql/payment_demo.sql              # 达梦初始化脚本
 ```
 
 启动链路在 `cmd/server/main.go`：
@@ -77,12 +86,15 @@ payment-demo-go/
 1. 读取 `config/application.yml`。
 2. 连接达梦数据库。
 3. 连接 Redis 并 `PING`。
-4. 连接 RabbitMQ，声明订单关单和退款查询两组队列。
+4. 连接 RabbitMQ，声明订单关单、退款查询、对账任务三组队列。
 5. 初始化微信 V3/V2 和支付宝客户端。
 6. 构造 `service.Service`。
 7. 启动订单延迟关单消费者。
 8. 启动退款自动查询消费者。
-9. 注册 Gin 路由并监听 `server.port`，当前配置为 `8080`。
+9. 启动对账任务消费者。
+10. 注册 Gin 路由并监听 `server.port`，当前配置为 `8080`。
+
+数据库初始化工具 `cmd/initdb/main.go`：在首次部署或重置数据库时使用，按顺序执行：创建 schema、切换 schema、清理旧表、创建 9 张表、创建索引、插入种子数据、添加注释。
 
 ## 3. 配置与运行依赖
 
@@ -94,7 +106,7 @@ payment-demo-go/
 |---|---|
 | HTTP | `server.port: 8080` |
 | 达梦 | `jdbc:dm://192.168.220.200:5236?schema=PAYMENT_DEMO&connectTimeout=30000` |
-| Redis | `192.168.220.200:6379` |
+| Redis | `192.168.220.200:6379`，密码 `cpc!23#@` |
 | RabbitMQ | `amqp://guest:guest@192.168.220.200:5672/` |
 | 订单延迟关单 | `payment.order.close-delay-ms: 60000` |
 
@@ -103,13 +115,27 @@ payment-demo-go/
 - 配置里保留 Spring 风格字段：`spring.datasource.url`、`username`、`password`。
 - Go 配置加载会把 `jdbc:dm://...` 转成达梦 Go driver 使用的 `dm://username:password@host:port?...`。
 - 当前密码包含 `#`、`@` 等特殊字符，DSN 拼接保持原样，避免 URL encode 后 driver 登录失败。
-- 默认 schema 是 `PAYMENT_DEMO`。如果数据库还没有这个 schema，要先执行 `payment-demo-go/sql/payment_demo.sql`。
+- 默认 schema 是 `PAYMENT_DEMO`。如果数据库还没有这个 schema，运行 `cmd/initdb` 或 `env/docker-compose.yml` 中的 `db-init` 服务。
 
-`docker-compose.yml` 提供 DM8 容器示例，镜像为 `registry.cn-hangzhou.aliyuncs.com/snow-io/dm8:latest`，端口映射 `5236:5236`，默认 `SYSDBA_PWD` 与当前配置一致。
+基础设施一键启动：
+
+```bash
+cd payment-demo-go/env
+docker-compose up -d
+```
+
+`env/docker-compose.yml` 启动 4 个服务：
+
+| 服务 | 镜像 | 端口 | 说明 |
+|---|---|---|---|
+| dm8 | `registry.cn-hangzhou.aliyuncs.com/snow-io/dm8:latest` | 5236 | 达梦数据库，SYSDBA_PWD 与 application.yml 一致 |
+| db-init | 同 dm8 镜像 | - | 一次性服务，等待达梦就绪后执行 `env/sql/payment_demo.sql` |
+| redis | `redis:7-alpine` | 6379 | 密码与 application.yml 一致 |
+| rabbitmq | `rabbitmq:3.13-management-alpine` | 5672 / 15672 | AMQP + 管理界面 |
 
 ## 4. 数据库
 
-初始化脚本：`payment-demo-go/sql/payment_demo.sql`
+初始化脚本：`payment-demo-go/env/sql/payment_demo.sql`
 
 当前脚本是达梦方言：
 
@@ -129,6 +155,9 @@ payment-demo-go/
 | `t_payment_channel` | 支付渠道级配置，例如 `wxpay`、`alipay` |
 | `t_payment_app` | 支付应用/商户级配置，前端现在直接选择此表数据 |
 | `t_refund_info` | 退款申请、审批、渠道退款状态、通知内容 |
+| `t_reconciliation_task` | 对账任务主表，记录任务状态、进度统计 |
+| `t_reconciliation_detail` | 对账明细表，记录每条数据的匹配结果 |
+| `t_reconciliation_diff` | 对账差异表，记录差异类型、处理状态、处理方式 |
 
 重要索引和幂等约束：
 
@@ -137,6 +166,8 @@ payment-demo-go/
 - `t_payment_info(transaction_id, payment_type)` 唯一。
 - `t_refund_info.refund_no` 唯一。
 - `t_refund_info.refund_id` 唯一。
+- `t_reconciliation_task(payment_type, payment_app_id, bill_date, bill_type)` 唯一。
+- `t_reconciliation_diff.handle_status` 普通索引。
 
 ## 5. 领域模型与状态
 
@@ -152,6 +183,14 @@ payment-demo-go/
 - `RefundInfo`
 - `OrderCloseMessage`
 - `RefundQueryMessage`
+- `ReconciliationTask`
+- `ReconciliationDetail`
+- `ReconciliationDiff`
+- `ReconciliationTaskMessage`
+- `ReconciliationTaskRequest`
+- `ReconciliationDiffHandleRequest`
+- `ReconciliationSummary`
+- `ReconciliationChannelStat`
 
 订单状态定义在 `internal/constant/enums.go`：
 
@@ -171,20 +210,31 @@ payment-demo-go/
 - `微信`
 - `支付宝`
 
-退款审批状态：
+退款审批状态：`PENDING`、`APPROVED`、`REJECTED`
 
-- `PENDING`
-- `APPROVED`
-- `REJECTED`
+退款执行状态：`CREATED`、`PROCESSING`、`SUCCESS`、`FAILED`、`CLOSED`、`ABNORMAL`
 
-退款执行状态：
+对账任务状态：
 
-- `CREATED`
-- `PROCESSING`
-- `SUCCESS`
-- `FAILED`
-- `CLOSED`
-- `ABNORMAL`
+| 状态 | 含义 |
+|---|---|
+| `PENDING` | 待执行 |
+| `PROCESSING` | 执行中 |
+| `COMPLETED` | 全部完成，无错误 |
+| `COMPLETED_WITH_WARNING` | 主流程完成，但有警告（如部分账单下载失败） |
+| `FAILED` | 执行失败 |
+
+对账明细类型：`order`、`refund`
+
+对账匹配状态：`MATCHED`、`DIFF`、`LOCAL_ONLY`、`CHANNEL_ONLY`
+
+对账差异类型：`AMOUNT_MISMATCH`、`STATUS_MISMATCH`、`LOCAL_ONLY`、`CHANNEL_ONLY`
+
+对账差异处理状态：`PENDING`、`HANDLED`、`IGNORED`、`RESOLVED`
+
+对账差异处理类型：`SUPPLEMENT`、`MARK_REFUNDED`、`IGNORE`、`MANUAL_PROCESS`
+
+对账触发来源：`manual`、`scheduled`
 
 ## 6. 支付配置模型
 
@@ -265,8 +315,8 @@ application.yml 基础配置
 | GET | `/api/wx-pay/check-order-status/:orderNo` | 微信订单状态检查 |
 | GET | `/api/wx-pay/query-refund/:refundNo` | 微信退款查询 |
 | POST | `/api/wx-pay/refunds/notify` | 微信退款通知 |
-| GET | `/api/wx-pay/querybill/:billDate/:type` | 微信账单 URL 查询 |
-| GET | `/api/wx-pay/downloadbill/:billDate/:type` | 微信账单下载 |
+| GET | `/api/wx-pay/querybill/:billDate/:type?paymentAppId=...` | 微信账单 URL 查询，支持按应用选配置 |
+| GET | `/api/wx-pay/downloadbill/:billDate/:type?paymentAppId=...` | 微信账单下载，支持按应用选配置 |
 | POST | `/api/wx-pay/jsapi` | 微信 JSAPI 下单 |
 | POST | `/api/wx-pay/jsapi/notify/v1` | JSAPI 通知入口，复用 V3 通知处理 |
 | POST | `/api/wx-pay-v2/native/:productId?paymentAppId=...` | 微信 V2 Native 下单 |
@@ -281,7 +331,7 @@ application.yml 基础配置
 | POST | `/api/ali-pay/trade/close/:orderNo` | 支付宝关闭订单 |
 | GET | `/api/ali-pay/trade/query/:orderNo` | 支付宝订单查询 |
 | GET | `/api/ali-pay/trade/fastpay/refund/:refundNo` | 支付宝退款查询 |
-| GET | `/api/ali-pay/bill/downloadurl/query/:billDate/:type` | 支付宝账单下载地址查询 |
+| GET | `/api/ali-pay/bill/downloadurl/query/:billDate/:type?paymentAppId=...` | 支付宝账单下载地址查询，支持按应用选配置 |
 
 ### 退款
 
@@ -299,6 +349,26 @@ application.yml 基础配置
 | POST | `/api/refund-info/reject/:refundNo` | 审核拒绝 |
 | POST | `/api/refund-info/query/:refundNo` | 手动查询并同步渠道退款状态 |
 | POST | `/api/refund-info/reconcile/:orderNo` | 订单维度退款对账 |
+
+### 对账
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/reconciliation/task` | 创建对账任务，body：`paymentType`、`paymentAppId`、`billDate`(YYYY-MM-DD)、`billType`、`remark` |
+| GET | `/api/reconciliation/task/list` | 对账任务列表，query：`paymentType`、`paymentAppId`、`billDate`、`status`、`page`、`pageSize` |
+| GET | `/api/reconciliation/task/:taskId` | 对账任务详情 |
+| POST | `/api/reconciliation/task/:taskId/execute` | 手动触发对账任务执行 |
+| GET | `/api/reconciliation/task/:taskId/diff` | 对账差异列表，query：`diffType`、`handleStatus`、`page`、`pageSize` |
+| POST | `/api/reconciliation/diff/:diffId/handle` | 处理对账差异，body：`handleType`、`remark` |
+| GET | `/api/reconciliation/summary` | 对账总览，query：`billDate` |
+
+对账任务创建校验：
+
+- `paymentType` 必须是 `微信` 或 `支付宝`。
+- `billDate` 必须是 `YYYY-MM-DD` 格式。
+- `billType` 可选 `trade`、`refund`、`all`，默认 `all`。
+- `paymentAppId` 大于 0 时校验应用存在、启用且 `paymentType` 与应用匹配。
+- 同一 `paymentType + paymentAppId + billDate + billType` 重复创建返回已有任务。
 
 ## 8. 订单流程
 
@@ -359,11 +429,44 @@ application.yml 基础配置
 - 查询失败不会立即 RabbitMQ 热重回，而是按剩余次数重新投递延迟消息。
 - 超过次数后保留手动查询和订单对账接口兜底。
 
-## 10. RabbitMQ
+## 10. 对账流程
+
+核心文件：
+
+- `internal/service/reconciliation_task.go`：对账任务管理（创建、查询、执行、总览、MQ 消费）
+- `internal/service/reconciliation_parser.go`：微信/支付宝账单下载与解析
+- `internal/service/reconciliation_matcher.go`：本地与渠道数据匹配、差异识别
+- `internal/service/reconciliation.go`：差异处理（补录、忽略、人工处理）
+
+对账主链路：
+
+1. 前端或调度器创建对账任务，状态为 `PENDING`。
+2. 手动触发或 MQ 消费触发任务执行，加 Redis 分布式锁。
+3. 任务状态转为 `PROCESSING`，清理旧的明细和差异记录。
+4. 按 `billType` 解析需要下载的账单类型（trade / refund / all）。
+5. 按 `paymentAppId` 选择渠道配置，下载微信/支付宝账单。
+6. 解析账单 CSV，转换为 `ChannelBillRecord`。
+7. 查询本地订单/退款记录，按 `order_no` 或 `refund_no` 构建匹配键。
+8. 对比本地与渠道数据，识别 4 类差异：金额不一致、状态不一致、本地有渠道无、渠道有本地无。
+9. 写入 `t_reconciliation_detail` 和 `t_reconciliation_diff`。
+10. 更新任务统计（总笔数、匹配笔数、差异笔数）和状态（`COMPLETED` / `COMPLETED_WITH_WARNING` / `FAILED`）。
+
+差异处理：
+
+| 处理类型 | 说明 | 目标状态 |
+|---|---|---|
+| `SUPPLEMENT` | 补录：按订单 paymentType 调用对应渠道查询接口，修正本地数据 | `HANDLED` |
+| `MARK_REFUNDED` | 标记已退款：仅更新差异状态 | `HANDLED` |
+| `IGNORE` | 忽略：跳过该差异 | `IGNORED` |
+| `MANUAL_PROCESS` | 人工处理：标记为已处理 | `HANDLED` |
+
+对账总览 `GetReconciliationSummary`：按 `billDate` 返回各渠道对账任务状态、差异统计，并按 task_id 过滤待处理和已处理差异数量。
+
+## 11. RabbitMQ
 
 MQ 客户端：`payment-demo-go/internal/mq/`
 
-启动时会声明两组 TTL + 死信交换机延迟队列。
+启动时会声明三组队列：订单关单、退款查询使用 TTL + 死信交换机延迟队列，对账任务使用普通 direct 队列 + fanout 完成事件交换机。
 
 ### 订单延迟关单
 
@@ -403,17 +506,38 @@ TTL 使用配置 `payment.order.close-delay-ms`。
 
 TTL 固定为 1 分钟。
 
-## 11. Redis
+### 对账任务
+
+| 名称 | 值 |
+|---|---|
+| task exchange | `payment.reconciliation.task.exchange`（direct） |
+| task queue | `payment.reconciliation.task.queue` |
+| task routing key | `payment.reconciliation.task` |
+| complete exchange | `payment.reconciliation.task.complete.exchange`（fanout） |
+
+消息：
+
+```json
+{"taskId":1,"trigger":"manual"}
+```
+
+无 TTL，持久化队列。消费失败时 `Nack + requeue=true` 重试，解析失败时 `Ack` 避免毒消息循环。
+
+## 12. Redis
 
 Redis 主要用途：
 
-- 分布式锁：订单创建、退款审核、退款查询、退款对账。
+- 分布式锁：订单创建、退款审核、退款查询、退款对账、对账任务执行。
+  - 锁 key 前缀：`payment:order:lock:`、`payment:refund:lock:`、`payment:reconciliation:lock:`。
+  - 锁实现：`internal/lock/redis_lock.go` 的 `Execute(ctx, key, wait, lease, fn)` 方法。
 - 微信 V3 通知幂等 key：`payment:wx:notify:processed:<notifyId>`。
 - 微信 V2 通知幂等 key：`payment:wx:v2:notify:processed:<transactionId>`。
 
 通知幂等 key 默认保留 24 小时。处理失败时会释放 `processing` 标记，让第三方后续重试能够再次处理。
 
-## 12. React 前端
+对账任务执行锁：`payment:reconciliation:lock:{taskId}`，TTL 默认 30 分钟，可通过 `ReconciliationConfig.LockTTL` 配置。
+
+## 13. React 前端
 
 目录：`payment-demo-react/`
 
@@ -452,6 +576,7 @@ src/api/refundInfo.js
 src/api/paymentConfig.js
 src/api/paymentChannel.js
 src/api/paymentApp.js
+src/api/reconciliation.js
 ```
 
 首页当前行为：
@@ -464,6 +589,8 @@ src/api/paymentApp.js
 - 支付宝应用调用支付宝电脑网站支付。
 - 微信 V2 按钮只允许微信支付应用使用。
 
+`bill.js` 与 `reconciliation.js` 支持 `paymentAppId` 参数，按应用选择渠道配置。
+
 常用命令：
 
 ```bash
@@ -475,7 +602,7 @@ npm run build
 
 开发服务默认端口：`3000`。
 
-## 13. Vue 前端
+## 14. Vue 前端
 
 目录：`payment-demo-vue/`
 
@@ -509,6 +636,8 @@ Vue 首页与 React 首页保持同一业务契约：
 - 下单请求带 `paymentAppId`。
 - 微信 V2 只允许微信应用。
 
+当前 Vue 项目通过 `vue.config.js` 把开发服务端口固定为 `8081`，避免与 Go 后端 `8080` 冲突。前端通过 `src/utils/request.js` 中 `baseURL: 'http://localhost:8080'` 直连后端，依赖后端 CORS。
+
 常用命令：
 
 ```bash
@@ -518,9 +647,9 @@ npm run serve
 npm run build
 ```
 
-开发服务默认端口通常为 `8080`，如果 Go 后端已占用 8080，需要前端 CLI 自动换端口或手动指定其他端口。
+开发服务端口：`8081`。
 
-## 14. 测试与验证
+## 15. 测试与验证
 
 后端基础验证：
 
@@ -545,16 +674,18 @@ npm run build
 
 - 配置加载和达梦 DSN 转换。
 - 达梦 GORM dialector。
-- 达梦 SQL 初始化脚本特征。
+- 达梦 SQL 初始化脚本特征（含对账 3 张表）。
 - 统一响应结构。
 - 支付配置管理和 `paymentAppId` 校验。
 - 支付应用与订单绑定。
-- RabbitMQ exchange、queue、routing key 名称。
+- RabbitMQ exchange、queue、routing key 名称（含对账队列）。
 - 退款自动查询重试边界。
 - Redis 锁行为。
 - Handler 路由与关键响应契约。
+- 对账匹配键构建、状态匹配、金额转换、账单解析、请求校验（含 billDate 格式校验）。
+- 对账 API 路由注册、参数校验失败响应。
 
-## 15. 维护注意事项
+## 16. 维护注意事项
 
 - 任何涉及 HTTP 路径、响应结构、状态值、DB schema、配置字段、MQ 名称、前端调用契约、第三方回调响应的变化，都属于公共接口或兼容影响，必须先更新 spec。
 - 行为变更要先补能失败的测试，再做最小实现。
@@ -564,3 +695,7 @@ npm run build
 - 新订单已经要求 `paymentAppId`，前端不要重新引入独立支付方式选择。
 - 退款审核通过后必须保证渠道退款提交成功才投递自动查询消息；如果投递失败，审核接口应返回错误，避免形成无人兜底的处理中退款。
 - 达梦 schema、脚本、配置和 README 要一起维护，避免再次出现 schema 不存在或账号密码解析错误。
+- 对账任务创建时必须校验 `billDate` 为 `YYYY-MM-DD` 格式，避免后续账单下载失败。
+- 对账任务创建时如果指定 `paymentAppId`，必须校验应用存在、启用且与 `paymentType` 匹配。
+- 对账任务可以重复执行，覆盖旧明细和差异记录；幂等通过 `paymentType + paymentAppId + billDate + billType` 唯一约束 + Redis 锁共同保证。
+- 对账差异处理只能处理 `PENDING` 状态的差异，已处理的差异不能重复处理。

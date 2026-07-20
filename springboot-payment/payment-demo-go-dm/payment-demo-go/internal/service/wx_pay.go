@@ -526,7 +526,24 @@ func amountInt(m map[string]interface{}, key string) *int {
 	return &n
 }
 
-func (s *Service) WxQueryBill(ctx context.Context, billDate, typ, billType, accountType, tarType string) (string, error) {
+func (s *Service) WxQueryBill(ctx context.Context, billDate, typ, billType, accountType, tarType string, paymentAppID ...int64) (string, error) {
+	appID := int64(0)
+	if len(paymentAppID) > 0 {
+		appID = paymentAppID[0]
+	}
+	cfg := s.Cfg.WxPay
+	client := s.WxV3
+	if appID > 0 {
+		resolvedCfg, resolvedAppID, err := s.wxPayConfigForApp(ctx, appID)
+		if err != nil {
+			return "", err
+		}
+		cfg = resolvedCfg
+		client, err = s.wxV3ClientForConfig(cfg, resolvedAppID)
+		if err != nil {
+			return "", err
+		}
+	}
 	path := constant.WxAPITradeBills
 	q := url.Values{}
 	q.Set("bill_date", billDate)
@@ -541,7 +558,7 @@ func (s *Service) WxQueryBill(ctx context.Context, billDate, typ, billType, acco
 	if strings.TrimSpace(tarType) != "" {
 		q.Set("tar_type", strings.TrimSpace(tarType))
 	}
-	body, err := s.WxV3.Get(ctx, pay.BuildURL(s.Cfg.WxPay.Domain, path, q))
+	body, err := client.Get(ctx, pay.BuildURL(cfg.Domain, path, q))
 	if err != nil {
 		return "", err
 	}
@@ -549,15 +566,32 @@ func (s *Service) WxQueryBill(ctx context.Context, billDate, typ, billType, acco
 	return str(m["download_url"]), nil
 }
 
-func (s *Service) WxDownloadBill(ctx context.Context, billDate, typ, billType, accountType, tarType string) (string, error) {
-	downloadURL, err := s.WxQueryBill(ctx, billDate, typ, billType, accountType, tarType)
+func (s *Service) WxDownloadBill(ctx context.Context, billDate, typ, billType, accountType, tarType string, paymentAppID ...int64) (string, error) {
+	appID := int64(0)
+	if len(paymentAppID) > 0 {
+		appID = paymentAppID[0]
+	}
+	downloadURL, err := s.WxQueryBill(ctx, billDate, typ, billType, accountType, tarType, appID)
 	if err != nil {
 		return "", err
 	}
 	if downloadURL == "" {
 		return "", util.Biz("微信账单下载地址为空")
 	}
-	return s.WxV3.GetNoSign(ctx, downloadURL)
+	cfg := s.Cfg.WxPay
+	client := s.WxV3
+	if appID > 0 {
+		resolvedCfg, resolvedAppID, err := s.wxPayConfigForApp(ctx, appID)
+		if err != nil {
+			return "", err
+		}
+		cfg = resolvedCfg
+		client, err = s.wxV3ClientForConfig(cfg, resolvedAppID)
+		if err != nil {
+			return "", err
+		}
+	}
+	return client.GetNoSign(ctx, downloadURL)
 }
 
 func defaultBlank(v, def string) string {

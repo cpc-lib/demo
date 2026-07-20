@@ -21,6 +21,9 @@
           <router-link to="/payment-config" tag="li" active-class="current">
             <a>支付配置</a>
           </router-link>
+          <router-link to="/reconciliation" tag="li" active-class="current">
+            <a>对账管理</a>
+          </router-link>
         </ul>
       </div>
       <div class="clear"></div>

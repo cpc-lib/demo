@@ -199,3 +199,23 @@ func FirstString(m map[string]interface{}, keys ...string) string {
 	}
 	return ""
 }
+
+func (c *AliPayClient) DownloadBill(ctx context.Context, billURL string) (string, error) {
+	if billURL == "" {
+		return "", fmt.Errorf("账单下载地址为空")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, billURL, nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}

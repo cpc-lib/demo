@@ -19,6 +19,11 @@ const (
 	OrderCloseReleaseQueue       = "payment.order.close.release.queue"
 	OrderCloseDelayRoutingKey    = "payment.order.close.delay"
 	OrderCloseReleaseRoutingKey  = "payment.order.close.release"
+
+	ReconciliationTaskExchange      = "payment.reconciliation.task.exchange"
+	ReconciliationTaskQueue     = "payment.reconciliation.task.queue"
+	ReconciliationTaskRoutingKey = "payment.reconciliation.task"
+	ReconciliationCompleteExchange = "payment.reconciliation.task.complete.exchange"
 )
 
 type Client struct {
@@ -50,7 +55,23 @@ func (c *Client) declare() error {
 	if err := c.declareOrderClose(); err != nil {
 		return err
 	}
-	return c.declareRefundQuery()
+	if err := c.declareRefundQuery(); err != nil {
+		return err
+	}
+	return c.declareReconciliationTask()
+}
+
+func (c *Client) declareReconciliationTask() error {
+	if err := c.ch.ExchangeDeclare(ReconciliationTaskExchange, "direct", true, false, false, false, nil); err != nil {
+		return err
+	}
+	if err := c.ch.ExchangeDeclare(ReconciliationCompleteExchange, "fanout", true, false, false, false, nil); err != nil {
+		return err
+	}
+	if _, err := c.ch.QueueDeclare(ReconciliationTaskQueue, true, false, false, false, nil); err != nil {
+		return err
+	}
+	return c.ch.QueueBind(ReconciliationTaskQueue, ReconciliationTaskRoutingKey, ReconciliationTaskExchange, false, nil)
 }
 
 func (c *Client) declareOrderClose() error {
@@ -108,6 +129,47 @@ func (c *Client) ConsumeCloseOrder(ctx context.Context, handler func(context.Con
 				}
 				if err := handler(ctx, m); err != nil {
 					log.Printf("处理延迟关单消息失败: %v", err)
+					_ = msg.Nack(false, true)
+					continue
+				}
+				_ = msg.Ack(false)
+			}
+		}
+	}()
+	return nil
+}
+
+func (c *Client) SendReconciliationTaskMessage(ctx context.Context, taskID int64, trigger string) error {
+	body, _ := json.Marshal(model.ReconciliationTaskMessage{TaskID: taskID, Trigger: trigger})
+	return c.ch.PublishWithContext(ctx, ReconciliationTaskExchange, ReconciliationTaskRoutingKey, false, false, amqp.Publishing{
+		ContentType:  "application/json",
+		DeliveryMode: amqp.Persistent,
+		Body:         body,
+	})
+}
+
+func (c *Client) ConsumeReconciliationTask(ctx context.Context, handler func(context.Context, model.ReconciliationTaskMessage) error) error {
+	msgs, err := c.ch.Consume(ReconciliationTaskQueue, "", false, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg, ok := <-msgs:
+				if !ok {
+					return
+				}
+				var m model.ReconciliationTaskMessage
+				if err := json.Unmarshal(msg.Body, &m); err != nil {
+					log.Printf("解析对账任务消息失败: %v", err)
+					_ = msg.Ack(false)
+					continue
+				}
+				if err := handler(ctx, m); err != nil {
+					log.Printf("处理对账任务消息失败: %v", err)
 					_ = msg.Nack(false, true)
 					continue
 				}

@@ -44,3 +44,6 @@ payment:
     close-delay-ms: 60000
   refund:
     status-sync-delay-ms: 60000
+  reconciliation:
+    enabled: true
+    cron: 0 0 2 * * ?

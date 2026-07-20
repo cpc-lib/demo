@@ -28,6 +28,7 @@
 | Spec ID | 标题 | 状态 | 实现锚点 | 测试覆盖 | 最后更新 |
 |---------|------|------|---------|---------|---------|
 | SPEC-001 | [支付核心流程行为规格](implemented/current-behavior/PAYMENT_DEMO_CURRENT_BEHAVIOR_SPEC.md) | ✅ 已实现 | 见锚点 | 24个特征测试 | 2026-06-14 |
+| SPEC-005 | [支付对账功能](implemented/RECONCILIATION_FUNCTION_SPEC.md) | ✅ 已实现 | 见锚点 | 待补充 | 2026-07-20 |
 
 ### SPEC-001 详情
 
@@ -59,6 +60,25 @@
 4. V2/V3幂等Key字段不同 (Test 3.2)
 5. 退款计算并发安全 (Test 4.3)
 6. 分布式锁中断处理 (Test 6.2)
+
+### SPEC-005 详情
+
+**标题**: 支付对账功能
+
+**状态**: implemented
+
+**描述**: 实现支付渠道账单与本地订单数据的自动对账，生成差异报告，支持财务核销。涵盖微信支付、支付宝两大渠道，支持手动触发和定时自动对账。
+
+**实现锚点**:
+| 模块 | 文件 | 关键方法 |
+|------|------|---------|
+| 对账控制器 | `ReconciliationController.java` | `executeReconciliation()`, `listReconciliation()`, `listDetails()`, `exportReconciliation()` |
+| 对账服务 | `ReconciliationServiceImpl.java` | `executeReconciliation()`, `matchOrders()`, `saveDetails()` |
+| 微信账单解析 | `WxBillParser.java` | `parse()` |
+| 支付宝账单解析 | `AliPayBillParser.java` | `parse()` |
+| 定时任务 | `ReconciliationScheduleConfig.java` | `autoReconcileWxPay()`, `autoReconcileAliPay()` |
+
+**验收进度**: 16/17 项已完成（仅特征测试待补充）
 
 ---
 
@@ -145,6 +165,8 @@
 | 日期 | Spec ID | 旧状态 | 新状态 | 原因 |
 |------|---------|--------|--------|------|
 | 2026-06-14 | SPEC-001 | - | implemented | 初始创建，覆盖核心流程 |
+| 2026-07-20 | SPEC-005 | - | planned | 新增支付对账功能设计方案 |
+| 2026-07-20 | SPEC-005 | planned | implemented | 完成全部开发：后端（Java）+ React 前端 + Vue 前端 |
 
 ---
 

@@ -7,6 +7,7 @@ import Orders from './pages/Orders.jsx'
 import Download from './pages/Download.jsx'
 import Success from './pages/Success.jsx'
 import PaymentConfig from './pages/PaymentConfig.jsx'
+import Reconciliation from './pages/Reconciliation.jsx'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/download" element={<Download />} />
           <Route path="/payment-config" element={<PaymentConfig />} />
+          <Route path="/reconciliation" element={<Reconciliation />} />
           <Route path="/success" element={<Success />} />
         </Routes>
         <AppFooter />

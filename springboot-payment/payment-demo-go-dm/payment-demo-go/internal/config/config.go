@@ -14,13 +14,21 @@ import (
 )
 
 type Config struct {
-	ServerPort int
-	Database   DatabaseConfig
-	Redis      RedisConfig
-	RabbitMQ   RabbitMQConfig
-	Payment    PaymentConfig
-	WxPay      WxPayConfig
-	AliPay     AliPayConfig
+	ServerPort     int
+	Database       DatabaseConfig
+	Redis          RedisConfig
+	RabbitMQ       RabbitMQConfig
+	Payment        PaymentConfig
+	Reconciliation ReconciliationConfig
+	WxPay          WxPayConfig
+	AliPay         AliPayConfig
+}
+
+type ReconciliationConfig struct {
+	SchedulerEnabled bool
+	SchedulerCron    string
+	LockTTL          time.Duration
+	ProgressTTL      time.Duration
 }
 
 type DatabaseConfig struct {
@@ -142,6 +150,12 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		ServerPort: raw.Server.Port,
+		Reconciliation: ReconciliationConfig{
+			SchedulerEnabled: false,
+			SchedulerCron:    "0 0 2 * * ?",
+			LockTTL:          30 * time.Minute,
+			ProgressTTL:      24 * time.Hour,
+		},
 		Database: DatabaseConfig{
 			Driver:   databaseDriver(raw.Spring.Datasource.DriverClassName),
 			URL:      raw.Spring.Datasource.URL,

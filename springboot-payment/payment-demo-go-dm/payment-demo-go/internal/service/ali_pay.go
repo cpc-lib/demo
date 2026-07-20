@@ -398,9 +398,24 @@ func (s *Service) aliClientForOrder(ctx context.Context, order *model.OrderInfo)
 	return client, cfg, paymentAppID, nil
 }
 
-func (s *Service) AliQueryBill(ctx context.Context, billDate, typ string) (string, error) {
+func (s *Service) AliQueryBill(ctx context.Context, billDate, typ string, paymentAppID ...int64) (string, error) {
+	appID := int64(0)
+	if len(paymentAppID) > 0 {
+		appID = paymentAppID[0]
+	}
+	client := s.AliPay
+	if appID > 0 {
+		cfg, resolvedAppID, err := s.aliPayConfigForApp(ctx, appID)
+		if err != nil {
+			return "", err
+		}
+		client, err = s.aliClientForConfig(cfg, resolvedAppID)
+		if err != nil {
+			return "", err
+		}
+	}
 	biz := map[string]interface{}{"bill_type": typ, "bill_date": billDate}
-	body, err := s.AliPay.Execute(ctx, "alipay.data.dataservice.bill.downloadurl.query", util.ToJSON(biz))
+	body, err := client.Execute(ctx, "alipay.data.dataservice.bill.downloadurl.query", util.ToJSON(biz))
 	if err != nil {
 		return "", util.Biz("申请支付宝账单失败: " + err.Error())
 	}

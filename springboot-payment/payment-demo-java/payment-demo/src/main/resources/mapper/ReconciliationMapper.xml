@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.ReconciliationMapper">
+
+    <resultMap id="BaseResultMap" type="cc.ivera.entity.Reconciliation">
+        <id column="id" property="id"/>
+        <result column="bill_date" property="billDate"/>
+        <result column="channel_code" property="channelCode"/>
+        <result column="payment_app_id" property="paymentAppId"/>
+        <result column="bill_type" property="billType"/>
+        <result column="status" property="status"/>
+        <result column="total_count" property="totalCount"/>
+        <result column="match_count" property="matchCount"/>
+        <result column="diff_count" property="diffCount"/>
+        <result column="diff_amount" property="diffAmount"/>
+        <result column="channel_total_amount" property="channelTotalAmount"/>
+        <result column="local_total_amount" property="localTotalAmount"/>
+        <result column="bill_hash" property="billHash"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectPageByConditions" resultMap="BaseResultMap">
+        select *
+        from t_reconciliation
+        <where>
+            <if test="billDateStart != null">
+                and bill_date >= #{billDateStart}
+            </if>
+            <if test="billDateEnd != null">
+                and bill_date &lt;= #{billDateEnd}
+            </if>
+            <if test="channelCode != null and channelCode != ''">
+                and channel_code = #{channelCode}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+        </where>
+        order by bill_date desc, id desc
+    </select>
+
+    <select id="selectByUniqueKey" resultMap="BaseResultMap">
+        select *
+        from t_reconciliation
+        where bill_date = #{billDate}
+          and channel_code = #{channelCode}
+          <choose>
+              <when test="paymentAppId != null">
+                  and payment_app_id = #{paymentAppId}
+              </when>
+              <otherwise>
+                  and payment_app_id is null
+              </otherwise>
+          </choose>
+          <choose>
+              <when test="billType != null and billType != ''">
+                  and bill_type = #{billType}
+              </when>
+              <otherwise>
+                  and bill_type = 'ALL'
+              </otherwise>
+          </choose>
+        limit 1
+    </select>
+
+</mapper>

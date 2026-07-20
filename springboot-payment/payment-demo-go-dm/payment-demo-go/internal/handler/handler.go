@@ -98,6 +98,15 @@ func (h *Handler) Register(r *gin.Engine) {
 	refund.POST("/reject/:refundNo", h.refundReject)
 	refund.POST("/query/:refundNo", h.refundQueryStatus)
 	refund.POST("/reconcile/:orderNo", h.refundReconcile)
+
+	recon := r.Group("/api/reconciliation")
+	recon.POST("/task", h.createReconciliationTask)
+	recon.GET("/task/list", h.listReconciliationTasks)
+	recon.GET("/task/:taskId", h.getReconciliationTask)
+	recon.POST("/task/:taskId/execute", h.executeReconciliationTask)
+	recon.GET("/task/:taskId/diff", h.listReconciliationDiffs)
+	recon.POST("/diff/:diffId/handle", h.handleReconciliationDiff)
+	recon.GET("/summary", h.getReconciliationSummary)
 }
 
 func cors() gin.HandlerFunc {
@@ -361,7 +370,8 @@ func (h *Handler) wxQueryRefund(c *gin.Context) {
 }
 
 func (h *Handler) wxQueryBill(c *gin.Context) {
-	downloadURL, err := h.Svc.WxQueryBill(c.Request.Context(), c.Param("billDate"), c.Param("type"), c.Query("billType"), c.Query("accountType"), c.Query("tarType"))
+	paymentAppID, _ := strconv.ParseInt(c.DefaultQuery("paymentAppId", "0"), 10, 64)
+	downloadURL, err := h.Svc.WxQueryBill(c.Request.Context(), c.Param("billDate"), c.Param("type"), c.Query("billType"), c.Query("accountType"), c.Query("tarType"), paymentAppID)
 	if err != nil {
 		fail(c, err)
 		return
@@ -372,7 +382,8 @@ func (h *Handler) wxQueryBill(c *gin.Context) {
 }
 
 func (h *Handler) wxDownloadBill(c *gin.Context) {
-	result, err := h.Svc.WxDownloadBill(c.Request.Context(), c.Param("billDate"), c.Param("type"), c.Query("billType"), c.Query("accountType"), c.Query("tarType"))
+	paymentAppID, _ := strconv.ParseInt(c.DefaultQuery("paymentAppId", "0"), 10, 64)
+	result, err := h.Svc.WxDownloadBill(c.Request.Context(), c.Param("billDate"), c.Param("type"), c.Query("billType"), c.Query("accountType"), c.Query("tarType"), paymentAppID)
 	if err != nil {
 		fail(c, err)
 		return
@@ -578,7 +589,8 @@ func (h *Handler) aliQueryRefund(c *gin.Context) {
 }
 
 func (h *Handler) aliQueryBill(c *gin.Context) {
-	downloadURL, err := h.Svc.AliQueryBill(c.Request.Context(), c.Param("billDate"), c.Param("type"))
+	paymentAppID, _ := strconv.ParseInt(c.DefaultQuery("paymentAppId", "0"), 10, 64)
+	downloadURL, err := h.Svc.AliQueryBill(c.Request.Context(), c.Param("billDate"), c.Param("type"), paymentAppID)
 	if err != nil {
 		fail(c, err)
 		return
@@ -794,6 +806,128 @@ func toErrMessage(v interface{}) string {
 	default:
 		return "失败"
 	}
+}
+
+func (h *Handler) createReconciliationTask(c *gin.Context) {
+	var req model.ReconciliationTaskRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fail(c, err)
+		return
+	}
+	task, err := h.Svc.CreateReconciliationTask(c.Request.Context(), req)
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	okData(c, task)
+}
+
+func (h *Handler) listReconciliationTasks(c *gin.Context) {
+	paymentType := c.Query("paymentType")
+	billDate := c.Query("billDate")
+	status := c.Query("status")
+	paymentAppIDStr := c.Query("paymentAppId")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	var paymentAppID *int64
+	if strings.TrimSpace(paymentAppIDStr) != "" {
+		id, err := strconv.ParseInt(paymentAppIDStr, 10, 64)
+		if err == nil && id > 0 {
+			paymentAppID = &id
+		}
+	}
+	list, total, err := h.Svc.ListReconciliationTasks(c.Request.Context(), paymentType, paymentAppID, billDate, status, page, pageSize)
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	pageResult(c, list, total, page, pageSize)
+}
+
+func (h *Handler) getReconciliationTask(c *gin.Context) {
+	taskID, err := strconv.ParseInt(c.Param("taskId"), 10, 64)
+	if err != nil || taskID <= 0 {
+		fail(c, util.Biz("对账任务ID无效"))
+		return
+	}
+	task, err := h.Svc.GetReconciliationTask(c.Request.Context(), taskID)
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	okData(c, task)
+}
+
+func (h *Handler) executeReconciliationTask(c *gin.Context) {
+	taskID, err := strconv.ParseInt(c.Param("taskId"), 10, 64)
+	if err != nil || taskID <= 0 {
+		fail(c, util.Biz("对账任务ID无效"))
+		return
+	}
+	if err := h.Svc.ExecuteReconciliationTask(c.Request.Context(), taskID, constant.ReconciliationTriggerManual); err != nil {
+		fail(c, err)
+		return
+	}
+	okMsg(c, "对账任务执行成功")
+}
+
+func (h *Handler) listReconciliationDiffs(c *gin.Context) {
+	taskID, err := strconv.ParseInt(c.Param("taskId"), 10, 64)
+	if err != nil || taskID <= 0 {
+		fail(c, util.Biz("对账任务ID无效"))
+		return
+	}
+	diffType := c.Query("diffType")
+	handleStatus := c.Query("handleStatus")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	list, total, err := h.Svc.ListReconciliationDiffs(c.Request.Context(), taskID, diffType, handleStatus, page, pageSize)
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	pageResult(c, list, total, page, pageSize)
+}
+
+func (h *Handler) handleReconciliationDiff(c *gin.Context) {
+	diffID, err := strconv.ParseInt(c.Param("diffId"), 10, 64)
+	if err != nil || diffID <= 0 {
+		fail(c, util.Biz("差异记录ID无效"))
+		return
+	}
+	var req model.ReconciliationDiffHandleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fail(c, err)
+		return
+	}
+	if err := h.Svc.HandleReconciliationDiff(c.Request.Context(), diffID, req); err != nil {
+		fail(c, err)
+		return
+	}
+	okMsg(c, "差异处理成功")
+}
+
+func (h *Handler) getReconciliationSummary(c *gin.Context) {
+	billDate := c.Query("billDate")
+	summary, err := h.Svc.GetReconciliationSummary(c.Request.Context(), billDate)
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	okData(c, summary)
+}
+
+func pageResult(c *gin.Context, list interface{}, total int64, page, pageSize int) {
+	c.JSON(http.StatusOK, response.R{
+		Code:    0,
+		Message: "success",
+		Data: gin.H{
+			"list":     list,
+			"total":    total,
+			"page":     page,
+			"pageSize": pageSize,
+		},
+	})
 }
 
 var _ = gorm.ErrRecordNotFound

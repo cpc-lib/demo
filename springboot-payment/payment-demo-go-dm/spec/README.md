@@ -19,7 +19,7 @@
 
 ### planned
 
-- 暂无。
+- [支付对账功能](planned/PAYMENT_RECONCILIATION_SPEC.md)
 
 ### implemented
 
