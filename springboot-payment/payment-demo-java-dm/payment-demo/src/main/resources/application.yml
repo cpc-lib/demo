@@ -44,3 +44,10 @@ payment:
     close-delay-ms: 60000
   refund:
     status-sync-delay-ms: 60000
+  reconciliation:
+    schedule:
+      enabled: false
+      cron: "0 30 10 * * ?"
+    retry-delay-ms: 300000
+    feature:
+      enabled: true

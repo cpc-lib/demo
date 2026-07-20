@@ -33,6 +33,9 @@ export default function AppHeader() {
             <li className={liClassName('/payment-config')}>
               <NavLink to="/payment-config">支付配置</NavLink>
             </li>
+            <li className={liClassName('/reconciliation')}>
+              <NavLink to="/reconciliation">对账管理</NavLink>
+            </li>
           </ul>
         </div>
         <div className="clear" />

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.reconciliation.ReconciliationBatchMapper">
+
+    <select id="selectByBatchNo" resultType="cc.ivera.entity.reconciliation.ReconciliationBatch">
+        select *
+        from t_reconciliation_batch
+        where batch_no = #{batchNo}
+    </select>
+
+    <select id="selectByChannelAndDate" resultType="cc.ivera.entity.reconciliation.ReconciliationBatch">
+        select *
+        from t_reconciliation_batch
+        where channel_code = #{channelCode}
+          and bill_date = #{billDate}
+        order by create_time desc
+    </select>
+
+    <select id="selectByStatus" resultType="cc.ivera.entity.reconciliation.ReconciliationBatch">
+        select *
+        from t_reconciliation_batch
+        where status = #{status}
+        order by create_time desc
+    </select>
+
+    <select id="selectPageByCondition" resultType="cc.ivera.entity.reconciliation.ReconciliationBatch">
+        select *
+        from t_reconciliation_batch
+        <where>
+            <if test="query.channelCode != null and query.channelCode != ''">
+                and channel_code = #{query.channelCode}
+            </if>
+            <if test="query.status != null and query.status != ''">
+                and status = #{query.status}
+            </if>
+            <if test="query.billDate != null and query.billDate != ''">
+                and bill_date = #{query.billDate}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+</mapper>

@@ -10,6 +10,7 @@ import Orders from '../views/Orders'
 import Download from '../views/Download'
 import Success from '../views/Success'
 import PaymentConfig from '../views/PaymentConfig'
+import Reconciliation from '../views/Reconciliation'
 
 // 创建并暴露一个路由器
 export default new VueRouter({
@@ -29,6 +30,10 @@ export default new VueRouter({
         {
             path: '/payment-config',
             component: PaymentConfig
+        },
+        {
+            path: '/reconciliation',
+            component: Reconciliation
         },
         {
             path: '/success',

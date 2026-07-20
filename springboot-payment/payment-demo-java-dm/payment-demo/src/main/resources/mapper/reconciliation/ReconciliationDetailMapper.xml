@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.reconciliation.ReconciliationDetailMapper">
+
+    <select id="selectByBatchNo" resultType="cc.ivera.entity.reconciliation.ReconciliationDetail">
+        select *
+        from t_reconciliation_detail
+        where batch_no = #{batchNo}
+        order by id
+    </select>
+
+    <select id="selectByBatchNoAndMatchStatus" resultType="cc.ivera.entity.reconciliation.ReconciliationDetail">
+        select *
+        from t_reconciliation_detail
+        where batch_no = #{batchNo}
+          and match_status = #{matchStatus}
+        order by id
+    </select>
+
+    <insert id="batchInsert">
+        insert into t_reconciliation_detail (
+            batch_no, order_no, transaction_id, trade_type,
+            channel_amount, local_amount, channel_status, local_status,
+            match_status, discrepancy_type, trade_time, create_time, update_time
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.batchNo}, #{item.orderNo}, #{item.transactionId}, #{item.tradeType},
+                #{item.channelAmount}, #{item.localAmount}, #{item.channelStatus}, #{item.localStatus},
+                #{item.matchStatus}, #{item.discrepancyType}, #{item.tradeTime},
+                #{item.createTime}, #{item.updateTime}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteByBatchNo">
+        delete from t_reconciliation_detail
+        where batch_no = #{batchNo}
+    </delete>
+
+    <select id="selectPageByCondition" resultType="cc.ivera.entity.reconciliation.ReconciliationDetail">
+        select *
+        from t_reconciliation_detail
+        <where>
+            and batch_no = #{query.batchNo}
+            <if test="query.matchStatus != null and query.matchStatus != ''">
+                and match_status = #{query.matchStatus}
+            </if>
+            <if test="query.discrepancyType != null and query.discrepancyType != ''">
+                and discrepancy_type = #{query.discrepancyType}
+            </if>
+            <if test="query.tradeType != null and query.tradeType != ''">
+                and trade_type = #{query.tradeType}
+            </if>
+        </where>
+        order by trade_time desc
+    </select>
+
+</mapper>

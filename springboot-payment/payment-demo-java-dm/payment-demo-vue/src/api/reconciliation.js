@@ -1,22 +1,8 @@
 import request from '@/utils/request'
 
-export default{
+export default {
 
-  downloadBillWxPay(billDate, type) {
-    return request({
-      url: '/api/wx-pay/downloadbill/' + billDate + '/' + type,
-      method: 'get'
-    })
-  },
-
-  downloadBillAliPay(billDate, type) {
-    return request({
-      url: '/api/ali-pay/bill/downloadurl/query/' + billDate + '/' + type,
-      method: 'get'
-    })
-  },
-
-  createReconciliationBatch(channelCode, paymentAppId, billDate) {
+  createBatch(channelCode, paymentAppId, billDate) {
     return request({
       url: '/api/reconciliation/batch/create',
       method: 'post',
@@ -24,41 +10,55 @@ export default{
     })
   },
 
-  listReconciliationBatches(channelCode, status, billDate) {
+  listBatches(channelCode, status, billDateStart, billDateEnd) {
     return request({
       url: '/api/reconciliation/batch/list',
       method: 'get',
-      params: { channelCode, status, billDate }
+      params: { channelCode, status, billDateStart, billDateEnd }
     })
   },
 
-  getReconciliationBatch(batchNo) {
+  getBatch(batchNo) {
     return request({
       url: '/api/reconciliation/batch/' + batchNo,
       method: 'get'
     })
   },
 
-  executeReconciliationBatch(batchNo) {
+  executeBatch(batchNo) {
     return request({
       url: '/api/reconciliation/batch/' + batchNo + '/execute',
       method: 'post'
     })
   },
 
-  listReconciliationDetails(batchNo, matchStatus) {
+  getBatchProgress(batchNo) {
     return request({
-      url: '/api/reconciliation/detail/list/' + batchNo,
-      method: 'get',
-      params: { matchStatus }
+      url: '/api/reconciliation/batch/' + batchNo + '/progress',
+      method: 'get'
     })
   },
 
-  listReconciliationDiscrepancies(batchNo, status) {
+  getSummary() {
+    return request({
+      url: '/api/reconciliation/summary',
+      method: 'get'
+    })
+  },
+
+  listDetails(batchNo, matchStatus, pageNum, pageSize) {
+    return request({
+      url: '/api/reconciliation/detail/list/' + batchNo,
+      method: 'get',
+      params: { matchStatus, pageNum, pageSize }
+    })
+  },
+
+  listDiscrepancies(batchNo, status, pageNum, pageSize) {
     return request({
       url: '/api/reconciliation/discrepancy/list/' + batchNo,
       method: 'get',
-      params: { status }
+      params: { status, pageNum, pageSize }
     })
   },
 

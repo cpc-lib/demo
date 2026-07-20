@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.reconciliation.ReconciliationDiscrepancyMapper">
+
+    <select id="selectByBatchNo" resultType="cc.ivera.entity.reconciliation.ReconciliationDiscrepancy">
+        select *
+        from t_reconciliation_discrepancy
+        where batch_no = #{batchNo}
+        order by id
+    </select>
+
+    <select id="selectByBatchNoAndStatus" resultType="cc.ivera.entity.reconciliation.ReconciliationDiscrepancy">
+        select *
+        from t_reconciliation_discrepancy
+        where batch_no = #{batchNo}
+          and status = #{status}
+        order by id
+    </select>
+
+    <select id="selectPageByCondition" resultType="cc.ivera.entity.reconciliation.ReconciliationDiscrepancy">
+        select *
+        from t_reconciliation_discrepancy
+        <where>
+            and batch_no = #{query.batchNo}
+            <if test="query.status != null and query.status != ''">
+                and status = #{query.status}
+            </if>
+            <if test="query.discrepancyType != null and query.discrepancyType != ''">
+                and discrepancy_type = #{query.discrepancyType}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+</mapper>

@@ -70,6 +70,36 @@ BEGIN
 END;
 /
 
+DECLARE
+  v_table_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_table_count FROM USER_TABLES WHERE UPPER(TABLE_NAME) = 'T_RECONCILIATION_DISCREPANCY';
+  IF v_table_count > 0 THEN
+    EXECUTE IMMEDIATE 'DROP TABLE t_reconciliation_discrepancy';
+  END IF;
+END;
+/
+
+DECLARE
+  v_table_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_table_count FROM USER_TABLES WHERE UPPER(TABLE_NAME) = 'T_RECONCILIATION_DETAIL';
+  IF v_table_count > 0 THEN
+    EXECUTE IMMEDIATE 'DROP TABLE t_reconciliation_detail';
+  END IF;
+END;
+/
+
+DECLARE
+  v_table_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_table_count FROM USER_TABLES WHERE UPPER(TABLE_NAME) = 'T_RECONCILIATION_BATCH';
+  IF v_table_count > 0 THEN
+    EXECUTE IMMEDIATE 'DROP TABLE t_reconciliation_batch';
+  END IF;
+END;
+/
+
 -- ----------------------------
 -- t_payment_channel 支付渠道配置表
 -- ----------------------------
@@ -305,6 +335,157 @@ CREATE INDEX idx_refund_order_status ON t_refund_info(order_no, refund_status);
 
 CREATE OR REPLACE TRIGGER trg_refund_info_uptime
 BEFORE UPDATE ON t_refund_info
+FOR EACH ROW
+BEGIN
+  :NEW.update_time = CURRENT_TIMESTAMP;
+END;
+/
+
+-- ----------------------------
+-- t_reconciliation_batch 对账批次表
+-- ----------------------------
+CREATE TABLE t_reconciliation_batch (
+  id BIGINT IDENTITY(1, 1) NOT NULL,
+  batch_no VARCHAR(50) NOT NULL,
+  channel_code VARCHAR(32) NOT NULL,
+  payment_app_id BIGINT,
+  bill_date VARCHAR(10) NOT NULL,
+  status VARCHAR(30) NOT NULL,
+  channel_total_count INT DEFAULT 0,
+  channel_total_amount INT DEFAULT 0,
+  local_total_count INT DEFAULT 0,
+  local_total_amount INT DEFAULT 0,
+  matched_count INT DEFAULT 0,
+  matched_amount INT DEFAULT 0,
+  discrepancy_count INT DEFAULT 0,
+  overpayment_count INT DEFAULT 0,
+  underpayment_count INT DEFAULT 0,
+  amount_mismatch_count INT DEFAULT 0,
+  status_mismatch_count INT DEFAULT 0,
+  failure_reason VARCHAR(512),
+  create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT pk_reconciliation_batch PRIMARY KEY (id),
+  CONSTRAINT uk_batch_no UNIQUE (batch_no),
+  CONSTRAINT uk_batch_channel_date_app UNIQUE (channel_code, bill_date, payment_app_id)
+);
+
+COMMENT ON TABLE t_reconciliation_batch IS '对账批次表：记录每次对账任务的批次信息与统计数据';
+COMMENT ON COLUMN t_reconciliation_batch.id IS '对账批次ID';
+COMMENT ON COLUMN t_reconciliation_batch.batch_no IS '对账批次号';
+COMMENT ON COLUMN t_reconciliation_batch.channel_code IS '渠道编码：WXPAY、ALIPAY';
+COMMENT ON COLUMN t_reconciliation_batch.payment_app_id IS '支付应用ID';
+COMMENT ON COLUMN t_reconciliation_batch.bill_date IS '对账日期，格式yyyy-MM-dd';
+COMMENT ON COLUMN t_reconciliation_batch.status IS '对账批次状态';
+COMMENT ON COLUMN t_reconciliation_batch.channel_total_count IS '渠道账单总笔数';
+COMMENT ON COLUMN t_reconciliation_batch.channel_total_amount IS '渠道账单总金额(分)';
+COMMENT ON COLUMN t_reconciliation_batch.local_total_count IS '本地交易总笔数';
+COMMENT ON COLUMN t_reconciliation_batch.local_total_amount IS '本地交易总金额(分)';
+COMMENT ON COLUMN t_reconciliation_batch.matched_count IS '匹配成功笔数';
+COMMENT ON COLUMN t_reconciliation_batch.matched_amount IS '匹配成功金额(分)';
+COMMENT ON COLUMN t_reconciliation_batch.discrepancy_count IS '差异总笔数';
+COMMENT ON COLUMN t_reconciliation_batch.overpayment_count IS '长款笔数（渠道有本地无）';
+COMMENT ON COLUMN t_reconciliation_batch.underpayment_count IS '短款笔数（本地有渠道无）';
+COMMENT ON COLUMN t_reconciliation_batch.amount_mismatch_count IS '金额不一致笔数';
+COMMENT ON COLUMN t_reconciliation_batch.status_mismatch_count IS '状态不一致笔数';
+COMMENT ON COLUMN t_reconciliation_batch.failure_reason IS '对账失败原因';
+COMMENT ON COLUMN t_reconciliation_batch.create_time IS '创建时间';
+COMMENT ON COLUMN t_reconciliation_batch.update_time IS '更新时间';
+
+CREATE INDEX idx_batch_status ON t_reconciliation_batch(status);
+CREATE INDEX idx_batch_channel_date ON t_reconciliation_batch(channel_code, bill_date);
+
+CREATE OR REPLACE TRIGGER trg_reconciliation_batch_uptime
+BEFORE UPDATE ON t_reconciliation_batch
+FOR EACH ROW
+BEGIN
+  :NEW.update_time = CURRENT_TIMESTAMP;
+END;
+/
+
+-- ----------------------------
+-- t_reconciliation_detail 对账明细表
+-- ----------------------------
+CREATE TABLE t_reconciliation_detail (
+  id BIGINT IDENTITY(1, 1) NOT NULL,
+  batch_no VARCHAR(50) NOT NULL,
+  order_no VARCHAR(50),
+  transaction_id VARCHAR(50),
+  trade_type VARCHAR(20),
+  channel_amount INT,
+  local_amount INT,
+  channel_status VARCHAR(50),
+  local_status VARCHAR(50),
+  match_status VARCHAR(30),
+  discrepancy_type VARCHAR(30),
+  trade_time TIMESTAMP,
+  create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT pk_reconciliation_detail PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE t_reconciliation_detail IS '对账明细表：记录渠道账单与本地交易的逐笔对账明细';
+COMMENT ON COLUMN t_reconciliation_detail.id IS '对账明细ID';
+COMMENT ON COLUMN t_reconciliation_detail.batch_no IS '对账批次号';
+COMMENT ON COLUMN t_reconciliation_detail.order_no IS '商户订单号';
+COMMENT ON COLUMN t_reconciliation_detail.transaction_id IS '渠道交易流水号';
+COMMENT ON COLUMN t_reconciliation_detail.trade_type IS '交易类型';
+COMMENT ON COLUMN t_reconciliation_detail.channel_amount IS '渠道交易金额(分)';
+COMMENT ON COLUMN t_reconciliation_detail.local_amount IS '本地交易金额(分)';
+COMMENT ON COLUMN t_reconciliation_detail.channel_status IS '渠道交易状态';
+COMMENT ON COLUMN t_reconciliation_detail.local_status IS '本地交易状态';
+COMMENT ON COLUMN t_reconciliation_detail.match_status IS '匹配状态';
+COMMENT ON COLUMN t_reconciliation_detail.discrepancy_type IS '差异类型';
+COMMENT ON COLUMN t_reconciliation_detail.trade_time IS '交易时间';
+COMMENT ON COLUMN t_reconciliation_detail.create_time IS '创建时间';
+COMMENT ON COLUMN t_reconciliation_detail.update_time IS '更新时间';
+
+CREATE INDEX idx_detail_batch_no ON t_reconciliation_detail(batch_no);
+CREATE INDEX idx_detail_match_status ON t_reconciliation_detail(batch_no, match_status);
+CREATE INDEX idx_detail_discrepancy ON t_reconciliation_detail(batch_no, discrepancy_type);
+
+CREATE OR REPLACE TRIGGER trg_reconciliation_detail_uptime
+BEFORE UPDATE ON t_reconciliation_detail
+FOR EACH ROW
+BEGIN
+  :NEW.update_time = CURRENT_TIMESTAMP;
+END;
+/
+
+-- ----------------------------
+-- t_reconciliation_discrepancy 对账差异单表
+-- ----------------------------
+CREATE TABLE t_reconciliation_discrepancy (
+  id BIGINT IDENTITY(1, 1) NOT NULL,
+  batch_no VARCHAR(50) NOT NULL,
+  detail_id BIGINT,
+  discrepancy_type VARCHAR(30) NOT NULL,
+  status VARCHAR(20) DEFAULT 'OPEN' NOT NULL,
+  resolve_remark VARCHAR(512),
+  resolved_time TIMESTAMP,
+  resolved_by VARCHAR(64),
+  create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT pk_reconciliation_discrepancy PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE t_reconciliation_discrepancy IS '对账差异单表：记录对账发现的差异并跟踪处理状态';
+COMMENT ON COLUMN t_reconciliation_discrepancy.id IS '差异单ID';
+COMMENT ON COLUMN t_reconciliation_discrepancy.batch_no IS '对账批次号';
+COMMENT ON COLUMN t_reconciliation_discrepancy.detail_id IS '关联对账明细ID';
+COMMENT ON COLUMN t_reconciliation_discrepancy.discrepancy_type IS '差异类型';
+COMMENT ON COLUMN t_reconciliation_discrepancy.status IS '差异处理状态：OPEN-待处理，RESOLVED-已解决';
+COMMENT ON COLUMN t_reconciliation_discrepancy.resolve_remark IS '处理备注';
+COMMENT ON COLUMN t_reconciliation_discrepancy.resolved_time IS '处理时间';
+COMMENT ON COLUMN t_reconciliation_discrepancy.resolved_by IS '处理人';
+COMMENT ON COLUMN t_reconciliation_discrepancy.create_time IS '创建时间';
+COMMENT ON COLUMN t_reconciliation_discrepancy.update_time IS '更新时间';
+
+CREATE INDEX idx_discrepancy_batch ON t_reconciliation_discrepancy(batch_no);
+CREATE INDEX idx_discrepancy_status ON t_reconciliation_discrepancy(status);
+
+CREATE OR REPLACE TRIGGER trg_reconciliation_discrepancy_uptime
+BEFORE UPDATE ON t_reconciliation_discrepancy
 FOR EACH ROW
 BEGIN
   :NEW.update_time = CURRENT_TIMESTAMP;
