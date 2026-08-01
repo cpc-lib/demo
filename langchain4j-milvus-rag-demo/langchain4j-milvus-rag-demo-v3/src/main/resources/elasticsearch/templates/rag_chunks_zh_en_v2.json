@@ -1,0 +1,121 @@
+{
+  "index_patterns": ["${index_name}*"],
+  "template": {
+    "aliases": {
+      "${index_alias}": {}
+    },
+    "settings": {
+      "analysis": {
+        "filter": {
+          "rag_synonyms": {
+            "type": "synonym_graph",
+            "synonyms_path": "${synonym_path}",
+            "updateable": false
+          }
+        },
+        "analyzer": {
+          "rag_zh": {
+            "tokenizer": "standard",
+            "filter": ["lowercase"]
+          },
+          "rag_en": {
+            "tokenizer": "standard",
+            "filter": ["lowercase", "asciifolding"]
+          },
+          "rag_business_synonym": {
+            "tokenizer": "standard",
+            "filter": ["lowercase", "asciifolding", "rag_synonyms"]
+          }
+        },
+        "normalizer": {
+          "lowercase_keyword": {
+            "type": "custom",
+            "filter": ["lowercase", "asciifolding"]
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties": {
+        "tenantId": { "type": "long" },
+        "tenant_id": { "type": "long" },
+        "knowledgeBaseId": { "type": "long" },
+        "knowledge_base_id": { "type": "long" },
+        "documentId": { "type": "keyword" },
+        "document_id": { "type": "keyword" },
+        "documentName": {
+          "type": "text",
+          "analyzer": "rag_zh",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 512 }
+          }
+        },
+        "document_name": {
+          "type": "text",
+          "analyzer": "rag_zh",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 512 }
+          }
+        },
+        "chunkId": { "type": "keyword" },
+        "chunk_uid": { "type": "keyword" },
+        "version": { "type": "integer" },
+        "chunkStatus": { "type": "keyword" },
+        "contentType": { "type": "keyword" },
+        "content_type": { "type": "keyword" },
+        "current": { "type": "boolean" },
+        "is_current": { "type": "boolean" },
+        "permissionTags": { "type": "keyword" },
+        "permission_tags": { "type": "keyword" },
+        "title": {
+          "type": "text",
+          "analyzer": "rag_zh",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 512 },
+            "en": { "type": "text", "analyzer": "rag_en" },
+            "synonym": { "type": "text", "analyzer": "rag_business_synonym" }
+          }
+        },
+        "sectionPath": {
+          "type": "text",
+          "analyzer": "rag_zh",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 512 }
+          }
+        },
+        "section_path": {
+          "type": "text",
+          "analyzer": "rag_zh",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 512 }
+          }
+        },
+        "contentSummary": {
+          "type": "text",
+          "analyzer": "rag_zh"
+        },
+        "content": {
+          "type": "text",
+          "analyzer": "rag_zh",
+          "fields": {
+            "smart": { "type": "text", "analyzer": "rag_zh" },
+            "en": { "type": "text", "analyzer": "rag_en" },
+            "synonym": { "type": "text", "analyzer": "rag_business_synonym" },
+            "keyword": { "type": "keyword", "ignore_above": 256 }
+          }
+        },
+        "imageCaption": { "type": "text", "analyzer": "rag_zh" },
+        "image_caption": { "type": "text", "analyzer": "rag_zh" },
+        "ocr_text": { "type": "text", "analyzer": "rag_zh" },
+        "pageNo": { "type": "integer" },
+        "updatedAt": { "type": "date", "ignore_malformed": true },
+        "updated_at": { "type": "date", "ignore_malformed": true },
+        "isDeleted": { "type": "boolean" }
+      }
+    }
+  },
+  "_meta": {
+    "index_version": "${index_version}",
+    "analyzer_profile": "${analyzer_profile}"
+  }
+}

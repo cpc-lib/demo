@@ -1,0 +1,263 @@
+version: "3.8"
+
+networks:
+  rag-network:
+    driver: bridge
+    name: rag-network
+
+volumes:
+  mysql-data:
+    name: rag-mysql-data
+  redis-data:
+    name: rag-redis-data
+  rabbitmq-data:
+    name: rag-rabbitmq-data
+  es-data:
+    name: rag-elasticsearch-data
+  etcd-data:
+    name: rag-etcd-data
+  minio-data:
+    name: rag-minio-data
+  milvus-data:
+    name: rag-milvus-data
+
+services:
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mysql:8.4
+    container_name: rag-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-cpc!23#@}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ragdemo}
+      MYSQL_USER: ${MYSQL_USER:-ragdemo}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-cpc!23#@}
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=500
+      - --innodb-buffer-pool-size=256M
+      - --bind-address=0.0.0.0
+    ports:
+      - "0.0.0.0:${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/ragedemo.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER:-ragdemo}", "-p${MYSQL_PASSWORD:-cpc!23#@}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/redis:7.2-alpine
+    container_name: rag-redis
+    restart: unless-stopped
+    command: >
+      redis-server /etc/redis/redis.conf
+      --requirepass ${REDIS_PASSWORD:-ragdemo}
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - redis-data:/data
+      - ./redis/config/redis.conf:/etc/redis/redis.conf:ro
+    ports:
+      - "0.0.0.0:${REDIS_PORT:-6379}:6379"
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-ragdemo}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  rabbitmq:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/rabbitmq:3.13-management-alpine
+    container_name: rag-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      TZ: Asia/Shanghai
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    ports:
+      - "0.0.0.0:${RABBITMQ_PORT:-5672}:5672"
+      - "0.0.0.0:${RABBITMQ_MGMT_PORT:-15672}:15672"
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  elasticsearch:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/elasticsearch:8.14.3
+    container_name: rag-elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      TZ: Asia/Shanghai
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/synonyms.txt:/usr/share/elasticsearch/config/es/synonyms.txt:ro
+      - ./elasticsearch/config/stopwords.txt:/usr/share/elasticsearch/config/es/stopwords.txt:ro
+    ports:
+      - "0.0.0.0:${ES_PORT:-9200}:9200"
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  etcd:
+    container_name: rag-etcd
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/etcd:v3.5.5
+    restart: unless-stopped
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+      - TZ=Asia/Shanghai
+    command: >
+      etcd
+      -advertise-client-urls=http://0.0.0.0:2379
+      -listen-client-urls=http://0.0.0.0:2379
+      -data-dir=/etcd
+    volumes:
+      - etcd-data:/etcd
+    ports:
+      - "0.0.0.0:2379:2379"
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  minio:
+    container_name: rag-minio
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/minio:RELEASE.2023-01-02T09-40-09Z
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioadmin}
+      MINIO_CONSOLE_ADDRESS: ":9001"
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-}
+      MINIO_OPTS: "--compat"
+      TZ: Asia/Shanghai
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    ports:
+      - "0.0.0.0:${MINIO_PORT:-9000}:9000"
+      - "0.0.0.0:${MINIO_CONSOLE_PORT:-9001}:9001"
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  milvus:
+    container_name: rag-milvus
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/milvus:v2.3.7
+    restart: unless-stopped
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      COMMON_SECURITY_AUTHORIZATION_ENABLED: "true"
+      COMMON_SECURITY_SUPERUSER_USERNAME: ${MILVUS_USERNAME:-root}
+      COMMON_SECURITY_SUPERUSER_PASSWORD: ${MILVUS_PASSWORD:-Milvus}
+      TZ: Asia/Shanghai
+    volumes:
+      - milvus-data:/var/lib/milvus
+    ports:
+      - "0.0.0.0:${MILVUS_PORT:-19530}:19530"
+      - "0.0.0.0:9091:9091"
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  attu:
+    container_name: rag-attu
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/attu:v2.4
+    restart: unless-stopped
+    environment:
+      - MILVUS_URL=milvus:19530
+      - MILVUS_USERNAME=${MILVUS_USERNAME:-root}
+      - MILVUS_PASSWORD=${MILVUS_PASSWORD:-Milvus}
+      - TZ=Asia/Shanghai
+    ports:
+      - "0.0.0.0:${ATTU_PORT:-8000}:3000"
+    depends_on:
+      milvus:
+        condition: service_healthy
+    networks:
+      - rag-network
+
+  openai-mock:
+    container_name: rag-openai-mock
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/wiremock:3.9.1
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    command:
+      - --port
+      - "8080"
+      - --root-dir
+      - /home/wiremock
+      - --verbose
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings:ro
+    ports:
+      - "0.0.0.0:${OPENAI_MOCK_PORT:-18080}:8080"
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:8080/__admin/health | grep -q '\"status\":\"healthy\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

@@ -1,0 +1,32 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Java source files - UTF-8 encoding
+*.java text encoding=utf-8
+*.xml text encoding=utf-8
+*.yml text encoding=utf-8
+*.yaml text encoding=utf-8
+*.sql text encoding=utf-8
+*.md text encoding=utf-8
+*.json text encoding=utf-8
+*.js text encoding=utf-8
+*.ts text encoding=utf-8
+*.tsx text encoding=utf-8
+*.css text encoding=utf-8
+*.html text encoding=utf-8
+
+# Binary files - should not be processed
+*.class binary
+*.jar binary
+*.war binary
+*.zip binary
+*.pdf binary
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary

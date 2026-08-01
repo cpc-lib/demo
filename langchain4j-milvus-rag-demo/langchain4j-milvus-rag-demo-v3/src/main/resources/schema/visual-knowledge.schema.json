@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "required": ["contentType", "summary"],
+  "properties": {
+    "contentType": {
+      "type": "string",
+      "enum": ["image", "chart", "flowchart", "architecture", "table", "diagram"]
+    },
+    "title": { "type": "string" },
+    "caption": { "type": "string" },
+    "imageNumber": { "type": "string" },
+    "sectionTitle": { "type": "string" },
+    "ocrText": { "type": "string" },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": { "type": "string" },
+          "target": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "order": { "type": "integer" },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "chartType": { "type": "string" },
+    "xAxis": { "type": "string" },
+    "yAxis": { "type": "string" },
+    "series": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "values": { "type": "array" }
+        }
+      }
+    },
+    "insights": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "summary": { "type": "string" }
+  },
+  "additionalProperties": true
+}

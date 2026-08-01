@@ -1,0 +1,95 @@
+ai,artificial intelligence
+ml,machine learning
+dl,deep learning
+nlp,natural language processing
+rag,retrieval augmented generation
+llm,large language model
+api,application programming interface
+sdk,software development kit
+db,database
+kb,knowledge base
+faq,frequently asked questions
+ui,user interface
+ux,user experience
+id,identifier
+config,configuration
+info,information
+doc,document
+docs,documents
+img,image
+imgs,images
+req,request
+resp,response
+err,error
+msg,message
+val,value
+func,function
+props,properties
+params,parameters
+args,arguments
+def,definition
+ref,reference
+temp,temporary
+curr,current
+prev,previous
+next,subsequent
+max,maximum
+min,minimum
+avg,average
+std,standard
+dev,development
+prod,production
+stg,staging
+qa,quality assurance
+admin,administrator
+auth,authentication
+perm,permission
+sec,security
+tls,transport layer security
+ssl,secure sockets layer
+http,hypertext transfer protocol
+https,hypertext transfer protocol secure
+url,uniform resource locator
+uri,uniform resource identifier
+json,javascript object notation
+yaml,yaml ain't markup language
+xml,extensible markup language
+html,hypertext markup language
+css,cascading style sheets
+js,javascript
+ts,typescript
+py,python
+java,java programming language
+go,golang
+rust,rust programming language
+c#,c sharp
+c++,c plus plus
+用户,使用者,客户
+管理员,系统管理员,超级用户
+权限,许可,授权
+配置,设置,参数
+文档,文件,资料
+知识库,知识图谱,知识系统
+问题,疑问,咨询
+答案,解答,回复
+搜索,检索,查找
+查询,询问,搜索
+索引,目录,检索表
+向量,矢量,嵌入
+嵌入,向量化,embedding
+模型,算法,ai模型
+提示,提示词,prompt
+上下文,语境,context
+对话,会话,聊天
+任务,工作,作业
+状态,状况,情况
+错误,异常,故障
+警告,提醒,提示
+成功,完成,通过
+失败,错误,未通过
+创建,新建,生成
+更新,修改,编辑
+删除,移除,清除
+获取,读取,查询
+列表,清单,目录
+详情,详细信息,细节

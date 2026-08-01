@@ -1,0 +1,314 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+rag:
+  llm:
+    base-url: ${RAG_LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    api-key: ${RAG_LLM_API_KEY:}
+    model: ${RAG_LLM_MODEL:qwen-plus}
+    temperature: 0.2
+
+  embedding:
+    base-url: ${RAG_EMBED_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    api-key: ${RAG_EMBED_API_KEY:}
+    model: ${RAG_EMBED_MODEL:text-embedding-v4}
+    dimension: ${RAG_EMBED_DIMENSION:1024}
+
+  milvus:
+    username: ${MILVUS_USERNAME:root}
+    password: ${MILVUS_PASSWORD:Milvus}
+    default-alias: ${MILVUS_DEFAULT_ALIAS:default}
+    host: ${MILVUS_HOST:192.168.220.200}
+    port: ${MILVUS_PORT:19530}
+    rpc-deadline-ms: ${MILVUS_RPC_DEADLINE_MS:0}
+    collection: ${MILVUS_COLLECTION:demo_kb}
+    top-k: ${MILVUS_TOP_K:6}
+    min-score: ${MILVUS_MIN_SCORE:0.55}
+    multimodal-enabled: ${MILVUS_MULTIMODAL_ENABLED:false}
+    multimodal-collection: ${MILVUS_MULTIMODAL_COLLECTION:rag_chunks_multimodal_v1}
+    text-vector-field: ${MILVUS_TEXT_VECTOR_FIELD:text_vector}
+    image-vector-field: ${MILVUS_IMAGE_VECTOR_FIELD:image_vector}
+    multimodal-metric-type: ${MILVUS_MULTIMODAL_METRIC_TYPE:COSINE}
+    multimodal-index-type: ${MILVUS_MULTIMODAL_INDEX_TYPE:HNSW}
+    multimodal-index-params: '${MILVUS_MULTIMODAL_INDEX_PARAMS:{"M":16,"efConstruction":200}}'
+    multimodal-search-params: '${MILVUS_MULTIMODAL_SEARCH_PARAMS:{"ef":64}}'
+    auto-create-multimodal-collection: ${MILVUS_AUTO_CREATE_MULTIMODAL_COLLECTION:true}
+
+  splitter:
+    chunk-size: 900
+    overlap: 120
+
+  agent:
+    memory-max-messages: 20
+    append-source-block: true
+    append-tool-trace: true
+    tools:
+      - ticket
+      - knowledge
+      - web-search
+      - weather
+      - text-to-image
+
+  web-search:
+    enabled: true
+    provider: tavily
+    tavily-api-key: ${TAVILY_API_KEY:}
+    max-results: 10
+    search-depth: advanced
+    timeout-seconds: 20
+
+  weather:
+    enabled: true
+    geocoding-base-url: https://geocoding-api.open-meteo.com
+    forecast-base-url: https://api.open-meteo.com
+    default-timezone: Asia/Shanghai
+    timeout-seconds: 20
+
+  image:
+    enabled: true
+    base-url: ${RAG_IMAGE_BASE_URL:${RAG_LLM_BASE_URL:https://dashscope.aliyuncs.com/api/v1}}
+    api-key: ${RAG_IMAGE_API_KEY:${RAG_LLM_API_KEY:}}
+    model: ${RAG_IMAGE_MODEL:wanx-v1}
+    size: ${RAG_IMAGE_SIZE:1024x1024}
+    quality: ${RAG_IMAGE_QUALITY:standard}
+    timeout-seconds: ${RAG_IMAGE_TIMEOUT_SECONDS:60}
+    poll-interval-millis: ${RAG_IMAGE_POLL_INTERVAL_MILLIS:2000}
+
+  multimodal-ingest:
+    enabled: ${RAG_MULTIMODAL_INGEST_ENABLED:true}
+    vision-analysis-enabled: ${RAG_VISION_ANALYSIS_ENABLED:true}
+    vision-base-url: ${RAG_VISION_BASE_URL:${RAG_LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}}
+    vision-api-key: ${RAG_VISION_API_KEY:${RAG_LLM_API_KEY:}}
+    vision-model: ${RAG_VISION_MODEL:qwen-vl-plus}
+    ocr-enabled: ${RAG_OCR_ENABLED:false}
+    ocr-provider: ${RAG_OCR_PROVIDER:noop}
+    ocr-base-url: ${RAG_OCR_BASE_URL:}
+    ocr-api-key: ${RAG_OCR_API_KEY:}
+    ocr-model: ${RAG_OCR_MODEL:}
+    vision-embedding-enabled: ${RAG_VISION_EMBEDDING_ENABLED:false}
+    vision-embedding-provider: ${RAG_VISION_EMBEDDING_PROVIDER:dashscope}
+    vision-embedding-base-url: ${RAG_VISION_EMBEDDING_BASE_URL:${RAG_LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}}
+    vision-embedding-api-key: ${RAG_VISION_EMBEDDING_API_KEY:${RAG_LLM_API_KEY:}}
+    vision-embedding-model: ${RAG_VISION_EMBEDDING_MODEL:}
+    vision-embedding-dimension: ${RAG_VISION_EMBEDDING_DIMENSION:1024}
+    low-confidence-threshold: ${RAG_MULTIMODAL_LOW_CONFIDENCE_THRESHOLD:0.70}
+    visual-schema-path: ${RAG_VISUAL_SCHEMA_PATH:classpath:schema/visual-knowledge.schema.json}
+    ocr-schema-path: ${RAG_OCR_SCHEMA_PATH:classpath:schema/ocr-result.schema.json}
+    asset-directory: ${RAG_KNOWLEDGE_ASSET_DIR:data/knowledge-assets}
+    asset-url-prefix: ${RAG_KNOWLEDGE_ASSET_URL_PREFIX:/api/knowledge/assets}
+    timeout-seconds: ${RAG_VISION_TIMEOUT_SECONDS:60}
+
+  ingestion:
+    rabbit-enabled: ${RAG_INGESTION_RABBIT_ENABLED:true}
+    consumer-auto-startup: ${RAG_INGESTION_CONSUMER_AUTO_STARTUP:true}
+    exchange: ${RAG_INGESTION_EXCHANGE:rag.ingestion.exchange}
+    queue-name: ${RAG_INGESTION_QUEUE:rag.ingestion.tasks}
+    routing-key: ${RAG_INGESTION_ROUTING_KEY:rag.ingestion.task}
+    object-directory: ${RAG_OBJECT_DIR:data/rag-objects}
+    default-tenant-id: ${RAG_DEFAULT_TENANT_ID:0}
+    default-knowledge-base-code: ${RAG_DEFAULT_KB_CODE:default}
+    default-knowledge-base-name: ${RAG_DEFAULT_KB_NAME:Default Knowledge Base}
+
+  object-storage:
+    type: ${RAG_OBJECT_STORAGE_TYPE:local}
+    endpoint: ${RAG_OBJECT_STORAGE_ENDPOINT:http://192.168.220.200:9000}
+    access-key: ${RAG_OBJECT_STORAGE_ACCESS_KEY:minioadmin}
+    secret-key: ${RAG_OBJECT_STORAGE_SECRET_KEY:minioadmin}
+    bucket: ${RAG_OBJECT_STORAGE_BUCKET:rag-objects}
+
+  schema:
+    auto-initialize: ${RAG_SCHEMA_AUTO_INITIALIZE:true}
+    bootstrap-location: ${RAG_SCHEMA_BOOTSTRAP_LOCATION:classpath:sql/all-in-one.sql}
+
+  chunk-registry:
+    enabled: ${RAG_CHUNK_REGISTRY_ENABLED:true}
+    rebuild-on-startup: ${RAG_CHUNK_REGISTRY_REBUILD_ON_STARTUP:false}
+    scheduled-rebuild-enabled: ${RAG_CHUNK_REGISTRY_SCHEDULED_REBUILD_ENABLED:false}
+    clear-existing-on-rebuild: ${RAG_CHUNK_REGISTRY_CLEAR_EXISTING:true}
+    rebuild-initial-delay-millis: ${RAG_CHUNK_REGISTRY_REBUILD_INITIAL_DELAY_MILLIS:3600000}
+    rebuild-fixed-delay-millis: ${RAG_CHUNK_REGISTRY_REBUILD_FIXED_DELAY_MILLIS:3600000}
+
+  retrieval:
+    hybrid-vector-weight: ${RAG_HYBRID_VECTOR_WEIGHT:0.65}
+    hybrid-keyword-weight: ${RAG_HYBRID_KEYWORD_WEIGHT:0.35}
+    multimodal-text-vector-weight: ${RAG_MULTIMODAL_TEXT_VECTOR_WEIGHT:0.40}
+    multimodal-image-vector-weight: ${RAG_MULTIMODAL_IMAGE_VECTOR_WEIGHT:0.40}
+    multimodal-keyword-weight: ${RAG_MULTIMODAL_KEYWORD_WEIGHT:0.20}
+    image-only-vector-weight: ${RAG_IMAGE_ONLY_VECTOR_WEIGHT:0.80}
+    image-only-keyword-weight: ${RAG_IMAGE_ONLY_KEYWORD_WEIGHT:0.20}
+    rrf-k: ${RAG_RRF_K:60.0}
+    rerank-enabled: ${RAG_RERANK_ENABLED:false}
+    rerank-provider: ${RAG_RERANK_PROVIDER:dashscope}
+    rerank-base-url: ${RAG_RERANK_BASE_URL:https://dashscope.aliyuncs.com/compatible-api/v1}
+    rerank-api-key: ${RAG_RERANK_API_KEY:${RAG_LLM_API_KEY:}}
+    rerank-model: ${RAG_RERANK_MODEL:qwen3-rerank}
+    rerank-candidate-limit: ${RAG_RERANK_CANDIDATE_LIMIT:50}
+    rerank-timeout-seconds: ${RAG_RERANK_TIMEOUT_SECONDS:20}
+    rerank-observation-enabled: ${RAG_RERANK_OBSERVATION_ENABLED:true}
+    rerank-cost-per1k-tokens: ${RAG_RERANK_COST_PER_1K_TOKENS:0}
+    keyword-candidate-multiplier: ${RAG_KEYWORD_CANDIDATE_MULTIPLIER:8}
+    evaluation-set-path: ${RAG_RETRIEVAL_EVAL_SET:data/rag-eval/retrieval-eval-set.json}
+
+  keyword-index:
+    enabled: ${RAG_KEYWORD_INDEX_ENABLED:true}
+    provider: ${RAG_KEYWORD_INDEX_PROVIDER:elasticsearch}
+    base-url: ${RAG_ELASTICSEARCH_BASE_URL:http://192.168.220.200:9200}
+    index-name: ${RAG_ELASTICSEARCH_INDEX:rag_chunks}
+    index-alias: ${RAG_ELASTICSEARCH_ALIAS:rag_chunks_current}
+    index-version: ${RAG_ELASTICSEARCH_INDEX_VERSION:v2}
+    analyzer-profile: ${RAG_ELASTICSEARCH_ANALYZER_PROFILE:standard_zh_en}
+    template-managed: ${RAG_ELASTICSEARCH_TEMPLATE_MANAGED:false}
+    synonym-path: ${RAG_ELASTICSEARCH_SYNONYM_PATH:es/synonyms.txt}
+    stopword-path: ${RAG_ELASTICSEARCH_STOPWORD_PATH:es/stopwords.txt}
+    api-key: ${RAG_ELASTICSEARCH_API_KEY:}
+    username: ${RAG_ELASTICSEARCH_USERNAME:}
+    password: ${RAG_ELASTICSEARCH_PASSWORD:}
+    timeout-seconds: ${RAG_ELASTICSEARCH_TIMEOUT_SECONDS:10}
+    auto-create-index: ${RAG_ELASTICSEARCH_AUTO_CREATE_INDEX:true}
+
+  security:
+    mode: dev
+    public-path-prefixes:
+      - /error
+      - /swagger-ui
+      - /v3/api-docs
+      - /actuator
+      - /api/auth/login
+      - /assets
+      - /favicon.ico
+    admin-roles: ${RAG_SECURITY_ADMIN_ROLES:SUPER_ADMIN}
+    api-key-encryption-key: ${RAG_SECURITY_API_KEY_ENCRYPTION_KEY:rag-demo-default-encryption-key}
+
+  ingestion-events:
+    bus: ${RAG_INGESTION_EVENT_BUS:redis-stream}
+    redis-stream-max-len: ${RAG_INGESTION_EVENT_REDIS_STREAM_MAX_LEN:5000}
+    stream-ttl-seconds: ${RAG_INGESTION_EVENT_STREAM_TTL_SECONDS:86400}
+    poll-interval-millis: ${RAG_INGESTION_EVENT_POLL_INTERVAL_MILLIS:1000}
+    emitter-timeout-millis: ${RAG_INGESTION_EVENT_EMITTER_TIMEOUT_MILLIS:1800000}
+
+  tenant-deletion:
+    enabled: ${RAG_TENANT_DELETION_ENABLED:true}
+    execute-enabled: ${RAG_TENANT_DELETION_EXECUTE_ENABLED:false}
+    mysql-delete-enabled: ${RAG_TENANT_DELETION_MYSQL_ENABLED:false}
+    object-storage-delete-enabled: ${RAG_TENANT_DELETION_OBJECT_STORAGE_ENABLED:true}
+    milvus-delete-enabled: ${RAG_TENANT_DELETION_MILVUS_ENABLED:true}
+    elasticsearch-delete-enabled: ${RAG_TENANT_DELETION_ELASTICSEARCH_ENABLED:true}
+    redis-delete-enabled: ${RAG_TENANT_DELETION_REDIS_ENABLED:true}
+    lock-ttl-seconds: ${RAG_TENANT_DELETION_LOCK_TTL_SECONDS:1800}
+
+  keyword-reindex:
+    enabled: ${RAG_KEYWORD_REINDEX_ENABLED:true}
+    batch-size: ${RAG_KEYWORD_REINDEX_BATCH_SIZE:500}
+    validation-sample-size: ${RAG_KEYWORD_REINDEX_VALIDATION_SAMPLE_SIZE:20}
+    retain-completed-jobs: ${RAG_KEYWORD_REINDEX_RETAIN_COMPLETED_JOBS:100}
+
+  metrics:
+    materialized-enabled: ${RAG_METRICS_MATERIALIZED_ENABLED:true}
+    scheduled-aggregation-enabled: ${RAG_METRICS_SCHEDULED_AGGREGATION_ENABLED:false}
+    lookback-hours: ${RAG_METRICS_LOOKBACK_HOURS:48}
+    late-arrival-window-hours: ${RAG_METRICS_LATE_ARRIVAL_WINDOW_HOURS:2}
+    fixed-delay-millis: ${RAG_METRICS_FIXED_DELAY_MILLIS:900000}
+    prefer-materialized: ${RAG_METRICS_PREFER_MATERIALIZED:true}
+
+  scheduler:
+    pool-size: ${RAG_SCHEDULER_POOL_SIZE:3}
+    await-termination-seconds: ${RAG_SCHEDULER_AWAIT_TERMINATION_SECONDS:60}
+
+  tenant:
+    dev-header-enabled: true
+    allow-demo-tenant-fallback: ${RAG_TENANT_ALLOW_DEMO_FALLBACK:false}
+    mybatis-tenant-interceptor-enabled: ${RAG_MYBATIS_TENANT_INTERCEPTOR_ENABLED:true}
+    object-environment: dev
+    demo-user-id: ${RAG_DEMO_USER_ID:demo-user}
+    demo-roles:
+      - TENANT_ADMIN
+      - KB_OWNER
+    mybatis-ignore-tables:
+      - sys_tenant
+      - sys_platform_admin
+      - model_catalog
+      - rag_model_pricing
+      - tenant_data_deletion_task
+      - tenant_data_deletion_stage
+    default-max-documents: ${RAG_TENANT_DEFAULT_MAX_DOCUMENTS:10000}
+    default-max-storage-bytes: ${RAG_TENANT_DEFAULT_MAX_STORAGE_BYTES:107374182400}
+    default-max-file-bytes: ${RAG_TENANT_DEFAULT_MAX_FILE_BYTES:104857600}
+    default-daily-ocr-limit: ${RAG_TENANT_DEFAULT_DAILY_OCR_LIMIT:10000}
+    default-daily-embedding-tokens: ${RAG_TENANT_DEFAULT_DAILY_EMBEDDING_TOKENS:10000000}
+    default-max-concurrent-ingestion-tasks: ${RAG_TENANT_DEFAULT_MAX_CONCURRENT_INGESTION_TASKS:5}
+    default-daily-query-limit: ${RAG_TENANT_DEFAULT_DAILY_QUERY_LIMIT:100000}
+    default-monthly-budget-cents: ${RAG_TENANT_DEFAULT_MONTHLY_BUDGET_CENTS:100000}
+
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST:192.168.220.200}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+  data:
+    redis:
+      host: ${REDIS_HOST:192.168.220.200}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      timeout: 5s
+      password: ${REDIS_PASSWORD:ragdemo}
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://192.168.220.200:3306/ragdemo?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
+    username: ${MYSQL_USERNAME:ragdemo}
+    password: ${MYSQL_PASSWORD:cpc!23#@}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+  servlet:
+    multipart:
+      max-file-size: 100MB      # 单个文件最大
+      max-request-size: 100MB  # 单次请求总大小（多文件+表单）
+      enabled: true
+  mandatory-file-encoding: UTF-8
+  mvc:
+    async:
+      request-timeout: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  metrics:
+    tags:
+      application: rag-demo
+    distribution:
+      percentiles-histogram:
+        rag.query.duration: true
+        rag.rerank.duration: true
+        rag.embedding.duration: true
+        rag.ingestion.duration: true
+        rag.llm.duration: true
+      percentiles:
+        rag.query.duration: 0.5,0.9,0.99
+        rag.rerank.duration: 0.5,0.9,0.99
+        rag.embedding.duration: 0.5,0.9,0.99
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:rag-demo},%X{traceId:-},%X{spanId:-}]"

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.ragdemo.mapper.RagQueryFeedbackMapper">
+
+    <sql id="FeedbackSummaryWhere">
+        WHERE 1 = 1
+        AND (l.is_deleted = 0 OR l.is_deleted IS NULL)
+        <if test="tenantId != null">
+            AND l.tenant_id = #{tenantId}
+        </if>
+        <if test="queryType != null and queryType != ''">
+            AND l.query_type = #{queryType}
+        </if>
+        <if test="status != null and status != ''">
+            AND l.status = #{status}
+        </if>
+        <if test="conversationId != null and conversationId != ''">
+            AND l.conversation_id = #{conversationId}
+        </if>
+        <if test="traceId != null and traceId != ''">
+            AND l.trace_id = #{traceId}
+        </if>
+        <if test="rating != null and rating != ''">
+            AND f.rating = #{rating}
+        </if>
+        <if test="createdBy != null and createdBy != ''">
+            AND f.created_by = #{createdBy}
+        </if>
+    </sql>
+
+    <select id="summarizeFeedback" resultType="cc.ivera.ragdemo.model.query.RagFeedbackRatingCount">
+        SELECT f.rating AS rating, COUNT(*) AS count
+        FROM rag_query_feedback f
+        INNER JOIN rag_query_log l ON l.id = f.query_log_id
+        <include refid="FeedbackSummaryWhere"/>
+        GROUP BY f.rating
+    </select>
+
+    <select id="listRecentFeedback" resultType="cc.ivera.ragdemo.model.query.RagFeedbackSummaryItem">
+        SELECT
+            f.id AS feedbackId,
+            f.query_log_id AS queryLogId,
+            f.rating AS rating,
+            f.created_by AS createdBy,
+            f.comment AS comment,
+            f.corrected_answer AS correctedAnswer,
+            f.feedback_status AS feedbackStatus,
+            f.priority AS priority,
+            f.assignee AS assignee,
+            f.review_result AS reviewResult,
+            f.created_at AS feedbackCreatedAt,
+            l.tenant_id AS tenantId,
+            l.query_type AS queryType,
+            l.status AS status,
+            l.trace_id AS traceId,
+            l.conversation_id AS conversationId,
+            l.query_text AS queryText,
+            l.retrieval_mode AS retrievalMode,
+            l.hit_count AS hitCount,
+            l.total_tokens AS totalTokens,
+            l.latency_ms AS latencyMs,
+            l.created_at AS queryCreatedAt
+        FROM rag_query_feedback f
+        INNER JOIN rag_query_log l ON l.id = f.query_log_id
+        <include refid="FeedbackSummaryWhere"/>
+        ORDER BY f.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>
