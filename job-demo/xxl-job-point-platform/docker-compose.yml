@@ -1,0 +1,97 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: point-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+    ports: [ "3306:3306" ]
+    command: [ "--character-set-server=utf8mb4","--collation-server=utf8mb4_unicode_ci" ]
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./infra/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [ "CMD","mysqladmin","ping","-h","localhost","-proot123" ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  xxl-schema-download:
+    image: curlimages/curl:8.12.1
+    volumes: [ "xxl-schema:/schema" ]
+    command: [ "-fsSL","https://raw.githubusercontent.com/xuxueli/xxl-job/3.4.2/doc/db/tables_xxl_job.sql","-o","/schema/tables_xxl_job.sql" ]
+
+  xxl-schema-import:
+    image: mysql:8.4
+    depends_on:
+      mysql: { condition: service_healthy }
+      xxl-schema-download: { condition: service_completed_successfully }
+    volumes: [ "xxl-schema:/schema:ro" ]
+    entrypoint: [ "sh","-c" ]
+    command: >-
+      count=$$(mysql -hmysql -uroot -proot123 -Nse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='xxl_job' AND table_name='xxl_job_info';");
+      if [ "$$count" = "0" ]; then
+        mysql -hmysql -uroot -proot123 < /schema/tables_xxl_job.sql;
+      else
+        echo "XXL-JOB schema already initialized";
+      fi
+
+
+  xxl-job-admin:
+    image: xuxueli/xxl-job-admin:3.4.2
+    container_name: xxl-job-admin
+    depends_on:
+      xxl-schema-import: { condition: service_completed_successfully }
+    environment:
+      PARAMS: >-
+        --spring.datasource.url=jdbc:mysql://mysql:3306/xxl_job?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        --spring.datasource.username=root
+        --spring.datasource.password=root123
+        --server.port=8080
+        --server.servlet.context-path=/
+    ports: [ "8080:8080" ]
+
+  kafka:
+    image: apache/kafka:4.1.0
+    container_name: point-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 6
+    ports: [ "29092:29092" ]
+
+  backend:
+    build: ./backend
+    container_name: point-backend
+    depends_on:
+      mysql: { condition: service_healthy }
+      kafka: { condition: service_started }
+      xxl-job-admin: { condition: service_started }
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/point_reward?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: root123
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ACCESS_TOKEN: default_token
+      XXL_JOB_EXECUTOR_PORT: 9999
+    ports: [ "8088:8088","9999:9999" ]
+
+  frontend:
+    build: ./frontend
+    container_name: point-frontend
+    depends_on: [ backend ]
+    ports: [ "3000:80" ]
+
+volumes:
+  mysql-data:
+  xxl-schema:

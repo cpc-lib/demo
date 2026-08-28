@@ -1,0 +1,83 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: article-delay-publish
+
+  datasource:
+    url: jdbc:mysql://192.168.220.200:3308/article_delay?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+    username: root
+    password: cpc!23#@
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+
+  data:
+    redis:
+      host: 192.168.220.200
+      port: 6379
+      timeout: 2s
+      password: cpc!23#@
+
+  kafka:
+    bootstrap-servers: 192.168.220.200:9092
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+    consumer:
+      group-id: article-publish-consumer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.articledelay.infrastructure.kafka
+    listener:
+      ack-mode: record
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+app:
+  delay:
+    topic: article.publish
+    batch-size: 100
+    lease: 30s
+    dispatch-interval: 500ms
+    retry-backoff: 2s
+    recovery-interval: 5s
+    compensation-interval: 30s
+    compensation-look-ahead: 10m
+    compensation-batch-size: 1000
+
+logging:
+  level:
+    com.example.articledelay: INFO

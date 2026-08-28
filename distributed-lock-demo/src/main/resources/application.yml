@@ -1,0 +1,35 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: distributed-lock-demo
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://192.168.220.200:3308/distributed_lock_demo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8&useAffectedRows=true}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:cpc!23#@}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 2
+      connection-timeout: 3000
+
+app:
+  lock:
+    redisson:
+      address: ${REDIS_ADDRESS:redis://192.168.220.200:6379}
+      password: ${REDIS_PASSWORD:cpc!23#@}
+      watchdog-timeout-ms: 30000
+    zookeeper:
+      connect-string: ${ZOOKEEPER_CONNECT:192.168.220.200:2181}
+      session-timeout-ms: 30000
+      connection-timeout-ms: 10000
+    mysql:
+      retry-interval-ms: 50
+      default-lease-ms: 10000
+  demo:
+    critical-section-delay-ms: 80
+
+logging:
+  level:
+    com.example.distributedlock: INFO

@@ -1,0 +1,204 @@
+openapi: 3.0.3
+info:
+  title: distributed-lock-demo API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/demo/inventory/reset:
+    post:
+      summary: 重置库存
+      operationId: reset
+      parameters:
+        - name: productId
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 1001
+        - name: stock
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  productId:
+                    type: integer
+                    format: int64
+                  stock:
+                    type: integer
+                    format: int32
+  /api/demo/inventory/{productId}:
+    get:
+      summary: 查询库存
+      operationId: stock
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  productId:
+                    type: integer
+                    format: int64
+                  stock:
+                    type: integer
+                    format: int32
+  /api/demo/decrement/{provider}:
+    post:
+      summary: 单次扣减库存
+      operationId: decrement
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - REDISSON
+              - ZOOKEEPER
+              - MYSQL
+        - name: productId
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 1001
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    type: string
+                  success:
+                    type: boolean
+                  productId:
+                    type: integer
+                    format: int64
+                  stock:
+                    type: integer
+                    format: int32
+  /api/demo/concurrent/{provider}:
+    post:
+      summary: 并发扣减库存（加锁）
+      operationId: concurrent
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - REDISSON
+              - ZOOKEEPER
+              - MYSQL
+        - name: productId
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 1001
+        - name: initialStock
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: requests
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcurrentResult'
+  /api/demo/concurrent-unsafe:
+    post:
+      summary: 并发扣减库存（无锁）
+      operationId: concurrentUnsafe
+      parameters:
+        - name: productId
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 1001
+        - name: initialStock
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: requests
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcurrentResult'
+components:
+  schemas:
+    ConcurrentResult:
+      type: object
+      properties:
+        provider:
+          type: string
+        productId:
+          type: integer
+          format: int64
+        requests:
+          type: integer
+          format: int32
+        successfulBusinessExecutions:
+          type: integer
+          format: int32
+        rejectedOrFailed:
+          type: integer
+          format: int32
+        finalStock:
+          type: integer
+          format: int32
+        elapsedMs:
+          type: integer
+          format: int64

@@ -1,0 +1,8 @@
+target
+.git
+.idea
+.vscode
+*.iml
+*.log
+admin-ui/node_modules
+admin-ui/dist
