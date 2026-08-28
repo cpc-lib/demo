@@ -26,6 +26,7 @@ public class OrderController {
         String limitKey = OrderQueryRateLimitSupport.buildLimitKey(clientIp, id);
         Entry entry = null;
         try {
+            //sentinel限流
             entry = SphU.entry(OrderBlockHandler.GET_ORDER_RESOURCE, EntryType.IN, 1, limitKey);
             return orderService.getById(id);
         } catch (BlockException ex) {

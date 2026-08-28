@@ -37,6 +37,7 @@ public class OrderService {
 
     public Order getById(Long id) {
 
+        //无效参数拒绝
         if (id == null || id <= 0) {
             throw new ResponseStatusException(BAD_REQUEST, "order id must be greater than 0");
         }
@@ -47,10 +48,12 @@ public class OrderService {
             return parseCacheValue(cache, id);
         }
 
+        //bloom filter不存在一定不存在，存在可能存在
         if (!orderBloomFilter.mightContain(id)) {
             throw orderNotFound(id);
         }
 
+        //在获取缓存之前加锁，保护，先读取，无法确定处理顺序，依然可能请求到db，导致重复构建缓存
         RLock lock = redissonClient.getLock("lock:" + id);
         lock.lock(10, TimeUnit.SECONDS);
         try {
@@ -63,6 +66,7 @@ public class OrderService {
             Order order = orderMapper.selectById(id);
 
             if (order == null) {
+                //缓存空值（穿透处理方案，缓存空值）
                 cacheNullValue(key);
                 throw orderNotFound(id);
             }
@@ -89,6 +93,8 @@ public class OrderService {
         orderMapper.insert(newOrder);
 
         orderBloomFilter.add(newOrder.getId());
+
+        //事务提交后将数据写入缓存
         cacheOrderAfterCommit(newOrder);
 
         return newOrder;
@@ -120,6 +126,7 @@ public class OrderService {
     }
 
     private void cacheOrder(Order order) {
+        //随机ttl，避免大量key失效导致雪崩
         int ttl = CACHE_TTL_MINUTES + ThreadLocalRandom.current().nextInt(CACHE_TTL_JITTER_MINUTES);
         redisTemplate.opsForValue().set(
                 "order:" + order.getId(),
