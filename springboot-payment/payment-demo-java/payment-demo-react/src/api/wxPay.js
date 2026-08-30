@@ -17,6 +17,14 @@ export default {
     })
   },
 
+  nativePayOrder(orderNo) {
+    return request.post(`/api/wx-pay/native/order/${orderNo}`)
+  },
+
+  nativePayV2Order(orderNo) {
+    return request.post(`/api/wx-pay-v2/native/order/${orderNo}`)
+  },
+
   cancel(orderNo) {
     return request({
       url: `/api/wx-pay/cancel/${orderNo}`,

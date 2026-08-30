@@ -1,12 +1,18 @@
 package cc.ivera.controller;
 
 import cc.ivera.entity.OrderInfo;
+import cc.ivera.entity.OrderItem;
+import cc.ivera.dto.CheckoutRequest;
 import cc.ivera.enums.OrderStatus;
+import cc.ivera.security.AuthContext;
+import cc.ivera.service.CheckoutService;
 import cc.ivera.service.OrderInfoService;
+import cc.ivera.vo.CheckoutResult;
 import cc.ivera.vo.R;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotBlank;
@@ -23,10 +29,19 @@ public class OrderInfoController {
 
     private final OrderInfoService orderInfoService;
 
+    private final CheckoutService checkoutService;
+
+    @Autowired
     public OrderInfoController(
-        OrderInfoService orderInfoService
+        OrderInfoService orderInfoService,
+        CheckoutService checkoutService
     ) {
         this.orderInfoService = orderInfoService;
+        this.checkoutService = checkoutService;
+    }
+
+    public OrderInfoController(OrderInfoService orderInfoService) {
+        this(orderInfoService, null);
     }
 
     @ApiOperation("订单列表")
@@ -34,6 +49,30 @@ public class OrderInfoController {
     public R<Map<String, Object>> list() {
         List<OrderInfo> list = orderInfoService.listOrderByCreateTimeDesc();
         return R.ok().data("list", list);
+    }
+
+    @ApiOperation("我的订单")
+    @GetMapping("/my-list")
+    public R<Map<String, Object>> myList() {
+        List<OrderInfo> list = orderInfoService.listOrderByUserId(AuthContext.requireUser().getUserId());
+        return R.ok().data("list", list);
+    }
+
+    @ApiOperation("购物车结算")
+    @PostMapping("/checkout")
+    public R<CheckoutResult> checkout(@RequestBody @javax.validation.Valid CheckoutRequest request) {
+        CheckoutResult result = checkoutService.checkout(
+                AuthContext.requireUser().getUserId(),
+                request.getPaymentAppId(),
+                request.getCheckoutRequestId()
+        );
+        return R.ok(result);
+    }
+
+    @ApiOperation("订单明细")
+    @GetMapping("/{orderNo}/items")
+    public R<List<OrderItem>> orderItems(@PathVariable String orderNo) {
+        return R.ok(orderInfoService.listOrderItemsForUser(orderNo, AuthContext.requireUser()));
     }
 
     /**
@@ -47,7 +86,7 @@ public class OrderInfoController {
     @ApiOperation("查询本地订单状态")
     @GetMapping("/query-order-status/{orderNo}")
     public R<Map<String, Object>> queryOrderStatus(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
-        String orderStatus = orderInfoService.getOrderStatus(orderNo);
+        String orderStatus = orderInfoService.getOrderStatusForUser(orderNo, AuthContext.requireUser());
         if (OrderStatus.SUCCESS.getType().equals(orderStatus)) {
             return R.ok().setMessage("支付成功"); //支付成功
         } else if (OrderStatus.NOTPAY.getType().equals(orderStatus)) {

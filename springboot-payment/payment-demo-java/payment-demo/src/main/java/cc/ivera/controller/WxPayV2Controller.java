@@ -5,6 +5,7 @@ import cc.ivera.entity.OrderInfo;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.exception.BizException;
 import cc.ivera.lock.DistributedLockTemplate;
+import cc.ivera.security.AuthContext;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
@@ -86,6 +87,17 @@ public class WxPayV2Controller {
         //修改code_url可以重新获取到新的地址信息
         Map<String, Object> map = wxPayOrderFacade.nativePayV2(productId, remoteAddr, paymentAppId);
         return R.ok().setData(map);
+    }
+
+    @ApiOperation("为已有订单生成APIv2支付二维码")
+    @PostMapping("/native/order/{orderNo}")
+    public R<Map<String, Object>> createNativeOrder(
+            @PathVariable String orderNo,
+            HttpServletRequest request
+    ) {
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
+        Map<String, Object> map = wxPayOrderFacade.nativePayV2Order(orderNo, request.getRemoteAddr());
+        return R.ok(map);
     }
 
     /**

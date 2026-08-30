@@ -31,6 +31,7 @@
 | SPEC-005 | [支付对账功能](implemented/RECONCILIATION_FUNCTION_SPEC.md) | ✅ 已实现 | 见锚点 | 待补充 | 2026-07-20 |
 | SPEC-006 | [渠道账单导入与对账管理](implemented/CHANNEL_BILL_IMPORT_SPEC.md) | ✅ 已实现 | 见锚点 | 15个特征测试 | 2026-08-28 |
 | SPEC-007 | [微信进账与退款逐笔对账兼容扩展](implemented/WXPAY_PAYMENT_REFUND_RECONCILIATION_COMPAT_SPEC.md) | ✅ 已实现 | 见锚点 | 36个相关测试 | 2026-08-30 |
+| SPEC-008 | [登录、服务端购物车与多课程合并下单兼容扩展](implemented/AUTH_CART_MULTI_ITEM_ORDER_COMPAT_SPEC.md) | ✅ 已实现 | 见锚点 | 47个相关测试 | 2026-08-30 |
 
 ### SPEC-001 详情
 
@@ -120,7 +121,7 @@
 | 多微信应用账单下载 | `WxPayBillService.java` | `downloadBill(Long, ...)` |
 | 对账编排 | `ReconciliationServiceImpl.java` | `doReconcile()`, `queryLocalWxPayments()`, `queryLocalWxRefunds()` |
 | 手动导入 | `ChannelBillServiceImpl.java` | `uploadBill()` |
-| 数据库升级 | `wxpay_reconciliation_v2_upgrade.sql` | 明细类型与退款标识列 |
+| 数据库初始化 | `payment-demo/sql/payment-demo.sql` | 完整表结构，包含明细类型与退款标识列 |
 
 **测试覆盖**: 36个相关测试（`WxBillParserTest` 10个 + `ChannelBillServiceTest` 14个 + `WxPayBillServiceTest` 1个 + `WxPaymentRefundMatcherTest` 7个 + `ReconciliationBillDependencyTest` 4个），并用真实 XLSX 验证 31 条 PAYMENT 与 14 条 REFUND。
 
@@ -133,6 +134,18 @@
 | SPEC-002 | V2通知处理器提取重构 | 中 | SPEC-001测试全绿 | v0.0.2 |
 | SPEC-003 | 配置热更新机制 | 低 | 无 | v0.1.0 |
 | SPEC-004 | 退款并发安全加固 | 高 | SPEC-001测试全绿 | v0.0.3 |
+
+### SPEC-008 详情
+
+**标题**: 登录、服务端购物车与多课程合并下单兼容扩展
+
+**状态**: implemented
+
+**分类**: type: compatibility（现有购买和管理接口新增登录/角色要求，同时扩展订单数据模型和结算数据流）
+
+**描述**: 新增 USER/ADMIN 登录鉴权、Access/Refresh Token 轮换、按用户隔离的服务端购物车和订单明细；支持多课程、多份数一次下单，并保留微信 V3、微信 V2、支付宝以及现有支付/退款/对账协议。
+
+**实现锚点**: `implemented/AUTH_CART_MULTI_ITEM_ORDER_COMPAT_SPEC.md`；认证、购物车、结算与支付入口见 `payment-demo/src/main/java/cc/ivera/`，React/Vue 入口见各自 `src/`。
 
 ### SPEC-002 详情
 
@@ -215,6 +228,8 @@
 | 2026-08-28 | SPEC-006 | planned | implemented | 完成全部开发：数据库 + 后端 + Vue/React 前端 + 15 个特征测试 |
 | 2026-08-29 | SPEC-007 | - | planned | 兼容微信官方账单格式，按支付流水和退款流水逐笔双向对账 |
 | 2026-08-30 | SPEC-007 | planned | implemented | 完成解析、逐笔匹配、持久化、双前端展示、真实账单验证与兼容测试 |
+| 2026-08-30 | SPEC-008 | - | planned | 新增登录、两级角色、服务端购物车和多课程合并下单设计 |
+| 2026-08-30 | SPEC-008 | planned | implemented | 完成认证、服务端购物车、多课程合单、三渠道按订单支付、权限隔离、双前端与47个相关测试 |
 
 ---
 

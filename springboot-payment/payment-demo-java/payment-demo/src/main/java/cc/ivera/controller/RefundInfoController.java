@@ -3,10 +3,13 @@ package cc.ivera.controller;
 import cc.ivera.dto.RefundApproveRequest;
 import cc.ivera.entity.RefundInfo;
 import cc.ivera.service.RefundApplicationService;
+import cc.ivera.service.OrderInfoService;
+import cc.ivera.security.AuthContext;
 import cc.ivera.vo.R;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -24,10 +27,19 @@ public class RefundInfoController {
 
     private final RefundApplicationService refundApplicationService;
 
+    private final OrderInfoService orderInfoService;
+
+    @Autowired
     public RefundInfoController(
-        RefundApplicationService refundApplicationService
+        RefundApplicationService refundApplicationService,
+        OrderInfoService orderInfoService
     ) {
         this.refundApplicationService = refundApplicationService;
+        this.orderInfoService = orderInfoService;
+    }
+
+    public RefundInfoController(RefundApplicationService refundApplicationService) {
+        this(refundApplicationService, null);
     }
 
     @ApiOperation("退款申请单列表")
@@ -40,6 +52,9 @@ public class RefundInfoController {
     @ApiOperation("按订单号查询退款申请单")
     @GetMapping("/list/{orderNo}")
     public R<Map<String, Object>> listByOrderNo(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
+        if (orderInfoService != null) {
+            orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
+        }
         List<RefundInfo> list = refundApplicationService.listByOrderNo(orderNo);
         return R.ok().data("list", list);
     }

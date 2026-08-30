@@ -1,32 +1,78 @@
 <template>
-  <!-- 公共头 -->
   <header id="header">
-    <section class="container">
-      <h1 id="logo">
-        <a href="#/" title="苏三的开发日记">
-          <img src="../assets/img/logo.png" width="100%" alt="苏三的开发日记">
-        </a>
-      </h1>
-      <div>
-        <ul class="nav">
-          <router-link to="/" tag="li" active-class="current" exact>
-            <a>购买课程</a>
-          </router-link>
-          <router-link to="/orders" tag="li" active-class="current">
-            <a>我的订单</a>
-          </router-link>
-          <router-link to="/download" tag="li" active-class="current">
-            <a>下载账单</a>
-          </router-link>
-          <router-link to="/payment-config" tag="li" active-class="current">
-            <a>支付配置</a>
-          </router-link>
-          <router-link to="/reconciliation" tag="li" active-class="current">
-            <a>对账管理</a>
-          </router-link>
-        </ul>
+    <div class="container header-inner">
+      <router-link to="/" class="brand" title="课程支付中心">
+        <img src="../assets/img/logo.png" alt="课程支付中心">
+      </router-link>
+      <nav class="nav" aria-label="主导航">
+        <router-link to="/" exact>课程</router-link>
+        <router-link v-if="auth.user" to="/orders">我的订单</router-link>
+        <router-link v-if="isAdmin" to="/download">账单</router-link>
+        <router-link v-if="isAdmin" to="/payment-config">支付配置</router-link>
+        <router-link v-if="isAdmin" to="/reconciliation">对账</router-link>
+      </nav>
+      <div class="header-actions">
+        <template v-if="auth.user">
+          <el-badge :value="auth.cartCount" :hidden="!auth.cartCount" :max="99">
+            <el-button @click="$router.push('/cart')">购物车</el-button>
+          </el-badge>
+          <el-dropdown trigger="click" @command="handleCommand">
+            <el-button type="text">{{ auth.user.username }}</el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="account">账号安全</el-dropdown-item>
+              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+        </template>
+        <el-button v-else type="primary" @click="$router.push('/login')">登录</el-button>
       </div>
-      <div class="clear"></div>
-    </section>
+    </div>
   </header>
 </template>
+
+<script>
+import authApi from '../api/auth'
+import cartApi from '../api/cart'
+import { authState, clearSession } from '../auth/session'
+
+export default {
+  computed: {
+    auth() {
+      return authState
+    },
+    isAdmin() {
+      return authState.user && authState.user.role === 'ADMIN'
+    }
+  },
+  watch: {
+    'auth.user': {
+      immediate: true,
+      handler(user) {
+        if (user) {
+          cartApi.get().then(response => {
+            authState.cartCount = (response.data && response.data.totalQuantity) || 0
+          }).catch(() => {
+            authState.cartCount = 0
+          })
+        }
+      }
+    }
+  },
+  methods: {
+    async handleCommand(command) {
+      if (command === 'account') {
+        this.$router.push('/account')
+        return
+      }
+      if (command === 'logout') {
+        try {
+          await authApi.logout()
+        } finally {
+          clearSession()
+          this.$router.push('/login')
+        }
+      }
+    }
+  }
+}
+</script>

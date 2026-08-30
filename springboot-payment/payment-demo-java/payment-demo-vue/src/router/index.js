@@ -11,9 +11,12 @@ import Download from '../views/Download'
 import Success from '../views/Success'
 import PaymentConfig from '../views/PaymentConfig'
 import Reconciliation from '../views/Reconciliation'
+import Login from '../views/Login'
+import Cart from '../views/Cart'
+import Account from '../views/Account'
+import { authState, refreshSession } from '../auth/session'
 
-// 创建并暴露一个路由器
-export default new VueRouter({
+const router = new VueRouter({
     routes:[
         {
             path: '/',
@@ -21,23 +24,68 @@ export default new VueRouter({
         },
         {
             path: '/orders',
-            component: Orders
+            component: Orders,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/login',
+            component: Login
+        },
+        {
+            path: '/cart',
+            component: Cart,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/account',
+            component: Account,
+            meta: { requiresAuth: true }
         },
         {
             path: '/download',
-            component: Download
+            component: Download,
+            meta: { requiresAuth: true, role: 'ADMIN' }
         },
         {
             path: '/payment-config',
-            component: PaymentConfig
+            component: PaymentConfig,
+            meta: { requiresAuth: true, role: 'ADMIN' }
         },
         {
             path: '/reconciliation',
-            component: Reconciliation
+            component: Reconciliation,
+            meta: { requiresAuth: true, role: 'ADMIN' }
         },
         {
             path: '/success',
-            component: Success
+            component: Success,
+            meta: { requiresAuth: true }
         }
     ]
 })
+
+router.beforeEach(async (to, from, next) => {
+  if (!authState.bootstrapped) {
+    try {
+      await refreshSession()
+    } catch (_) {
+      // 未登录是正常启动状态，由下面的路由元数据决定是否跳转。
+    }
+  }
+
+  if (to.meta.requiresAuth && !authState.user) {
+    next({ path: '/login', query: { redirect: to.fullPath } })
+    return
+  }
+  if (to.meta.role && (!authState.user || authState.user.role !== to.meta.role)) {
+    next('/')
+    return
+  }
+  if (to.path === '/login' && authState.user) {
+    next('/')
+    return
+  }
+  next()
+})
+
+export default router

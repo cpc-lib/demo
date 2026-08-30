@@ -24,9 +24,25 @@
                   and payment_app_id is null
               </otherwise>
           </choose>
+          <choose>
+              <when test="userId != null">
+                  and user_id = #{userId}
+              </when>
+              <otherwise>
+                  and user_id is null
+              </otherwise>
+          </choose>
         order by create_time desc, id desc
         limit 1
         for update
+    </select>
+
+    <select id="selectByCheckoutKey" resultType="cc.ivera.entity.OrderInfo">
+        select *
+        from t_order_info
+        where user_id = #{userId}
+          and checkout_request_id = #{checkoutRequestId}
+        limit 1
     </select>
 
 </mapper>

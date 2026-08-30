@@ -15,6 +15,7 @@ Payment Demo 是一个完整的支付集成演示项目，集成了**微信支�
 - ✅ **微信支付 V2**：扫码支付、支付通知处理
 - ✅ **支付宝**：扫码支付、退款、订单查询
 - ✅ **订单管理**：创建订单、取消订单、查询订单
+- ✅ **账号与购物车**：USER/ADMIN 登录、BCrypt 密码、Access/Refresh Token 轮换、服务端购物车、多课程多份合并下单
 - ✅ **退款管理**：退款申请、审核通过/拒绝、退款查询、订单对账
 - ✅ **对账管理**：渠道账单导入（自动拉取或上传微信 CSV/TXT/XLSX，账单 T+1 出账）→ 微信进账匹配支付流水、退款匹配退款流水 → 差异明细与报告导出
 
@@ -49,16 +50,16 @@ cd payment-demo-v6-concurrency-final
 
 #### 2. 初始化数据库
 
-执行 SQL 脚本：
+执行唯一的完整初始化 SQL 脚本：
 
 ```bash
-mysql -u root -p < sql/payment_demo_v6_complete.sql
+mysql -u root -p < sql/payment-demo.sql
 ```
 
 或者在 MySQL 客户端中：
 
 ```sql
-source /path/to/sql/payment_demo_v6_complete.sql;
+source /path/to/sql/payment-demo.sql;
 ```
 
 #### 3. 配置项目
@@ -84,6 +85,18 @@ spring:
 ```
 
 RabbitMQ 队列、exchange、routing key 和延迟参数的部署/运维清单见 [docs/RABBITMQ_OPERATIONS.md](docs/RABBITMQ_OPERATIONS.md)。
+
+认证配置：
+
+```yaml
+payment:
+  auth:
+    jwt-secret: ${PAYMENT_AUTH_JWT_SECRET}
+    secure-cookie: true
+    allowed-origins: http://localhost:3000,http://localhost:8081
+```
+
+开发环境可将 `secure-cookie` 设为 `false`。生产环境必须通过 `PAYMENT_AUTH_JWT_SECRET` 提供至少 32 字节的随机密钥，并启用 Secure Cookie。初始化脚本中的演示管理员为 `admin`，初始密码为 `Admin@123456`，首次登录后请立即在“账号安全”页面修改。
 
 #### 4. 配置支付信息
 
@@ -113,7 +126,7 @@ mvn spring-boot:run
 ```
 payment-demo-v4/
 ├── sql/                              # 数据库脚本
-│   └── payment_demo_v1.sql  # 完整的数据库初始化脚本
+│   └── payment-demo.sql  # 唯一完整的数据库初始化脚本
 ├── src/
 │   ├── main/
 │   │   ├── java/cc/ivera/
@@ -198,6 +211,7 @@ distributedLockTemplate.execute(lockKey, waitTime, leaseTime, () -> {
 | 接口 | 方法 | 说明 |
 |------|------|------|
 | `/api/wx-pay/native/{productId}` | POST | 微信扫码支付下单 |
+| `/api/wx-pay/native/order/{orderNo}` | POST | 为已有未支付订单重新生成微信 V3 二维码 |
 | `/api/wx-pay/native/notify` | POST | 支付结果通知 |
 | `/api/wx-pay/jsapi/{productId}/{openid}` | POST | JSAPI 支付下单 |
 | `/api/wx-pay/jsapi/notify/v1` | POST | JSAPI 支付通知 |
@@ -211,7 +225,22 @@ distributedLockTemplate.execute(lockKey, waitTime, leaseTime, () -> {
 | 接口 | 方法 | 说明 |
 |------|------|------|
 | `/api/wx-pay-v2/native/{productId}/{remoteAddr}` | POST | 微信 V2 扫码支付下单 |
+| `/api/wx-pay-v2/native/order/{orderNo}` | POST | 为已有未支付订单重新生成微信 V2 二维码 |
 | `/api/wx-pay-v2/native/notify` | POST | 支付结果通知 |
+
+#### 登录、购物车与订单
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/auth/register` | POST | 注册 USER 账号 |
+| `/api/auth/login` | POST | 登录并设置 HttpOnly Refresh Cookie |
+| `/api/auth/refresh` | POST | 轮换 Refresh Token，返回短期 Access Token |
+| `/api/auth/logout` | POST | 撤销当前登录设备会话 |
+| `/api/cart` | GET | 当前用户购物车 |
+| `/api/cart/items` | POST | 添加课程并累加数量 |
+| `/api/order-info/checkout` | POST | 将购物车合并创建一笔订单 |
+| `/api/order-info/my-list` | GET | 当前用户订单 |
+| `/api/ali-pay/trade/page/pay/order/{orderNo}` | POST | 为已有未支付订单重新生成支付宝支付页 |
 
 #### 退款管理
 

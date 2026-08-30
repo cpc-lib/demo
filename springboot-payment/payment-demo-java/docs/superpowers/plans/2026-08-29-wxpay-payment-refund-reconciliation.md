@@ -286,19 +286,17 @@ Expected: payment/refund match is complete and the existing imported-bill/idempo
 
 **Files:**
 - Modify: `payment-demo/src/main/resources/mapper/ReconciliationDetailMapper.xml`
-- Modify: `payment-demo/sql/payment-demo.sql`
-- Create: `payment-demo/sql/wxpay_reconciliation_v2_upgrade.sql`
+- Modify: `payment-demo/sql/payment-demo.sql`（唯一完整初始化脚本）
 - Modify: `payment-demo/src/main/java/cc/ivera/service/impl/reconciliation/ReconciliationServiceImpl.java`
 - Modify: `payment-demo-react/src/pages/Reconciliation.jsx`
 - Modify: `payment-demo-vue/src/views/Reconciliation.vue`
 
-- [ ] **Step 1: Add nullable columns and mapper fields**
+- [ ] **Step 1: Add nullable columns to the consolidated table definition and mapper fields**
 
 ```sql
-ALTER TABLE `t_reconciliation_detail`
-  ADD COLUMN `business_type` varchar(16) NULL COMMENT '业务类型：PAYMENT/REFUND' AFTER `diff_type`,
-  ADD COLUMN `refund_no` varchar(64) NULL COMMENT '商户退款单号' AFTER `transaction_id`,
-  ADD COLUMN `refund_id` varchar(64) NULL COMMENT '渠道退款单号' AFTER `refund_no`;
+`business_type` varchar(16) NULL COMMENT '业务类型：PAYMENT/REFUND',
+`refund_no` varchar(64) NULL COMMENT '商户退款单号',
+`refund_id` varchar(64) NULL COMMENT '渠道退款单号'
 ```
 
 - [ ] **Step 2: Add the same fields to batch insert/result mapping/export**

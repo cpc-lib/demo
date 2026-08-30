@@ -90,17 +90,34 @@ public class AliPayServiceImpl implements AliPayService {
         );
     }
 
-    private String doTradeCreate(Long productId, Long paymentAppId) {
-        try {
-            log.info("生成支付宝订单");
-            PaymentAppConfig payConfig = resolveAliPayConfig(paymentAppId);
-            OrderInfo orderInfo = orderInfoService.createOrReuseOrder(
-                    productId,
-                    PayType.ALIPAY.getType(),
-                    payConfig.getAppId(),
-                    PaymentConfigLoader.CHANNEL_ALIPAY
-            );
+    @Override
+    public String tradeCreateOrder(String orderNo) {
+        return distributedLockTemplate.execute(
+                "payment:ali:pagepay:order:" + orderNo,
+                3000L,
+                15000L,
+                () -> {
+                    OrderInfo orderInfo = requirePayableAliOrder(orderNo);
+                    PaymentAppConfig payConfig = resolveAliPayConfig(orderInfo.getPaymentAppId());
+                    return requestTradePage(orderInfo, payConfig);
+                }
+        );
+    }
 
+    private String doTradeCreate(Long productId, Long paymentAppId) {
+        log.info("生成支付宝订单");
+        PaymentAppConfig payConfig = resolveAliPayConfig(paymentAppId);
+        OrderInfo orderInfo = orderInfoService.createOrReuseOrder(
+                productId,
+                PayType.ALIPAY.getType(),
+                payConfig.getAppId(),
+                PaymentConfigLoader.CHANNEL_ALIPAY
+        );
+        return requestTradePage(orderInfo, payConfig);
+    }
+
+    private String requestTradePage(OrderInfo orderInfo, PaymentAppConfig payConfig) {
+        try {
             AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
             request.setNotifyUrl(required(payConfig.getAlipayNotifyUrl(), "支付宝notifyUrl未配置"));
             request.setReturnUrl(required(payConfig.getReturnUrl(), "支付宝returnUrl未配置"));
@@ -433,6 +450,21 @@ public class AliPayServiceImpl implements AliPayService {
             throw new BizException("支付应用不是支付宝渠道");
         }
         return config;
+    }
+
+    private OrderInfo requirePayableAliOrder(String orderNo) {
+        OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(orderNo);
+        if (orderInfo == null) {
+            throw new BizException("订单不存在");
+        }
+        if (!OrderStatus.NOTPAY.getType().equals(orderInfo.getOrderStatus())) {
+            throw new BizException("订单状态不允许支付");
+        }
+        if (!PayType.ALIPAY.getType().equals(orderInfo.getPaymentType())
+                || !PaymentConfigLoader.CHANNEL_ALIPAY.equals(orderInfo.getPaymentChannelCode())) {
+            throw new BizException("订单支付渠道不是支付宝");
+        }
+        return orderInfo;
     }
 
     private PaymentAppConfig resolveAliPayConfigByOrderNo(String orderNo) {

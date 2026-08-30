@@ -83,6 +83,20 @@ public class WxPayOrderService implements WxPayOrderFacade {
         );
     }
 
+    @Override
+    public Map<String, Object> nativePayOrder(String orderNo) {
+        return distributedLockTemplate.execute(
+                "payment:wx:native:v3:order:" + orderNo,
+                3000L,
+                -1L,
+                () -> {
+                    OrderInfo orderInfo = requirePayableWxOrder(orderNo);
+                    PaymentAppConfig payConfig = resolveWxPayConfig(orderInfo.getPaymentAppId());
+                    return requestNativePay(orderInfo, payConfig);
+                }
+        );
+    }
+
     private Map<String, Object> doNativePay(Long productId, Long paymentAppId) {
         PaymentAppConfig payConfig = resolveWxPayConfig(paymentAppId);
         OrderInfo orderInfo = orderInfoService.createOrReuseOrder(
@@ -94,6 +108,10 @@ public class WxPayOrderService implements WxPayOrderFacade {
         if (orderInfo == null) {
             throw new BizException("订单创建失败");
         }
+        return requestNativePay(orderInfo, payConfig);
+    }
+
+    private Map<String, Object> requestNativePay(OrderInfo orderInfo, PaymentAppConfig payConfig) {
         if (StringUtils.hasText(orderInfo.getCodeUrl())) {
             log.info("订单已存在，复用二维码，orderNo={}", orderInfo.getOrderNo());
             return buildNativePayResult(orderInfo.getOrderNo(), orderInfo.getCodeUrl());
@@ -308,6 +326,20 @@ public class WxPayOrderService implements WxPayOrderFacade {
         );
     }
 
+    @Override
+    public Map<String, Object> nativePayV2Order(String orderNo, String remoteAddr) {
+        return distributedLockTemplate.execute(
+                "payment:wx:native:v2:order:" + orderNo,
+                3000L,
+                -1L,
+                () -> {
+                    OrderInfo orderInfo = requirePayableWxOrder(orderNo);
+                    PaymentAppConfig payConfig = resolveWxPayConfig(orderInfo.getPaymentAppId());
+                    return requestNativePayV2(orderInfo, remoteAddr, payConfig);
+                }
+        );
+    }
+
     private Map<String, Object> doNativePayV2(Long productId, String remoteAddr, Long paymentAppId) {
         PaymentAppConfig payConfig = resolveWxPayConfig(paymentAppId);
         OrderInfo orderInfo = orderInfoService.createOrReuseOrder(
@@ -319,6 +351,14 @@ public class WxPayOrderService implements WxPayOrderFacade {
         if (orderInfo == null) {
             throw new BizException("订单创建失败");
         }
+        return requestNativePayV2(orderInfo, remoteAddr, payConfig);
+    }
+
+    private Map<String, Object> requestNativePayV2(
+            OrderInfo orderInfo,
+            String remoteAddr,
+            PaymentAppConfig payConfig
+    ) {
         if (StringUtils.hasText(orderInfo.getCodeUrl())) {
             return buildNativePayResult(orderInfo.getOrderNo(), orderInfo.getCodeUrl());
         }
@@ -510,6 +550,21 @@ public class WxPayOrderService implements WxPayOrderFacade {
             throw new BizException("支付应用不是微信支付渠道");
         }
         return config;
+    }
+
+    private OrderInfo requirePayableWxOrder(String orderNo) {
+        OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(orderNo);
+        if (orderInfo == null) {
+            throw new BizException("订单不存在");
+        }
+        if (!OrderStatus.NOTPAY.getType().equals(orderInfo.getOrderStatus())) {
+            throw new BizException("订单状态不允许支付");
+        }
+        if (!PayType.WXPAY.getType().equals(orderInfo.getPaymentType())
+                || !PaymentConfigLoader.CHANNEL_WXPAY.equals(orderInfo.getPaymentChannelCode())) {
+            throw new BizException("订单支付渠道不是微信支付");
+        }
+        return orderInfo;
     }
 
     private PaymentAppConfig resolveWxPayConfigByOrderNo(String orderNo) {

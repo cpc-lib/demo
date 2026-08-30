@@ -28,6 +28,8 @@ public class OrderInfo extends BaseEntity {
 
     private String paymentChannelCode;//支付渠道编码
 
+    private String checkoutRequestId;//购物车结算幂等请求号
+
     @Version
     private Integer version;//乐观锁版本号
 }

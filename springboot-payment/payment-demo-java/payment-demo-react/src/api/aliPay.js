@@ -9,6 +9,10 @@ export default {
     })
   },
 
+  tradePagePayOrder(orderNo) {
+    return request.post(`/api/ali-pay/trade/page/pay/order/${orderNo}`)
+  },
+
   cancel(orderNo) {
     return request({
       url: `/api/ali-pay/trade/close/${orderNo}`,

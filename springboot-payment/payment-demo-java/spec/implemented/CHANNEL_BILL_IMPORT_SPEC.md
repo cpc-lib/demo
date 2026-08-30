@@ -228,7 +228,7 @@ SPEC-005 已实现对账，但存在以下问题：
 
 - **新增 API**：`/api/bill/**`，遵循现有 `R<T>` 响应格式。
 - **行为变更**：`/api/reconciliation/execute` 不再自动下载账单，需先导入（请求/响应结构不变，未导入账单时记录 FAILED）。
-- **数据库**：新增 `t_channel_bill` 表；`t_reconciliation` 新增 `bill_id` 列（可空，存量记录为 null）；增量脚本 `payment_bill_upgrade.sql`。
+- **数据库**：新增 `t_channel_bill` 表；`t_reconciliation` 新增 `bill_id` 列（可空，存量记录为 null）；完整结构统一维护在 `payment-demo/sql/payment-demo.sql`。
 - **配置**：删除 `payment.reconciliation.cron`，新增 `wx-cron` / `ali-cron`，`enabled` 保留；新增 `spring.servlet.multipart`（10MB）。
 - **前端**：Vue/React 对账页新增账单管理区块，不修改其他页面。
 
@@ -250,7 +250,7 @@ SPEC-005 已实现对账，但存在以下问题：
   - `payment-demo/src/main/resources/mapper/ReconciliationMapper.xml`（bill_id 映射）
   - `payment-demo/src/main/java/cc/ivera/config/ReconciliationScheduleConfig.java`（先导入后对账）
   - `payment-demo/src/main/resources/application.yml`（wx-cron/ali-cron、multipart）
-- SQL：`payment-demo/sql/payment-demo.sql`、`payment-demo/sql/payment_bill_upgrade.sql`
+- SQL：`payment-demo/sql/payment-demo.sql`（唯一完整初始化脚本）
 - 前端：
   - `payment-demo-vue/src/api/bill.js`、`payment-demo-vue/src/views/Reconciliation.vue`
   - `payment-demo-react/src/api/bill.js`、`payment-demo-react/src/pages/Reconciliation.jsx`

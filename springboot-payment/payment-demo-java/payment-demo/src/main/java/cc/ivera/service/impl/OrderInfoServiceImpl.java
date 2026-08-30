@@ -1,14 +1,20 @@
 package cc.ivera.service.impl;
 
 import cc.ivera.entity.OrderInfo;
+import cc.ivera.entity.OrderItem;
 import cc.ivera.entity.Product;
 import cc.ivera.enums.OrderStatus;
+import cc.ivera.enums.UserRole;
 import cc.ivera.exception.BizException;
+import cc.ivera.exception.ForbiddenException;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.mapper.OrderInfoMapper;
+import cc.ivera.mapper.OrderItemMapper;
 import cc.ivera.mapper.ProductMapper;
 import cc.ivera.service.OrderCloseMessageService;
 import cc.ivera.service.OrderInfoService;
+import cc.ivera.security.AuthUser;
+import cc.ivera.security.AuthContext;
 import cc.ivera.util.OrderNoUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -38,16 +44,20 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
     private final TransactionTemplate transactionTemplate;
 
+    private final OrderItemMapper orderItemMapper;
+
     public OrderInfoServiceImpl(
         ProductMapper productMapper,
         OrderCloseMessageService orderCloseMessageService,
         DistributedLockTemplate distributedLockTemplate,
-        TransactionTemplate transactionTemplate
+        TransactionTemplate transactionTemplate,
+        OrderItemMapper orderItemMapper
     ) {
         this.productMapper = productMapper;
         this.orderCloseMessageService = orderCloseMessageService;
         this.distributedLockTemplate = distributedLockTemplate;
         this.transactionTemplate = transactionTemplate;
+        this.orderItemMapper = orderItemMapper;
     }
 
     @Override
@@ -59,23 +69,38 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     public OrderInfo createOrReuseOrder(Long productId, String paymentType, Long paymentAppId, String paymentChannelCode) {
         validateCreateOrderParams(productId, paymentType);
 
-        String lockKey = buildCreateOrderLockKey(productId, paymentType, paymentAppId);
+        AuthUser authUser = AuthContext.getUser();
+        Long userId = authUser == null ? null : authUser.getUserId();
+        String lockKey = buildCreateOrderLockKey(productId, paymentType, paymentAppId, userId);
         return distributedLockTemplate.execute(
                 lockKey,
                 ORDER_CREATE_LOCK_WAIT_MS,
                 ORDER_CREATE_LOCK_LEASE_MS,
-                () -> transactionTemplate.execute(status -> doCreateOrReuseOrder(productId, paymentType, paymentAppId, paymentChannelCode))
+                () -> transactionTemplate.execute(status -> doCreateOrReuseOrder(
+                        productId,
+                        paymentType,
+                        paymentAppId,
+                        paymentChannelCode,
+                        userId
+                ))
         );
     }
 
-    private OrderInfo doCreateOrReuseOrder(Long productId, String paymentType, Long paymentAppId, String paymentChannelCode) {
+    private OrderInfo doCreateOrReuseOrder(
+            Long productId,
+            String paymentType,
+            Long paymentAppId,
+            String paymentChannelCode,
+            Long userId
+    ) {
         // 第一层防护：Redis 分布式锁，挡住多实例并发。
         // 第二层防护：select ... for update，挡住同库事务并发。
         OrderInfo noPayOrder = baseMapper.selectNoPayOrderForUpdate(
                 productId,
                 paymentType,
                 OrderStatus.NOTPAY.getType(),
-                paymentAppId
+                paymentAppId,
+                userId
         );
         if (noPayOrder != null) {
             log.info("复用未支付订单，productId={}, paymentType={}, orderNo={}",
@@ -92,6 +117,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         orderInfo.setTitle(product.getTitle());
         orderInfo.setOrderNo(OrderNoUtils.getOrderNo());
         orderInfo.setProductId(productId);
+        orderInfo.setUserId(userId);
         orderInfo.setTotalFee(product.getPrice());
         orderInfo.setOrderStatus(OrderStatus.NOTPAY.getType());
         orderInfo.setPaymentType(paymentType);
@@ -108,7 +134,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                     productId,
                     paymentType,
                     OrderStatus.NOTPAY.getType(),
-                    paymentAppId
+                    paymentAppId,
+                    userId
             );
             if (existOrder != null) {
                 return existOrder;
@@ -144,6 +171,20 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     public List<OrderInfo> listOrderByCreateTimeDesc() {
         QueryWrapper<OrderInfo> queryWrapper = new QueryWrapper<OrderInfo>().orderByDesc("create_time");
         return baseMapper.selectList(queryWrapper);
+    }
+
+    @Override
+    public List<OrderInfo> listOrderByUserId(Long userId) {
+        QueryWrapper<OrderInfo> queryWrapper = new QueryWrapper<OrderInfo>()
+                .eq("user_id", userId)
+                .orderByDesc("create_time");
+        return baseMapper.selectList(queryWrapper);
+    }
+
+    @Override
+    public List<OrderItem> listOrderItemsForUser(String orderNo, AuthUser authUser) {
+        OrderInfo order = requireAccessibleOrder(orderNo, authUser);
+        return orderItemMapper.selectByOrderId(order.getId());
     }
 
     @Override
@@ -190,6 +231,11 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     }
 
     @Override
+    public String getOrderStatusForUser(String orderNo, AuthUser authUser) {
+        return requireAccessibleOrder(orderNo, authUser).getOrderStatus();
+    }
+
+    @Override
     public OrderInfo getOrderByOrderNo(String orderNo) {
         if (!StringUtils.hasText(orderNo)) {
             return null;
@@ -225,6 +271,22 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         });
     }
 
+    @Override
+    public OrderInfo getOrderForUser(String orderNo, AuthUser authUser) {
+        return requireAccessibleOrder(orderNo, authUser);
+    }
+
+    private OrderInfo requireAccessibleOrder(String orderNo, AuthUser authUser) {
+        OrderInfo order = getOrderByOrderNo(orderNo);
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+        if (authUser.getRole() != UserRole.ADMIN && !authUser.getUserId().equals(order.getUserId())) {
+            throw new ForbiddenException("无权访问该订单");
+        }
+        return order;
+    }
+
     private void validateCreateOrderParams(Long productId, String paymentType) {
         if (productId == null) {
             throw new BizException("商品ID不能为空");
@@ -234,7 +296,9 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         }
     }
 
-    private String buildCreateOrderLockKey(Long productId, String paymentType, Long paymentAppId) {
-        return "payment:order:create:" + productId + ":" + paymentType + ":" + (paymentAppId == null ? "default" : paymentAppId);
+    private String buildCreateOrderLockKey(Long productId, String paymentType, Long paymentAppId, Long userId) {
+        return "payment:order:create:" + productId + ":" + paymentType + ":"
+                + (paymentAppId == null ? "default" : paymentAppId) + ":"
+                + (userId == null ? "legacy" : userId);
     }
 }

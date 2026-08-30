@@ -1,277 +1,81 @@
 <template>
-  <div class="bg-fa of">
-    <section id="index" class="container">
-      <header class="comm-title">
-        <h2>课程列表</h2>
-      </header>
-
-      <div v-if="loading" class="loading-container">
-        <el-spinner type="circle" size="48" />
-        <p class="loading-text">加载中...</p>
+  <main class="catalog-page">
+    <section class="catalog-intro container">
+      <div>
+        <span class="catalog-kicker">课程目录</span>
+        <h1>一次选择，多门课程一起结算</h1>
+        <p>课程可重复添加并在购物车调整份数。结算价格以创建订单时的最新价格为准。</p>
       </div>
-
-      <transition name="fade">
-        <ul v-show="!loading">
-          <li v-for="product in productList" :key="product.id">
-            <a
-              :class="['orderBtn', { current: payOrder.productId === product.id }]"
-              @click="selectItem(product.id)"
-              href="javascript:void(0);"
-            >
-              {{ product.title }}
-              <span class="price">¥{{ (product.price / 100).toFixed(2) }}</span>
-            </a>
-          </li>
-        </ul>
-      </transition>
-
-      <transition name="slide-up">
-        <div v-show="!loading" class="PaymentChannel_payment-channel-panel">
-          <h3 class="PaymentChannel_title">选择支付应用</h3>
-          <div v-if="paymentAppList.length === 0" class="empty-config-tip">
-            <div class="empty-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20 13V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" />
-                <polyline points="16 13 20 17 24 13" />
-                <line x1="12" y1="4" x2="12" y2="20" />
-              </svg>
-            </div>
-            <p>未查询到启用的支付应用</p>
-            <p class="empty-tip">请先到“支付配置”页面维护支付渠道与支付应用</p>
-          </div>
-          <div v-else class="PaymentChannel_channel-options">
-            <transition-group name="list">
-              <div
-                v-for="app in paymentAppList"
-                :key="app.id"
-                :class="['ChannelOption_payment-channel-option', { current: payOrder.paymentAppId === app.id }]"
-                @click="selectPaymentApp(app)"
-              >
-                <div class="ChannelOption_channel-icon">
-                  <img :src="channelIcon(app.channelCode)" class="ChannelOption_icon"/>
-                </div>
-                <div class="ChannelOption_channel-info">
-                  <div class="ChannelOption_label">{{ app.appName }}</div>
-                  <div class="ChannelOption_sub-label">{{ app.channelName || app.channelCode }}</div>
-                </div>
-              </div>
-            </transition-group>
-          </div>
-        </div>
-      </transition>
-
-      <div class="payButtom">
-        <el-button
-          :disabled="payBtnDisabled || !selectedPaymentApp"
-          type="warning"
-          round
-          style="width: 280px; height: 44px; font-size: 18px"
-          @click="toPay()"
-        >
-          确认支付（{{ selectedPaymentApp ? selectedPaymentApp.channelName || selectedPaymentApp.channelCode : '未选择应用' }}）
-        </el-button>
-        <el-button
-          v-if="selectedPaymentApp && selectedPaymentApp.channelCode === 'WXPAY'"
-          :disabled="payBtnDisabled"
-          type="warning"
-          round
-          style="width: 280px; height: 44px; font-size: 18px"
-          @click="toPayV2()"
-        >
-          确认支付（微信V2）
-        </el-button>
+      <div class="catalog-summary" aria-label="购买流程">
+        <strong>选择课程</strong>
+        <span>加入服务端购物车</span>
+        <span>合并创建一笔订单</span>
       </div>
     </section>
 
-    <el-dialog
-      :visible.sync="codeDialogVisible"
-      :show-close="false"
-      @close="closeDialog"
-      width="350px"
-      center
-    >
-      <qriously :value="codeUrl" :size="300"/>
-      使用微信扫码支付
-    </el-dialog>
-  </div>
+    <section class="container catalog-content" :aria-busy="loading">
+      <div v-if="loading" class="course-grid">
+        <div class="surface loading-surface">正在加载课程...</div>
+        <div class="surface loading-surface">正在加载课程...</div>
+      </div>
+      <div v-else-if="products.length" class="course-grid">
+        <article v-for="(product, index) in products" :key="product.id" :class="['course-card', `course-card-${index % 2}`]">
+          <div class="course-index">{{ String(index + 1).padStart(2, '0') }}</div>
+          <div>
+            <h2>{{ product.title }}</h2>
+            <p>购买后可在订单中查看本次课程组合与数量快照。</p>
+          </div>
+          <div class="course-buy-row">
+            <strong>¥{{ (product.price / 100).toFixed(2) }}</strong>
+            <el-button type="primary" :loading="addingId === product.id" @click="addToCart(product)">加入购物车</el-button>
+          </div>
+        </article>
+      </div>
+      <div v-else class="surface empty-surface">
+        <el-empty description="暂无可购买课程" />
+      </div>
+    </section>
+  </main>
 </template>
 
 <script>
 import productApi from '../api/product'
-import wxPayApi from '../api/wxPay'
-import aliPayApi from '../api/aliPay'
-import orderInfoApi from '../api/orderInfo'
-import paymentConfigApi from '../api/paymentConfig'
-import wxPayIcon from '../assets/img/wxpay.png'
-import aliPayIcon from '../assets/img/alipay.png'
+import cartApi from '../api/cart'
+import { authState } from '../auth/session'
 
 export default {
   data() {
     return {
       loading: true,
-      payBtnDisabled: false,
-      codeDialogVisible: false,
-      productList: [],
-      paymentAppList: [],
-      payOrder: {
-        productId: '',
-        paymentAppId: ''
-      },
-      codeUrl: '',
-      orderNo: '',
-      timer: null
+      addingId: null,
+      products: []
     }
   },
-
-  computed: {
-    selectedPaymentApp() {
-      return this.paymentAppList.find(item => item.id === this.payOrder.paymentAppId)
-    }
-  },
-
   created() {
-    this.loadProducts()
-    this.loadPaymentApps()
+    productApi.list().then(response => {
+      this.products = (response.data && response.data.productList) || []
+    }).catch(() => {
+      this.products = []
+    }).finally(() => {
+      this.loading = false
+    })
   },
-
   methods: {
-    loadProducts() {
-      productApi.list().then((response) => {
-        this.productList = response.data.productList || []
-        if (this.productList.length > 0) {
-          this.payOrder.productId = this.productList[0].id
-        }
-        this.checkLoadingComplete()
-      }).catch(() => {
-        this.checkLoadingComplete()
-      })
-    },
-
-    loadPaymentApps() {
-      paymentConfigApi.listEnabledApps().then((response) => {
-        this.paymentAppList = response.data || []
-        if (this.paymentAppList.length > 0) {
-          this.payOrder.paymentAppId = this.paymentAppList[0].id
-        }
-        this.checkLoadingComplete()
-      }).catch(() => {
-        this.checkLoadingComplete()
-      })
-    },
-
-    checkLoadingComplete() {
-      setTimeout(() => {
-        this.loading = false
-      }, 300)
-    },
-
-    selectItem(productId) {
-      this.payOrder.productId = productId
-    },
-
-    selectPaymentApp(app) {
-      this.payOrder.paymentAppId = app.id
-    },
-
-    channelIcon(channelCode) {
-      if (channelCode === 'ALIPAY') {
-        return aliPayIcon
-      }
-      return wxPayIcon
-    },
-
-    validateBeforePay() {
-      if (!this.payOrder.productId) {
-        this.$message.error('请选择课程')
-        return false
-      }
-      if (!this.selectedPaymentApp) {
-        this.$message.error('请选择支付应用')
-        return false
-      }
-      return true
-    },
-
-    toPay() {
-      if (!this.validateBeforePay()) {
+    async addToCart(product) {
+      if (!authState.user) {
+        this.$router.push({ path: '/login', query: { redirect: '/' } })
         return
       }
-      this.payBtnDisabled = true
-
-      if (this.selectedPaymentApp.channelCode === 'WXPAY') {
-        wxPayApi.nativePay(this.payOrder.productId, this.payOrder.paymentAppId).then((response) => {
-          this.codeUrl = response.data.codeUrl
-          this.orderNo = response.data.orderNo
-          this.codeDialogVisible = true
-          this.startQueryTimer()
-        }).catch(() => {
-          this.payBtnDisabled = false
-        })
-        return
+      this.addingId = product.id
+      try {
+        await cartApi.add(product.id, 1)
+        const response = await cartApi.get()
+        authState.cartCount = (response.data && response.data.totalQuantity) || 0
+        this.$message.success(`已将“${product.title}”加入购物车`)
+      } finally {
+        this.addingId = null
       }
-
-      if (this.selectedPaymentApp.channelCode === 'ALIPAY') {
-        aliPayApi.tradePagePay(this.payOrder.productId, this.payOrder.paymentAppId).then((response) => {
-          document.write(response.data.formStr)
-        }).catch(() => {
-          this.payBtnDisabled = false
-        })
-        return
-      }
-
-      this.payBtnDisabled = false
-      this.$message.error('暂不支持的支付渠道：' + this.selectedPaymentApp.channelCode)
-    },
-
-    toPayV2() {
-      if (!this.validateBeforePay()) {
-        return
-      }
-      if (this.selectedPaymentApp.channelCode !== 'WXPAY') {
-        this.$message.error('微信V2仅支持微信支付应用')
-        return
-      }
-      this.payBtnDisabled = true
-      wxPayApi.nativePayV2(this.payOrder.productId, this.payOrder.paymentAppId).then((response) => {
-        this.codeUrl = response.data.codeUrl
-        this.orderNo = response.data.orderNo
-        this.codeDialogVisible = true
-        this.startQueryTimer()
-      }).catch(() => {
-        this.payBtnDisabled = false
-      })
-    },
-
-    startQueryTimer() {
-      clearInterval(this.timer)
-      this.timer = setInterval(() => {
-        this.queryOrderStatus()
-      }, 3000)
-    },
-
-    closeDialog() {
-      this.payBtnDisabled = false
-      clearInterval(this.timer)
-    },
-
-    queryOrderStatus() {
-      orderInfoApi.queryOrderStatus(this.orderNo).then((response) => {
-        if (response.code === 0) {
-          clearInterval(this.timer)
-          setTimeout(() => {
-            this.$router.push({ path: '/success' })
-          }, 3000)
-        }
-      })
     }
   }
 }
 </script>
-
-<style scoped>
-.empty-config-tip {
-  padding: 24px 30px 30px;
-  color: #909399;
-  font-size: 14px;
-}
-</style>

@@ -6,10 +6,20 @@
 -- 3. V3 幂等性增强（乐观锁、唯一约束、索引优化）
 -- 4. V4/V5/V6 并发控制增强（数据库层兜底能力）
 -- 5. 对账功能（对账主表 + 对账明细表）
+-- 6. 渠道账单导入（渠道账单表 + 对账账单关联）
+-- 7. 微信进账与退款逐笔对账（业务类型 + 退款标识字段）
+-- 8. 用户认证、服务端购物车与多课程合单
+-- 本文件是唯一数据库初始化脚本，无需再执行其他升级脚本。
 -- ===============================================================
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS `t_order_item`;
+DROP TABLE IF EXISTS `t_cart_item`;
+DROP TABLE IF EXISTS `t_cart`;
+DROP TABLE IF EXISTS `t_refresh_token`;
+DROP TABLE IF EXISTS `t_user`;
 
 -- ----------------------------
 -- Table structure for t_payment_channel
@@ -92,6 +102,76 @@ INSERT INTO `t_product` VALUES (3, '前端课程', 1, '2023-02-04 23:34:20', '20
 INSERT INTO `t_product` VALUES (4, 'UI课程', 1, '2023-02-04 23:34:20', '2023-02-04 23:34:20');
 
 -- ----------------------------
+-- Table structure for t_user
+-- 用户表：密码只保存 BCrypt 哈希
+-- ----------------------------
+CREATE TABLE `t_user`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '用户ID',
+  `username` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '登录用户名',
+  `password_hash` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'BCrypt密码哈希',
+  `role` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'USER' COMMENT '角色：USER、ADMIN',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_user_username` (`username`) USING BTREE,
+  KEY `idx_user_role` (`role`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- 演示管理员，初始登录信息见 README；首次登录后请立即修改密码。
+INSERT INTO `t_user` (`id`, `username`, `password_hash`, `role`) VALUES
+(1, 'admin', '$2a$10$adpxTm2WcYIlEBzTd2dh0ObMLt/uQcjZY4q7zfMoRD9SPl4zVF5ZW', 'ADMIN');
+
+-- ----------------------------
+-- Table structure for t_refresh_token
+-- 刷新令牌表：只保存原始令牌的 SHA-256 哈希
+-- ----------------------------
+CREATE TABLE `t_refresh_token`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '刷新令牌ID',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '用户ID',
+  `token_hash` char(64) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL COMMENT '刷新令牌SHA-256哈希',
+  `token_family` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL COMMENT '令牌族UUID',
+  `expires_at` datetime NOT NULL COMMENT '过期时间',
+  `revoked_at` datetime NULL DEFAULT NULL COMMENT '撤销时间',
+  `replaced_by_hash` char(64) CHARACTER SET ascii COLLATE ascii_general_ci NULL DEFAULT NULL COMMENT '轮换后的令牌哈希',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_refresh_token_hash` (`token_hash`) USING BTREE,
+  KEY `idx_refresh_user_family` (`user_id`, `token_family`) USING BTREE,
+  KEY `idx_refresh_expires` (`expires_at`) USING BTREE,
+  CONSTRAINT `fk_refresh_user` FOREIGN KEY (`user_id`) REFERENCES `t_user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_cart / t_cart_item
+-- 每个用户一个购物车，同一课程只保留一条明细
+-- ----------------------------
+CREATE TABLE `t_cart`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '购物车ID',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '用户ID',
+  `version` int(11) NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_cart_user` (`user_id`) USING BTREE,
+  CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `t_user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+CREATE TABLE `t_cart_item`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '购物车明细ID',
+  `cart_id` bigint(20) UNSIGNED NOT NULL COMMENT '购物车ID',
+  `product_id` bigint(20) NOT NULL COMMENT '课程ID',
+  `quantity` int(11) UNSIGNED NOT NULL COMMENT '数量，业务限制1到99',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_cart_product` (`cart_id`, `product_id`) USING BTREE,
+  KEY `idx_cart_item_product` (`product_id`) USING BTREE,
+  CONSTRAINT `fk_cart_item_cart` FOREIGN KEY (`cart_id`) REFERENCES `t_cart` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_cart_item_product` FOREIGN KEY (`product_id`) REFERENCES `t_product` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for t_order_info
 -- 订单表：包含乐观锁 version 字段，支持幂等性
 -- ----------------------------
@@ -100,8 +180,8 @@ CREATE TABLE `t_order_info`  (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '订单id',
   `title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '订单标题',
   `order_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商户订单编号',
-  `user_id` bigint(20) NULL DEFAULT NULL COMMENT '用户id',
-  `product_id` bigint(20) NOT NULL COMMENT '支付产品id',
+  `user_id` bigint(20) UNSIGNED NULL DEFAULT NULL COMMENT '用户id，历史订单可为空',
+  `product_id` bigint(20) NULL DEFAULT NULL COMMENT '直购产品id，购物车合单为空',
   `total_fee` int(11) NOT NULL COMMENT '订单金额(分)',
   `code_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '订单二维码连接',
   `order_status` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '订单状态',
@@ -110,12 +190,37 @@ CREATE TABLE `t_order_info`  (
   `payment_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '支付类型：支付宝，微信',
   `payment_app_id` bigint(20) UNSIGNED NULL DEFAULT NULL COMMENT '支付应用ID',
   `payment_channel_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '支付渠道编码：WXPAY、ALIPAY',
+  `checkout_request_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '购物车结算幂等请求号',
   `version` int(11) NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uk_order_no` (`order_no`) USING BTREE,
+  UNIQUE KEY `uk_order_user_checkout` (`user_id`, `checkout_request_id`) USING BTREE,
   KEY `idx_product_status_pay_type` (`product_id`, `order_status`, `payment_type`) USING BTREE,
   KEY `idx_product_payment_status_time` (`product_id`, `payment_type`, `order_status`, `create_time`) USING BTREE,
-  KEY `idx_payment_app` (`payment_app_id`, `create_time`) USING BTREE
+  KEY `idx_payment_app` (`payment_app_id`, `create_time`) USING BTREE,
+  KEY `idx_order_user_time` (`user_id`, `create_time`) USING BTREE,
+  CONSTRAINT `fk_order_user` FOREIGN KEY (`user_id`) REFERENCES `t_user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_order_item
+-- 订单课程快照：支付、退款和对账仍以订单总额为边界
+-- ----------------------------
+CREATE TABLE `t_order_item`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '订单明细ID',
+  `order_id` bigint(20) UNSIGNED NOT NULL COMMENT '订单ID',
+  `product_id` bigint(20) NOT NULL COMMENT '课程ID',
+  `product_title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '下单时课程标题快照',
+  `unit_price` int(11) NOT NULL COMMENT '下单时单价快照（分）',
+  `quantity` int(11) UNSIGNED NOT NULL COMMENT '购买数量',
+  `subtotal` int(11) NOT NULL COMMENT '小计（分）',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_order_item_order` (`order_id`) USING BTREE,
+  KEY `idx_order_item_product` (`product_id`) USING BTREE,
+  CONSTRAINT `fk_order_item_order` FOREIGN KEY (`order_id`) REFERENCES `t_order_info` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_item_product` FOREIGN KEY (`product_id`) REFERENCES `t_product` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
@@ -268,6 +373,8 @@ CREATE TABLE `t_reconciliation_detail`  (
 -- 4. t_refund_info.uk_refund_no：防止商户退款单号重复
 -- 5. t_refund_info.uk_refund_id：防止渠道退款单号重复
 -- 6. t_reconciliation.uk_bill_date_channel_app：防止同一日期同一渠道同一应用重复对账
+-- 7. t_order_info.uk_order_user_checkout：防止同一用户重复提交同一次购物车结算
+-- 8. t_refresh_token.uk_refresh_token_hash：防止刷新令牌哈希重复入库
 --
 -- 配合代码层的优化：
 -- - 通知幂等检查（Redis + notifyId）

@@ -8,22 +8,32 @@ import Download from './pages/Download.jsx'
 import Success from './pages/Success.jsx'
 import PaymentConfig from './pages/PaymentConfig.jsx'
 import Reconciliation from './pages/Reconciliation.jsx'
+import Login from './pages/Login.jsx'
+import Cart from './pages/Cart.jsx'
+import Account from './pages/Account.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
+import { AuthProvider } from './auth/AuthContext.jsx'
 
 export default function App() {
   return (
-    <HashRouter>
-      <div id="app">
-        <AppHeader />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/download" element={<Download />} />
-          <Route path="/payment-config" element={<PaymentConfig />} />
-          <Route path="/reconciliation" element={<Reconciliation />} />
-          <Route path="/success" element={<Success />} />
-        </Routes>
-        <AppFooter />
-      </div>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <AuthProvider>
+        <div id="app">
+          <AppHeader />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+            <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+            <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+            <Route path="/download" element={<ProtectedRoute role="ADMIN"><Download /></ProtectedRoute>} />
+            <Route path="/payment-config" element={<ProtectedRoute role="ADMIN"><PaymentConfig /></ProtectedRoute>} />
+            <Route path="/reconciliation" element={<ProtectedRoute role="ADMIN"><Reconciliation /></ProtectedRoute>} />
+            <Route path="/success" element={<ProtectedRoute><Success /></ProtectedRoute>} />
+          </Routes>
+          <AppFooter />
+        </div>
+      </AuthProvider>
     </HashRouter>
   )
 }

@@ -129,7 +129,7 @@
 | 多支付应用账单下载 | `WxPayBillService.downloadBill(Long, ...)` |
 | 进账/退款匹配 | `WxPaymentRefundMatcher.match()` |
 | 本地流水查询与编排 | `ReconciliationServiceImpl.doReconcile()` |
-| 明细持久化 | `ReconciliationDetailMapper.xml`、`wxpay_reconciliation_v2_upgrade.sql` |
+| 明细持久化 | `ReconciliationDetailMapper.xml`、`payment-demo/sql/payment-demo.sql` |
 | 前端展示 | React/Vue `Reconciliation` 页面 |
 
 测试锚点：`WxBillParserTest`、`ChannelBillServiceTest`、`WxPayBillServiceTest`、`WxPaymentRefundMatcherTest`、`ReconciliationBillDependencyTest`。真实 `29082026_ALL.xlsx` 验证解析 45 条有效明细，其中 PAYMENT 31 条、REFUND 14 条。

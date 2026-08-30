@@ -137,7 +137,9 @@ public class PaymentAppController {
             map.put("channelCode", channel == null ? null : channel.getChannelCode());
             map.put("channelName", channel == null ? null : channel.getChannelName());
             map.put("appDesc", app.getAppDesc());
-            map.put("appConfig", app.getAppConfig());
+            if (!onlyEnabledChannel) {
+                map.put("appConfig", app.getAppConfig());
+            }
             map.put("sortOrder", app.getSortOrder());
             map.put("createTime", app.getCreateTime());
             map.put("updateTime", app.getUpdateTime());

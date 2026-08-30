@@ -6,6 +6,7 @@ import cc.ivera.config.PaymentConfigLoader;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.service.AliPayService;
 import cc.ivera.service.OrderInfoService;
+import cc.ivera.security.AuthContext;
 import cc.ivera.util.MoneyUtils;
 import cc.ivera.vo.R;
 import com.alipay.api.AlipayConstants;
@@ -61,6 +62,15 @@ public class AliPayController {
         //我们将form表单字符串返回给前端程序，之后前端将会调用自动提交脚本，进行表单的提交
         //此时，表单会自动提交到action属性所指向的支付宝开放平台中，从而为用户展示一个支付页面
         return R.ok().data("formStr", formStr);
+    }
+
+    @ApiOperation("为已有订单生成支付宝支付页面")
+    @PostMapping("/trade/page/pay/order/{orderNo}")
+    public R<Map<String, Object>> tradePagePayOrder(
+            @PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo
+    ) {
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
+        return R.ok().data("formStr", aliPayService.tradeCreateOrder(orderNo));
     }
 
     @ApiOperation("支付通知")
@@ -155,6 +165,7 @@ public class AliPayController {
     @PostMapping("/trade/close/{orderNo}")
     public R<Map<String, Object>> cancel(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
         log.info("取消订单");
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
         aliPayService.cancelOrder(orderNo);
         return R.ok().setMessage("订单已取消");
     }
@@ -169,6 +180,7 @@ public class AliPayController {
     @GetMapping("/trade/query/{orderNo}")
     public R<Map<String, Object>> queryOrder(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
         log.info("查询订单");
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
 
         String result = aliPayService.queryOrder(orderNo);
         return R.ok().setMessage("查询成功").data("result", result);

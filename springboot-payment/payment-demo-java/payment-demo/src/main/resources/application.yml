@@ -45,6 +45,13 @@ logging:
 
 
 payment:
+  auth:
+    # 生产环境必须通过 PAYMENT_AUTH_JWT_SECRET 覆盖，长度至少32字节
+    jwt-secret: ${PAYMENT_AUTH_JWT_SECRET:payment-demo-change-this-secret-32-bytes}
+    access-token-seconds: 900
+    refresh-token-seconds: 604800
+    secure-cookie: false
+    allowed-origins: ${PAYMENT_AUTH_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081}
   order:
     close-delay-ms: 60000
   refund:

@@ -10,6 +10,8 @@ public interface WxPayOrderFacade {
 
     Map<String, Object> nativePay(Long productId, Long paymentAppId);
 
+    Map<String, Object> nativePayOrder(String orderNo);
+
     void processOrder(Map<String, Object> bodyMap);
 
     void cancelOrder(String orderNo);
@@ -23,6 +25,8 @@ public interface WxPayOrderFacade {
     Map<String, Object> nativePayV2(Long productId, String remoteAddr);
 
     Map<String, Object> nativePayV2(Long productId, String remoteAddr, Long paymentAppId);
+
+    Map<String, Object> nativePayV2Order(String orderNo, String remoteAddr);
 
     Map<String, Object> jsapiPay(OrderInfo orderInfo, String openid);
 }

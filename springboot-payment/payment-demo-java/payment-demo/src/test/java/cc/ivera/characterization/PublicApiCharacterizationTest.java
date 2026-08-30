@@ -9,11 +9,15 @@ import cc.ivera.controller.RefundApplicationController;
 import cc.ivera.dto.RefundRequest;
 import cc.ivera.entity.Product;
 import cc.ivera.enums.OrderStatus;
+import cc.ivera.enums.UserRole;
+import cc.ivera.security.AuthContext;
+import cc.ivera.security.AuthUser;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.ProductService;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.vo.R;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -28,6 +32,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class PublicApiCharacterizationTest {
+
+    @AfterEach
+    void clearAuthContext() {
+        AuthContext.clear();
+    }
 
     @Test
     @DisplayName("现状: ProductController.test 返回 R 包装, message=hello, data 中包含 now")
@@ -65,7 +74,8 @@ class PublicApiCharacterizationTest {
     @DisplayName("现状: 订单轮询查到支付成功时 code=0,message=支付成功")
     void current_order_status_success_returns_success_message() {
         OrderInfoService orderInfoService = mock(OrderInfoService.class);
-        when(orderInfoService.getOrderStatus("ORD-1")).thenReturn(OrderStatus.SUCCESS.getType());
+        AuthUser authUser = authenticateUser();
+        when(orderInfoService.getOrderStatusForUser("ORD-1", authUser)).thenReturn(OrderStatus.SUCCESS.getType());
         OrderInfoController controller = new OrderInfoController(orderInfoService);
 
         R<Map<String, Object>> response = controller.queryOrderStatus("ORD-1");
@@ -78,7 +88,8 @@ class PublicApiCharacterizationTest {
     @DisplayName("现状: 订单轮询查到未支付时 code=101,message=支付中......")
     void current_order_status_notpay_returns_polling_code_101() {
         OrderInfoService orderInfoService = mock(OrderInfoService.class);
-        when(orderInfoService.getOrderStatus("ORD-2")).thenReturn(OrderStatus.NOTPAY.getType());
+        AuthUser authUser = authenticateUser();
+        when(orderInfoService.getOrderStatusForUser("ORD-2", authUser)).thenReturn(OrderStatus.NOTPAY.getType());
         OrderInfoController controller = new OrderInfoController(orderInfoService);
 
         R<Map<String, Object>> response = controller.queryOrderStatus("ORD-2");
@@ -91,7 +102,8 @@ class PublicApiCharacterizationTest {
     @DisplayName("现状: 订单轮询查到空状态仍返回支付中 code=101")
     void current_order_status_null_still_returns_polling_code_101() {
         OrderInfoService orderInfoService = mock(OrderInfoService.class);
-        when(orderInfoService.getOrderStatus("ORD-MISSING")).thenReturn(null);
+        AuthUser authUser = authenticateUser();
+        when(orderInfoService.getOrderStatusForUser("ORD-MISSING", authUser)).thenReturn(null);
         OrderInfoController controller = new OrderInfoController(orderInfoService);
 
         R<Map<String, Object>> response = controller.queryOrderStatus("ORD-MISSING");
@@ -104,7 +116,8 @@ class PublicApiCharacterizationTest {
     @DisplayName("现状: 订单轮询查到非成功非未支付状态仍返回支付中 code=101")
     void current_order_status_closed_still_returns_polling_code_101() {
         OrderInfoService orderInfoService = mock(OrderInfoService.class);
-        when(orderInfoService.getOrderStatus("ORD-CLOSED")).thenReturn(OrderStatus.CLOSED.getType());
+        AuthUser authUser = authenticateUser();
+        when(orderInfoService.getOrderStatusForUser("ORD-CLOSED", authUser)).thenReturn(OrderStatus.CLOSED.getType());
         OrderInfoController controller = new OrderInfoController(orderInfoService);
 
         R<Map<String, Object>> response = controller.queryOrderStatus("ORD-CLOSED");
@@ -164,5 +177,11 @@ class PublicApiCharacterizationTest {
         assertThat(response.getData()).isSameAs(configs);
         assertThat(response.getData().get(7L).getAppid()).isEqualTo("wx-app-id-current");
         assertThat(response.getData().get(7L).getMchId()).isEqualTo("merchant-current");
+    }
+
+    private AuthUser authenticateUser() {
+        AuthUser authUser = new AuthUser(1L, "characterization-user", UserRole.USER);
+        AuthContext.setUser(authUser);
+        return authUser;
     }
 }

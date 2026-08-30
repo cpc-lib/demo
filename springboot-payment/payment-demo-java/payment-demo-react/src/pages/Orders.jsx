@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
-import { Button, Form, InputNumber, message, Modal, Select, Table, Tag } from 'antd'
+import { useEffect, useRef, useState } from 'react'
+import { Button, Empty, Form, InputNumber, message, Modal, Select, Table, Tag } from 'antd'
 
 import aliPay from '@/api/aliPay'
 import orderInfoApi from '@/api/orderInfo'
 import wxPayApi from '@/api/wxPay'
 import refundInfoApi from '@/api/refundInfo'
+import { useAuth } from '@/auth/AuthContext'
+import WxPayDialog from '@/components/WxPayDialog'
 
 const APPROVAL_STATUS_TEXT = {
   PENDING: '待审核',
@@ -52,7 +54,13 @@ function orderStatusTag(status) {
 }
 
 export default function Orders() {
+  const auth = useAuth()
+  const timerRef = useRef(null)
   const [list, setList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [itemsByOrder, setItemsByOrder] = useState({})
+  const [payingOrderNo, setPayingOrderNo] = useState('')
+  const [payDialog, setPayDialog] = useState({ open: false, codeUrl: '', orderNo: '' })
   const [refundDialogVisible, setRefundDialogVisible] = useState(false)
   const [refundRecordDialogVisible, setRefundRecordDialogVisible] = useState(false)
   const [refundRecordList, setRefundRecordList] = useState([])
@@ -64,14 +72,63 @@ export default function Orders() {
   const [paymentType, setPaymentType] = useState('')
 
   const showOrderList = () => {
-    orderInfoApi.list().then((response) => {
+    setLoading(true)
+    const request = auth.user?.role === 'ADMIN' ? orderInfoApi.list() : orderInfoApi.myList()
+    request.then((response) => {
       setList(response?.data?.list || [])
-    })
+    }).finally(() => setLoading(false))
   }
 
   useEffect(() => {
     showOrderList()
-  }, [])
+    return () => clearInterval(timerRef.current)
+  }, [auth.user?.role])
+
+  const loadItems = (expanded, row) => {
+    if (!expanded || itemsByOrder[row.orderNo]) {
+      return
+    }
+    orderInfoApi.items(row.orderNo).then((response) => {
+      setItemsByOrder((current) => ({ ...current, [row.orderNo]: response?.data || [] }))
+    })
+  }
+
+  const openWxPay = (response, targetOrderNo) => {
+    setPayDialog({ open: true, codeUrl: response?.data?.codeUrl || '', orderNo: targetOrderNo })
+    clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      orderInfoApi.queryOrderStatus(targetOrderNo).then((status) => {
+        if (status.code === 0) {
+          clearInterval(timerRef.current)
+          setPayDialog({ open: false, codeUrl: '', orderNo: '' })
+          message.success('支付成功')
+          showOrderList()
+        }
+      })
+    }, 3000)
+  }
+
+  const retryPay = async (row, wxVersion = 'V3') => {
+    setPayingOrderNo(row.orderNo)
+    try {
+      const channelCode = row.paymentChannelCode || (row.paymentType === '支付宝' ? 'ALIPAY' : 'WXPAY')
+      if (channelCode === 'WXPAY') {
+        const response = wxVersion === 'V2'
+          ? await wxPayApi.nativePayV2Order(row.orderNo)
+          : await wxPayApi.nativePayOrder(row.orderNo)
+        openWxPay(response, row.orderNo)
+      } else if (channelCode === 'ALIPAY') {
+        const response = await aliPay.tradePagePayOrder(row.orderNo)
+        document.open()
+        document.write(response?.data?.formStr || '')
+        document.close()
+      } else {
+        message.error('暂不支持该订单的支付渠道')
+      }
+    } finally {
+      setPayingOrderNo('')
+    }
+  }
 
   const canApplyRefund = (orderStatus) => {
     return orderStatus === '支付成功' || orderStatus === '部分退款' || orderStatus === '退款中'
@@ -172,12 +229,18 @@ export default function Orders() {
     },
     {
       title: '操作',
-      width: 220,
+      width: 340,
       align: 'center',
       render: (_, row) => (
         <>
           {row.orderStatus === '未支付' ? (
-            <Button type="link" onClick={() => cancel(row.orderNo, row.paymentType)}>取消</Button>
+            <>
+              <Button type="link" loading={payingOrderNo === row.orderNo} onClick={() => retryPay(row)}>重试支付</Button>
+              {(row.paymentChannelCode === 'WXPAY' || row.paymentType === '微信') ? (
+                <Button type="link" onClick={() => retryPay(row, 'V2')}>微信 V2</Button>
+              ) : null}
+              <Button type="link" onClick={() => cancel(row.orderNo, row.paymentType)}>取消</Button>
+            </>
           ) : null}
           {canApplyRefund(row.orderStatus) ? (
             <Button type="link" onClick={() => refund(row)}>退款申请</Button>
@@ -240,7 +303,7 @@ export default function Orders() {
       <section id="index" className="container">
         <header className="comm-title">
           <h2 className="fl tac">
-            <span className="c-333">订单列表</span>
+            <span className="c-333">{auth.user?.role === 'ADMIN' ? '全部订单' : '我的订单'}</span>
           </h2>
         </header>
         <Table
@@ -248,7 +311,26 @@ export default function Orders() {
           dataSource={list}
           columns={columns}
           bordered
-          pagination={false}
+          loading={loading}
+          locale={{ emptyText: <Empty description="暂无订单" /> }}
+          pagination={{ pageSize: 10 }}
+          expandable={{
+            onExpand: loadItems,
+            expandedRowRender: (row) => {
+              const items = itemsByOrder[row.orderNo] || []
+              return items.length ? (
+                <div className="order-items">
+                  {items.map((item) => (
+                    <div key={item.id || item.productId}>
+                      <span>{item.productTitle}</span>
+                      <span>¥{(item.unitPrice / 100).toFixed(2)} × {item.quantity}</span>
+                      <strong>¥{(item.subtotal / 100).toFixed(2)}</strong>
+                    </div>
+                  ))}
+                </div>
+              ) : <span>正在读取订单明细...</span>
+            }
+          }}
         />
       </section>
 
@@ -308,6 +390,16 @@ export default function Orders() {
           pagination={false}
         />
       </Modal>
+
+      <WxPayDialog
+        open={payDialog.open}
+        codeUrl={payDialog.codeUrl}
+        onClose={() => {
+          clearInterval(timerRef.current)
+          setPayDialog({ open: false, codeUrl: '', orderNo: '' })
+          showOrderList()
+        }}
+      />
     </div>
   )
 }

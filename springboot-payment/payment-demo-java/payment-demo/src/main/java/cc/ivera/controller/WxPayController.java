@@ -5,6 +5,8 @@ import cc.ivera.entity.OrderInfo;
 import cc.ivera.service.wxpay.WxPayBillFacade;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.service.wxpay.WxPayRefundFacade;
+import cc.ivera.service.OrderInfoService;
+import cc.ivera.security.AuthContext;
 import cc.ivera.vo.R;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -39,16 +41,20 @@ public class WxPayController {
 
     private final WxPayNotifyHandler wxPayNotifyHandler;
 
+    private final OrderInfoService orderInfoService;
+
     public WxPayController(
         WxPayOrderFacade wxPayOrderFacade,
         WxPayRefundFacade wxPayRefundFacade,
         WxPayBillFacade wxPayBillFacade,
-        WxPayNotifyHandler wxPayNotifyHandler
+        WxPayNotifyHandler wxPayNotifyHandler,
+        OrderInfoService orderInfoService
     ) {
         this.wxPayOrderFacade = wxPayOrderFacade;
         this.wxPayRefundFacade = wxPayRefundFacade;
         this.wxPayBillFacade = wxPayBillFacade;
         this.wxPayNotifyHandler = wxPayNotifyHandler;
+        this.orderInfoService = orderInfoService;
     }
 
     /**
@@ -67,6 +73,15 @@ public class WxPayController {
         Map<String, Object> map = wxPayOrderFacade.nativePay(productId, paymentAppId);
 
         return R.ok().setData(map);
+    }
+
+    @ApiOperation("为已有订单生成支付二维码")
+    @PostMapping("/native/order/{orderNo}")
+    public R<Map<String, Object>> nativePayOrder(
+            @PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo
+    ) {
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
+        return R.ok(wxPayOrderFacade.nativePayOrder(orderNo));
     }
 
     /**
@@ -93,6 +108,7 @@ public class WxPayController {
     @PostMapping("/cancel/{orderNo}")
     public R<Map<String, Object>> cancel(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
         log.info("取消订单");
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
         wxPayOrderFacade.cancelOrder(orderNo);
         return R.ok().setMessage("订单已取消");
     }
@@ -107,6 +123,7 @@ public class WxPayController {
     @GetMapping("/query/{orderNo}")
     public R<Map<String, Object>> queryOrder(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
         log.info("查询订单");
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
 
         String result = wxPayOrderFacade.queryOrder(orderNo);
         return R.ok().setMessage("查询成功").data("result", result);
@@ -122,6 +139,7 @@ public class WxPayController {
     @GetMapping("/check-order-status/{orderNo}")
     public R<Map<String, Object>> checkOrderStatus(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo) {
         log.info("主动查询微信支付状态");
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
 
         Map<String, Object> result = wxPayOrderFacade.queryPaymentStatus(orderNo);
         return R.ok().setMessage("查询成功").setData(result);

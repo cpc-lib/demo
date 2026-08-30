@@ -322,7 +322,7 @@ PENDING → PROCESSING → COMPLETED
 
 - **HTTP 路径**：新增 `/api/reconciliation/**` 系列接口，不修改现有接口路径
 - **响应结构**：所有新接口遵循现有 `R<T>` 统一响应格式
-- **数据库结构**：新增 2 张表（`t_reconciliation`、`t_reconciliation_detail`），不修改现有表结构；需提供增量升级脚本 `payment_reconciliation_upgrade.sql`
+- **数据库结构**：新增 2 张表（`t_reconciliation`、`t_reconciliation_detail`），不修改现有表结构；完整初始化结构统一维护在 `payment-demo/sql/payment-demo.sql`
 - **状态值**：新增对账状态枚举（`PENDING`/`PROCESSING`/`COMPLETED`/`FAILED`）和差异类型枚举，不影响现有订单/退款状态
 - **配置字段**：新增 `reconciliation.cron`、`reconciliation.enabled` 配置项，默认开启
 - **前端影响**：React 和 Vue 均需新增对账页面（对账列表、对账详情、执行对账），不修改现有页面
@@ -342,7 +342,7 @@ PENDING → PROCESSING → COMPLETED
   - `payment-demo/src/main/java/cc/ivera/mapper/ReconciliationMapper.java`
   - `payment-demo/src/main/java/cc/ivera/mapper/ReconciliationDetailMapper.java`
   - `payment-demo/src/main/resources/mapper/ReconciliationMapper.xml`
-  - `payment-demo/sql/payment_reconciliation_upgrade.sql`
+  - `payment-demo/sql/payment-demo.sql`
 - Entity / DTO / Enum：
   - `payment-demo/src/main/java/cc/ivera/entity/Reconciliation.java`
   - `payment-demo/src/main/java/cc/ivera/entity/ReconciliationDetail.java`

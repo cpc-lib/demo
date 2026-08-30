@@ -19,5 +19,9 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     OrderInfo selectNoPayOrderForUpdate(@Param("productId") Long productId,
                                         @Param("paymentType") String paymentType,
                                         @Param("orderStatus") String orderStatus,
-                                        @Param("paymentAppId") Long paymentAppId);
+                                        @Param("paymentAppId") Long paymentAppId,
+                                        @Param("userId") Long userId);
+
+    OrderInfo selectByCheckoutKey(@Param("userId") Long userId,
+                                  @Param("checkoutRequestId") String checkoutRequestId);
 }

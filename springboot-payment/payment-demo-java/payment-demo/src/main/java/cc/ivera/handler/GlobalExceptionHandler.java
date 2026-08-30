@@ -1,8 +1,12 @@
 package cc.ivera.handler;
 
 import cc.ivera.exception.BizException;
+import cc.ivera.exception.ForbiddenException;
+import cc.ivera.exception.UnauthorizedException;
 import cc.ivera.vo.R;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,6 +21,18 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<R<Map<String, Object>>> handleUnauthorized(UnauthorizedException ex) {
+        R<Map<String, Object>> body = R.error().setCode(HttpStatus.UNAUTHORIZED.value()).setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<R<Map<String, Object>>> handleForbidden(ForbiddenException ex) {
+        R<Map<String, Object>> body = R.error().setCode(HttpStatus.FORBIDDEN.value()).setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
 
     @ExceptionHandler(BizException.class)
     public R<Map<String, Object>> handleBizException(BizException ex) {

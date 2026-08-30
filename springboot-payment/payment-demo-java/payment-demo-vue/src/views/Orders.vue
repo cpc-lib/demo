@@ -2,9 +2,21 @@
   <div class="bg-fa of">
     <section id="index" class="container">
       <header class="comm-title">
-        <h2>订单列表</h2>
+        <h2>{{ isAdmin ? '全部订单' : '我的订单' }}</h2>
       </header>
-      <el-table :data="list" border style="width: 100%">
+      <el-table :data="list" v-loading="loading" border style="width: 100%" @expand-change="loadItems">
+        <el-table-column type="expand">
+          <template slot-scope="scope">
+            <div v-if="itemsByOrder[scope.row.orderNo] && itemsByOrder[scope.row.orderNo].length" class="order-items">
+              <div v-for="item in itemsByOrder[scope.row.orderNo]" :key="item.id || item.productId">
+                <span>{{ item.productTitle }}</span>
+                <span>¥{{ (item.unitPrice / 100).toFixed(2) }} × {{ item.quantity }}</span>
+                <strong>¥{{ (item.subtotal / 100).toFixed(2) }}</strong>
+              </div>
+            </div>
+            <span v-else>正在读取订单明细...</span>
+          </template>
+        </el-table-column>
         <el-table-column type="index" width="50"></el-table-column>
         <el-table-column prop="orderNo" label="订单编号" width="230"></el-table-column>
         <el-table-column prop="title" label="订单标题"></el-table-column>
@@ -26,9 +38,13 @@
             <el-tag v-if="scope.row.orderStatus === '退款异常'" type="danger">{{ scope.row.orderStatus }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" align="center">
+        <el-table-column label="操作" width="340" align="center">
           <template slot-scope="scope">
-            <el-button v-if="scope.row.orderStatus === '未支付'" type="text" @click="cancel(scope.row.orderNo, scope.row.paymentType)">取消</el-button>
+            <template v-if="scope.row.orderStatus === '未支付'">
+              <el-button type="text" :loading="payingOrderNo === scope.row.orderNo" @click="retryPay(scope.row)">重试支付</el-button>
+              <el-button v-if="scope.row.paymentChannelCode === 'WXPAY' || scope.row.paymentType === '微信'" type="text" @click="retryPay(scope.row, 'V2')">微信 V2</el-button>
+              <el-button type="text" @click="cancel(scope.row.orderNo, scope.row.paymentType)">取消</el-button>
+            </template>
             <el-button v-if="canApplyRefund(scope.row.orderStatus)" type="text" @click="refund(scope.row)">退款申请</el-button>
             <el-button type="text" @click="showRefundRecords(scope.row)">退款申请记录</el-button>
           </template>
@@ -104,6 +120,15 @@
         <el-table-column prop="createTime" label="申请时间" width="170"></el-table-column>
       </el-table>
     </el-dialog>
+
+    <el-dialog :visible.sync="payDialog.open" width="360px" center @close="closePayDialog">
+      <div class="wxpay-dialog">
+        <h3>微信扫码支付</h3>
+        <p>支付完成后，订单状态会自动更新。</p>
+        <qriously v-if="payDialog.codeUrl" :value="payDialog.codeUrl" :size="280" />
+        <el-button @click="closePayDialog">稍后支付</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -112,11 +137,18 @@ import aliPay from '../api/aliPay'
 import orderInfoApi from '../api/orderInfo'
 import wxPayApi from '../api/wxPay'
 import refundInfoApi from '../api/refundInfo'
+import { authState } from '../auth/session'
 
 export default {
   data() {
     return {
       list: [],
+      loading: true,
+      auth: authState,
+      itemsByOrder: {},
+      payingOrderNo: '',
+      payDialog: { open: false, codeUrl: '', orderNo: '' },
+      timer: null,
       refundDialogVisible: false,
       refundRecordDialogVisible: false,
       refundRecordList: [],
@@ -133,11 +165,74 @@ export default {
     this.showOrderList()
   },
 
+  beforeDestroy() {
+    clearInterval(this.timer)
+  },
+
+  computed: {
+    isAdmin() {
+      return this.auth.user && this.auth.user.role === 'ADMIN'
+    }
+  },
+
   methods: {
     showOrderList() {
-      orderInfoApi.list().then((response) => {
+      this.loading = true
+      const request = this.isAdmin ? orderInfoApi.list() : orderInfoApi.myList()
+      request.then((response) => {
         this.list = response.data.list
+      }).finally(() => {
+        this.loading = false
       })
+    },
+
+    loadItems(row, expandedRows) {
+      if (!expandedRows.length || this.itemsByOrder[row.orderNo]) return
+      orderInfoApi.items(row.orderNo).then(response => {
+        this.$set(this.itemsByOrder, row.orderNo, response.data || [])
+      })
+    },
+
+    openWxPay(response, orderNo) {
+      this.payDialog = { open: true, codeUrl: (response.data && response.data.codeUrl) || '', orderNo }
+      clearInterval(this.timer)
+      this.timer = setInterval(async () => {
+        const status = await orderInfoApi.queryOrderStatus(orderNo)
+        if (status.code === 0) {
+          clearInterval(this.timer)
+          this.payDialog.open = false
+          this.$message.success('支付成功')
+          this.showOrderList()
+        }
+      }, 3000)
+    },
+
+    async retryPay(row, wxVersion) {
+      this.payingOrderNo = row.orderNo
+      try {
+        const channelCode = row.paymentChannelCode || (row.paymentType === '支付宝' ? 'ALIPAY' : 'WXPAY')
+        if (channelCode === 'WXPAY') {
+          const response = wxVersion === 'V2'
+            ? await wxPayApi.nativePayV2Order(row.orderNo)
+            : await wxPayApi.nativePayOrder(row.orderNo)
+          this.openWxPay(response, row.orderNo)
+        } else if (channelCode === 'ALIPAY') {
+          const response = await aliPay.tradePagePayOrder(row.orderNo)
+          document.open()
+          document.write((response.data && response.data.formStr) || '')
+          document.close()
+        } else {
+          this.$message.error('暂不支持该订单的支付渠道')
+        }
+      } finally {
+        this.payingOrderNo = ''
+      }
+    },
+
+    closePayDialog() {
+      clearInterval(this.timer)
+      this.payDialog = { open: false, codeUrl: '', orderNo: '' }
+      this.showOrderList()
     },
 
     canApplyRefund(orderStatus) {
