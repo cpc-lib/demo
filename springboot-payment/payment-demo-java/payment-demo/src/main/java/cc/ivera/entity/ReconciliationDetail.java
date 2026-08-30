@@ -13,9 +13,15 @@ public class ReconciliationDetail extends BaseEntity {
 
     private String diffType;
 
+    private String businessType;
+
     private String orderNo;
 
     private String transactionId;
+
+    private String refundNo;
+
+    private String refundId;
 
     private Integer channelAmount;
 

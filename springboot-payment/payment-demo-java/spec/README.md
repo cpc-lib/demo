@@ -29,6 +29,8 @@
 |---------|------|------|---------|---------|---------|
 | SPEC-001 | [支付核心流程行为规格](implemented/current-behavior/PAYMENT_DEMO_CURRENT_BEHAVIOR_SPEC.md) | ✅ 已实现 | 见锚点 | 24个特征测试 | 2026-06-14 |
 | SPEC-005 | [支付对账功能](implemented/RECONCILIATION_FUNCTION_SPEC.md) | ✅ 已实现 | 见锚点 | 待补充 | 2026-07-20 |
+| SPEC-006 | [渠道账单导入与对账管理](implemented/CHANNEL_BILL_IMPORT_SPEC.md) | ✅ 已实现 | 见锚点 | 15个特征测试 | 2026-08-28 |
+| SPEC-007 | [微信进账与退款逐笔对账兼容扩展](implemented/WXPAY_PAYMENT_REFUND_RECONCILIATION_COMPAT_SPEC.md) | ✅ 已实现 | 见锚点 | 36个相关测试 | 2026-08-30 |
 
 ### SPEC-001 详情
 
@@ -79,6 +81,48 @@
 | 定时任务 | `ReconciliationScheduleConfig.java` | `autoReconcileWxPay()`, `autoReconcileAliPay()` |
 
 **验收进度**: 16/17 项已完成（仅特征测试待补充）
+
+### SPEC-006 详情
+
+**标题**: 渠道账单导入与对账管理
+
+**状态**: implemented
+
+**分类**: type: design-change（数据流变更）
+
+**描述**: 渠道账单（微信/支付宝）先导入系统落库（自动拉取 + 手动上传）作为对账依据，对账只消费已导入账单；修复定时任务与微信 T+1 出账（次日 10:00 生成）的冲突，拆分渠道级 cron（微信默认 10:30、支付宝默认 11:00）；对账记录通过 `bill_id` 关联账单。
+
+**实现锚点**:
+| 模块 | 文件 | 关键方法 |
+|------|------|---------|
+| 账单控制器 | `ChannelBillController.java` | `importFromChannel()`, `uploadBill()`, `listBills()`, `listRecords()`, `deleteBill()` |
+| 账单服务 | `ChannelBillServiceImpl.java` | `importFromChannel()`, `uploadBill()`, `saveImportedBill()`, `deleteBill()` |
+| 对账服务（变更） | `ReconciliationServiceImpl.java` | `doReconcile()` 消费已导入账单 |
+| 定时任务（变更） | `ReconciliationScheduleConfig.java` | `autoImportAndReconcileWxPay()`, `autoImportAndReconcileAliPay()` |
+
+**测试覆盖**: 15个特征测试（`ChannelBillServiceTest` 12个 + `ReconciliationBillDependencyTest` 3个）
+
+### SPEC-007 详情
+
+**标题**: 微信进账与退款逐笔对账兼容扩展
+
+**状态**: implemented
+
+**分类**: type: compatibility（微信账单输入协议和明细响应字段扩展）
+
+**描述**: 兼容微信官方 CSV、27 列无表头 Tab、商户平台 XLSX 和旧版 CSV；将 PAYMENT 与本地支付流水、REFUND 与本地退款流水分别做标识、金额和状态双向匹配。
+
+**实现锚点**:
+| 模块 | 文件 | 关键方法 |
+|------|------|---------|
+| 微信账单解析 | `WxBillParser.java` | `normalize()`, `parse()` |
+| 进账/退款匹配 | `WxPaymentRefundMatcher.java` | `match()` |
+| 多微信应用账单下载 | `WxPayBillService.java` | `downloadBill(Long, ...)` |
+| 对账编排 | `ReconciliationServiceImpl.java` | `doReconcile()`, `queryLocalWxPayments()`, `queryLocalWxRefunds()` |
+| 手动导入 | `ChannelBillServiceImpl.java` | `uploadBill()` |
+| 数据库升级 | `wxpay_reconciliation_v2_upgrade.sql` | 明细类型与退款标识列 |
+
+**测试覆盖**: 36个相关测试（`WxBillParserTest` 10个 + `ChannelBillServiceTest` 14个 + `WxPayBillServiceTest` 1个 + `WxPaymentRefundMatcherTest` 7个 + `ReconciliationBillDependencyTest` 4个），并用真实 XLSX 验证 31 条 PAYMENT 与 14 条 REFUND。
 
 ---
 
@@ -167,6 +211,10 @@
 | 2026-06-14 | SPEC-001 | - | implemented | 初始创建，覆盖核心流程 |
 | 2026-07-20 | SPEC-005 | - | planned | 新增支付对账功能设计方案 |
 | 2026-07-20 | SPEC-005 | planned | implemented | 完成全部开发：后端（Java）+ React 前端 + Vue 前端 |
+| 2026-08-28 | SPEC-006 | - | planned | 新增渠道账单导入与对账管理设计（type: design-change） |
+| 2026-08-28 | SPEC-006 | planned | implemented | 完成全部开发：数据库 + 后端 + Vue/React 前端 + 15 个特征测试 |
+| 2026-08-29 | SPEC-007 | - | planned | 兼容微信官方账单格式，按支付流水和退款流水逐笔双向对账 |
+| 2026-08-30 | SPEC-007 | planned | implemented | 完成解析、逐笔匹配、持久化、双前端展示、真实账单验证与兼容测试 |
 
 ---
 

@@ -22,6 +22,11 @@ spring:
     timeout: 3000ms
     password: cpc!23#@
 
+  servlet:
+    multipart: #手动上传渠道账单文件大小限制
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   datasource:
     #    driver-class-name: com.mysql.cj.jdbc.Driver
     driver-class-name: com.mysql.jdbc.Driver
@@ -46,4 +51,6 @@ payment:
     status-sync-delay-ms: 60000
   reconciliation:
     enabled: true
-    cron: 0 0 2 * * ?
+    #渠道账单T+1出账：微信昨日账单次日10:00后生成，定时任务先导入账单再对账
+    wx-cron: 0 30 10 * * ?
+    ali-cron: 0 0 11 * * ?

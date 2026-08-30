@@ -195,15 +195,16 @@ graph TB
 - **状态同步**：退款状态通过 RabbitMQ 延迟消息定期同步
 
 #### 4.2.6 支付对账（新增）
-- **文件**：[ReconciliationController.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/controller/ReconciliationController.java)、[ReconciliationServiceImpl.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/service/impl/reconciliation/ReconciliationServiceImpl.java)
+- **文件**：[ReconciliationController.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/controller/ReconciliationController.java)、[ReconciliationServiceImpl.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/service/impl/reconciliation/ReconciliationServiceImpl.java)、[ChannelBillController.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/controller/ChannelBillController.java)、[ChannelBillServiceImpl.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/service/impl/reconciliation/ChannelBillServiceImpl.java)
+- **数据流**：渠道账单 T+1 出账，先导入账单落库（`t_channel_bill`）作为对账依据，再基于已导入账单执行对账；未导入账单时对账报错提示
 - **功能**：
-  - 手动触发对账 / 定时自动对账（微信 2:00，支付宝 2:30）
-  - 下载渠道账单（微信/支付宝 CSV）
-  - 解析账单并与本地订单匹配
+  - 渠道账单导入：自动拉取（调微信/支付宝 API）/ 手动上传（微信商户平台 CSV/TXT/XLSX），同键唯一、支持覆盖导入
+  - 手动触发对账 / 定时自动对账（微信 10:30、支付宝 11:00，先导入账单再对账）
+  - 微信进账与 `t_payment_info` 支付流水逐笔匹配，微信退款与 `t_refund_info` 退款流水逐笔匹配（支持跨日退款）
   - 识别差异：漏单、多单、金额不符、状态不符
   - 生成对账报告，支持 CSV 导出
 - **并发控制**：Redis 分布式锁防止同一对账任务并发执行
-- **幂等控制**：同一日期、渠道、应用的对账任务不重复执行（基于 `billHash`）
+- **幂等控制**：同一日期、渠道、应用的对账任务不重复执行；对账记录通过 `bill_id` 关联消费的账单
 
 #### 4.2.7 支付配置管理
 - **文件**：[PaymentConfigController.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/controller/PaymentConfigController.java)、[PaymentConfigLoader.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/config/PaymentConfigLoader.java)
@@ -223,7 +224,7 @@ graph TB
 | 支付成功 | [Success.jsx](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo-react/src/pages/Success.jsx) | `/success` | 支付成功回调展示 |
 | 下载账单 | [Download.jsx](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo-react/src/pages/Download.jsx) | `/download` | 下载渠道对账单 |
 | 支付配置 | [PaymentConfig.jsx](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo-react/src/pages/PaymentConfig.jsx) | `/payment-config` | 管理支付渠道和应用配置 |
-| 对账管理 | [Reconciliation.jsx](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo-react/src/pages/Reconciliation.jsx) | `/reconciliation` | 对账记录查询、手动对账、查看明细、导出报告 |
+| 对账管理 | [Reconciliation.jsx](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo-react/src/pages/Reconciliation.jsx) | `/reconciliation` | 账单导入（自动拉取/上传）、对账记录查询、手动对账、查看明细、导出报告 |
 
 #### Vue 前端（payment-demo-vue）
 
@@ -243,7 +244,8 @@ graph TB
 | `t_refund_info` | 退款表 | refund_no, order_no, refund_fee, refund_status, approval_status |
 | `t_payment_channel` | 支付渠道表 | channel_code(WXPAY/ALIPAY), channel_name, channel_status, config_params |
 | `t_payment_app` | 支付应用表 | app_code, channel_id, app_status, app_config(JSON) |
-| `t_reconciliation` | 对账主表 | bill_date, channel_code, status, total_count, match_count, diff_count, bill_hash |
+| `t_channel_bill` | 渠道账单表（对账依据） | bill_date, channel_code, bill_source(AUTO/MANUAL), record_count, total_amount, bill_hash, bill_content |
+| `t_reconciliation` | 对账主表 | bill_date, channel_code, status, total_count, match_count, diff_count, bill_hash, bill_id |
 | `t_reconciliation_detail` | 对账明细表 | reconciliation_id, order_no, diff_type(MISS/MORE/AMOUNT/STATUS), channel_amount, local_amount |
 
 ### 5.2 数据库初始化
@@ -317,7 +319,13 @@ graph TB
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/reconciliation/execute` | 手动触发对账 |
+| POST | `/api/bill/auto-fetch` | 自动拉取渠道账单并导入（对账依据） |
+| POST | `/api/bill/upload` | 手动上传账单文件导入（微信 CSV/TXT/XLSX） |
+| GET | `/api/bill/list` | 已导入账单列表（分页） |
+| GET | `/api/bill/{id}` | 账单详情 |
+| GET | `/api/bill/{id}/records` | 账单解析记录列表（分页） |
+| DELETE | `/api/bill/{id}` | 删除账单（被对账引用时禁止） |
+| POST | `/api/reconciliation/execute` | 手动触发对账（需先导入账单） |
 | GET | `/api/reconciliation/list` | 对账记录列表（分页） |
 | GET | `/api/reconciliation/{id}` | 对账记录详情 |
 | GET | `/api/reconciliation/{id}/details` | 对账明细列表 |
@@ -353,12 +361,13 @@ graph TB
 | `order.close.queue` | 60 秒 | 订单超时自动关闭 | [OrderCloseConsumer.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/mq/OrderCloseConsumer.java) |
 | `refund.status.sync.queue` | 60 秒 | 退款状态定期同步 | [RefundStatusSyncConsumer.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/mq/RefundStatusSyncConsumer.java) |
 
-### 7.3 定时任务（对账）
+### 7.3 定时任务（账单导入 + 对账）
 
 - **配置类**：[ReconciliationScheduleConfig.java](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/src/main/java/cc/ivera/config/ReconciliationScheduleConfig.java)
+- **流程**：先自动拉取导入昨日渠道账单（T+1 出账），再基于已导入账单执行对账；导入失败跳过当日对账，两个渠道互不影响
 - **触发时间**：
-  - 微信支付对账：每天凌晨 2:00
-  - 支付宝对账：每天凌晨 2:30
+  - 微信：每天 10:30（昨日账单 10:00 后生成）
+  - 支付宝：每天 11:00
 
 ### 7.4 全局异常处理
 
@@ -398,7 +407,8 @@ payment:
     status-sync-delay-ms: 60000   # 退款状态同步延迟
   reconciliation:
     enabled: true
-    cron: 0 0 2 * * ?             # 对账定时任务 Cron
+    wx-cron: 0 30 10 * * ?        # 微信账单导入+对账（昨日账单10:00后生成）
+    ali-cron: 0 0 11 * * ?        # 支付宝账单导入+对账
 ```
 
 ### 8.2 支付渠道配置
@@ -487,8 +497,11 @@ mvn test
 
 ### 10.3 已覆盖测试
 
-- 微信账单解析（6 个测试场景）
+- 微信账单解析（10 个测试场景：官方反引号、无表头 Tab、进账/退款、撤销过滤、重复交易号）
 - 支付宝账单解析（6 个测试场景）
+- 渠道账单导入（13 个测试场景：CSV/XLSX 上传、拉取、T+1 校验、幂等覆盖、删除保护、记录分页）
+- 微信进账退款匹配（6 个测试场景：双向缺失、金额/状态差异、唯一回退、重复渠道号）
+- 对账依赖已导入账单（4 个测试场景：未导入报错、billId 关联、幂等、跨日退款）
 - 基础设施特征测试
 - 公共 API 特征测试
 - 退款消息队列测试
@@ -503,6 +516,7 @@ mvn test
 | AI 开发规则 | [AGENTS.md](file:///d:/code/demo/springboot-payment/payment-demo-java/AGENTS.md) | Issue 分类、分支命名、测试要求、对账规则 |
 | Spec 状态账本 | [spec/README.md](file:///d:/code/demo/springboot-payment/payment-demo-java/spec/README.md) | 所有 Spec 的当前状态跟踪 |
 | 对账功能 Spec | [spec/implemented/RECONCILIATION_FUNCTION_SPEC.md](file:///d:/code/demo/springboot-payment/payment-demo-java/spec/implemented/RECONCILIATION_FUNCTION_SPEC.md) | 对账功能的设计与实现规格 |
+| 账单导入 Spec | [spec/implemented/CHANNEL_BILL_IMPORT_SPEC.md](file:///d:/code/demo/springboot-payment/payment-demo-java/spec/implemented/CHANNEL_BILL_IMPORT_SPEC.md) | 渠道账单导入与对账管理的设计与实现规格 |
 | 特征测试清单 | [CHARACTERIZATION_TESTS.md](file:///d:/code/demo/springboot-payment/payment-demo-java/CHARACTERIZATION_TESTS.md) | 所有特征测试的详细说明 |
 | 当前行为规格 | [CURRENT_BEHAVIOR_SPEC.md](file:///d:/code/demo/springboot-payment/payment-demo-java/CURRENT_BEHAVIOR_SPEC.md) | 系统当前实际行为描述 |
 | RabbitMQ 运维 | [payment-demo/docs/RABBITMQ_OPERATIONS.md](file:///d:/code/demo/springboot-payment/payment-demo-java/payment-demo/docs/RABBITMQ_OPERATIONS.md) | RabbitMQ 运维操作指南 |

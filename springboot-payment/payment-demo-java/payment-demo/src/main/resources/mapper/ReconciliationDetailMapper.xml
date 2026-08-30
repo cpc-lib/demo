@@ -6,8 +6,11 @@
         <id column="id" property="id"/>
         <result column="reconciliation_id" property="reconciliationId"/>
         <result column="diff_type" property="diffType"/>
+        <result column="business_type" property="businessType"/>
         <result column="order_no" property="orderNo"/>
         <result column="transaction_id" property="transactionId"/>
+        <result column="refund_no" property="refundNo"/>
+        <result column="refund_id" property="refundId"/>
         <result column="channel_amount" property="channelAmount"/>
         <result column="local_amount" property="localAmount"/>
         <result column="channel_status" property="channelStatus"/>
@@ -46,13 +49,14 @@
 
     <insert id="batchInsert" parameterType="java.util.List">
         insert into t_reconciliation_detail (
-            reconciliation_id, diff_type, order_no, transaction_id,
+            reconciliation_id, diff_type, business_type, order_no, transaction_id, refund_no, refund_id,
             channel_amount, local_amount, channel_status, local_status,
             diff_amount, channel_trade_time, local_trade_time, remark, create_time
         ) values
         <foreach collection="list" item="item" separator=",">
             (
-                #{item.reconciliationId}, #{item.diffType}, #{item.orderNo}, #{item.transactionId},
+                #{item.reconciliationId}, #{item.diffType}, #{item.businessType}, #{item.orderNo},
+                #{item.transactionId}, #{item.refundNo}, #{item.refundId},
                 #{item.channelAmount}, #{item.localAmount}, #{item.channelStatus}, #{item.localStatus},
                 #{item.diffAmount}, #{item.channelTradeTime}, #{item.localTradeTime}, #{item.remark}, now()
             )

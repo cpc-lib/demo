@@ -95,4 +95,90 @@ class WxBillParserTest {
         List<ChannelBillRecord> result = parser.parse(csv);
         assertTrue(result.isEmpty(), "没有订单号和交易号的记录应该被过滤");
     }
+
+    @Test
+    @DisplayName("官方ALL账单：带保护反引号的进账和退款分别解析")
+    void testParseOfficialAllPaymentAndRefundRows() {
+        String content = officialAllHeaders() + "\n"
+                + officialPaymentRow("42000000000000000001", "ORDER_OFFICIAL_001") + "\n"
+                + officialRefundRow() + "\n"
+                + "总交易单数,总交易额,总退款金额,总代金券或立减优惠退款金额,手续费总金额,订单总金额,申请退款总金额\n"
+                + "`2,`2.00,`0.40,`0.00,`0.01,`2.00,`0.60\n";
+
+        List<ChannelBillRecord> result = parser.parse(content);
+
+        assertEquals(2, result.size());
+
+        ChannelBillRecord payment = result.get(0);
+        assertEquals("PAYMENT", payment.getBusinessType());
+        assertEquals("ORDER_OFFICIAL_001", payment.getOrderNo());
+        assertEquals("42000000000000000001", payment.getTransactionId());
+        assertEquals(100, payment.getAmount(), "进账优先使用订单金额");
+        assertEquals("SUCCESS", payment.getStatus());
+
+        ChannelBillRecord refund = result.get(1);
+        assertEquals("REFUND", refund.getBusinessType());
+        assertEquals("ORDER_REFUND_001", refund.getOrderNo());
+        assertEquals("REFUND_OFFICIAL_001", refund.getRefundNo());
+        assertEquals("50000000000000000001", refund.getRefundId());
+        assertEquals(60, refund.getAmount(), "退款优先使用申请退款金额");
+        assertEquals("SUCCESS", refund.getStatus());
+    }
+
+    @Test
+    @DisplayName("官方ALL账单：无表头Tab明细仍可解析")
+    void testParseHeaderlessOfficialTabRow() {
+        String tabRow = officialPaymentRow("42000000000000000002", "ORDER_TAB_001")
+                .replace(',', '\t');
+
+        List<ChannelBillRecord> result = parser.parse(tabRow);
+
+        assertEquals(1, result.size());
+        assertEquals("PAYMENT", result.get(0).getBusinessType());
+        assertEquals("ORDER_TAB_001", result.get(0).getOrderNo());
+        assertEquals(100, result.get(0).getAmount());
+    }
+
+    @Test
+    @DisplayName("官方ALL账单：撤销明细不进入进账退款对账")
+    void testIgnoreRevokedRow() {
+        String revoked = officialPaymentRow("42000000000000000003", "ORDER_REVOKED_001")
+                .replace("`SUCCESS", "`REVOKED");
+
+        List<ChannelBillRecord> result = parser.parse(officialAllHeaders() + "\n" + revoked);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("官方ALL账单：相同微信订单号的不同商户订单均保留")
+    void testKeepRowsWithDuplicateTransactionId() {
+        String transactionId = "42000000000000000004";
+        String content = officialAllHeaders() + "\n"
+                + officialPaymentRow(transactionId, "ORDER_DUP_001") + "\n"
+                + officialPaymentRow(transactionId, "ORDER_DUP_002") + "\n";
+
+        List<ChannelBillRecord> result = parser.parse(content);
+
+        assertEquals(2, result.size());
+        assertEquals("ORDER_DUP_001", result.get(0).getOrderNo());
+        assertEquals("ORDER_DUP_002", result.get(1).getOrderNo());
+    }
+
+    private String officialAllHeaders() {
+        return "交易时间,公众账号ID,商户号,特约商户号,设备号,微信订单号,商户订单号,用户标识,交易类型,交易状态,付款银行,货币种类,应结订单金额,代金券金额,微信退款单号,商户退款单号,退款金额,充值券退款金额,退款类型,退款状态,商品名称,商户数据包,手续费,费率,订单金额,申请退款金额,费率备注";
+    }
+
+    private String officialPaymentRow(String transactionId, String orderNo) {
+        return "`2026-08-29 10:00:00,`wx_appid,`1900000001,`,`device_1,`" + transactionId
+                + ",`" + orderNo
+                + ",`openid,`JSAPI,`SUCCESS,`CMB,`CNY,`0.99,`0.00,`0,`0,`0.00,`0.00,`,`,`商品,`,`0.00600,`0.60%,`1.00,`0.00,`";
+    }
+
+    private String officialRefundRow() {
+        return "`2026-08-29 11:00:00,`wx_appid,`1900000001,`,`device_1,`42000000000000000005"
+                + ",`ORDER_REFUND_001,`openid,`JSAPI,`REFUND,`CMB,`CNY,`0.40,`0.00"
+                + ",`50000000000000000001,`REFUND_OFFICIAL_001,`0.40,`0.00,`ORIGINAL,`SUCCESS"
+                + ",`商品,`,`0.00000,`0.00%,`1.00,`0.60,`";
+    }
 }

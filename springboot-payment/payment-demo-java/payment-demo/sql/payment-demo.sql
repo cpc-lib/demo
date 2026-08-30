@@ -169,6 +169,33 @@ CREATE TABLE `t_refund_info`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for t_channel_bill
+-- 渠道账单表：导入的渠道账单原文，作为对账依据
+-- ----------------------------
+DROP TABLE IF EXISTS `t_channel_bill`;
+CREATE TABLE `t_channel_bill`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '渠道账单ID',
+  `bill_date` date NOT NULL COMMENT '账单日期',
+  `channel_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '支付渠道编码：WXPAY、ALIPAY',
+  `payment_app_id` bigint(20) UNSIGNED NULL DEFAULT NULL COMMENT '支付应用ID',
+  `bill_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'ALL' COMMENT '账单子类型：ALL/SUCCESS/REFUND',
+  `bill_source` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '账单来源：AUTO_DOWNLOAD（API拉取）/MANUAL_UPLOAD（手动上传）',
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'IMPORTED' COMMENT '账单状态：IMPORTED（已导入）',
+  `record_count` int(11) NOT NULL DEFAULT 0 COMMENT '账单解析记录数',
+  `total_amount` bigint(20) NOT NULL DEFAULT 0 COMMENT '账单总金额（分）',
+  `bill_hash` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '账单原文哈希（SHA-256）',
+  `file_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '上传文件名（手动上传时记录）',
+  `bill_content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '账单原文（CSV）',
+  `error_message` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '错误信息',
+  `import_time` datetime NULL DEFAULT NULL COMMENT '导入时间',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_bill_date_channel_app` (`bill_date`, `channel_code`, `payment_app_id`, `bill_type`) USING BTREE,
+  KEY `idx_channel_bill_date` (`channel_code`, `bill_date`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC COMMENT = '渠道账单表（对账依据）';
+
+-- ----------------------------
 -- Table structure for t_reconciliation
 -- 对账主表：记录每一次对账任务的执行情况和统计结果
 -- ----------------------------
@@ -188,6 +215,7 @@ CREATE TABLE `t_reconciliation`  (
   `channel_total_amount` bigint(20) NOT NULL DEFAULT 0 COMMENT '渠道账单总金额（分）',
   `local_total_amount` bigint(20) NOT NULL DEFAULT 0 COMMENT '本地订单总金额（分）',
   `bill_hash` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '渠道账单原文哈希（SHA-256），用于审计追溯',
+  `bill_id` bigint(20) UNSIGNED NULL DEFAULT NULL COMMENT '关联渠道账单ID（t_channel_bill.id）',
   `error_message` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '错误信息',
   `start_time` datetime NULL DEFAULT NULL COMMENT '对账开始时间',
   `end_time` datetime NULL DEFAULT NULL COMMENT '对账结束时间',
@@ -196,7 +224,8 @@ CREATE TABLE `t_reconciliation`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uk_bill_date_channel_app` (`bill_date`, `channel_code`, `payment_app_id`, `bill_type`) USING BTREE,
   KEY `idx_channel_status` (`channel_code`, `status`) USING BTREE,
-  KEY `idx_bill_date` (`bill_date`) USING BTREE
+  KEY `idx_bill_date` (`bill_date`) USING BTREE,
+  KEY `idx_bill_id` (`bill_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC COMMENT = '对账主表';
 
 -- ----------------------------
@@ -207,8 +236,11 @@ CREATE TABLE `t_reconciliation_detail`  (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '对账明细ID',
   `reconciliation_id` bigint(20) UNSIGNED NOT NULL COMMENT '对账记录ID',
   `diff_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '差异类型：MATCH/MISSING_LOCAL/MISSING_CHANNEL/AMOUNT_MISMATCH/STATUS_MISMATCH',
+  `business_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '业务类型：PAYMENT（进账）/REFUND（退款）',
   `order_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '商户订单号',
   `transaction_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '渠道交易号',
+  `refund_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '商户退款单号',
+  `refund_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '渠道退款单号',
   `channel_amount` int(11) NULL DEFAULT NULL COMMENT '渠道金额（分）',
   `local_amount` int(11) NULL DEFAULT NULL COMMENT '本地金额（分）',
   `channel_status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '渠道状态',
@@ -221,7 +253,9 @@ CREATE TABLE `t_reconciliation_detail`  (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_reconciliation_id` (`reconciliation_id`) USING BTREE,
   KEY `idx_diff_type` (`reconciliation_id`, `diff_type`) USING BTREE,
+  KEY `idx_business_type` (`reconciliation_id`, `business_type`) USING BTREE,
   KEY `idx_order_no` (`order_no`) USING BTREE,
+  KEY `idx_refund_no` (`refund_no`) USING BTREE,
   CONSTRAINT `fk_recon_detail_recon` FOREIGN KEY (`reconciliation_id`) REFERENCES `t_reconciliation` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC COMMENT = '对账明细表';
 

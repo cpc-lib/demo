@@ -1,32 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="cc.ivera.mapper.ReconciliationMapper">
+<mapper namespace="cc.ivera.mapper.ChannelBillMapper">
 
-    <resultMap id="BaseResultMap" type="cc.ivera.entity.Reconciliation">
+    <resultMap id="BaseResultMap" type="cc.ivera.entity.ChannelBill">
         <id column="id" property="id"/>
         <result column="bill_date" property="billDate"/>
         <result column="channel_code" property="channelCode"/>
         <result column="payment_app_id" property="paymentAppId"/>
         <result column="bill_type" property="billType"/>
+        <result column="bill_source" property="billSource"/>
         <result column="status" property="status"/>
-        <result column="total_count" property="totalCount"/>
-        <result column="match_count" property="matchCount"/>
-        <result column="diff_count" property="diffCount"/>
-        <result column="diff_amount" property="diffAmount"/>
-        <result column="channel_total_amount" property="channelTotalAmount"/>
-        <result column="local_total_amount" property="localTotalAmount"/>
+        <result column="record_count" property="recordCount"/>
+        <result column="total_amount" property="totalAmount"/>
         <result column="bill_hash" property="billHash"/>
-        <result column="bill_id" property="billId"/>
-        <result column="error_message" property="errorMessage"/>
-        <result column="start_time" property="startTime"/>
-        <result column="end_time" property="endTime"/>
+        <result column="file_name" property="fileName"/>
+        <result column="bill_content" property="billContent"/>
+        <result column="import_time" property="importTime"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <select id="selectPageByConditions" resultMap="BaseResultMap">
-        select *
-        from t_reconciliation
+        select id, bill_date, channel_code, payment_app_id, bill_type, bill_source, status,
+               record_count, total_amount, bill_hash, file_name, import_time, create_time, update_time
+        from t_channel_bill
         <where>
             <if test="billDateStart != null">
                 and bill_date >= #{billDateStart}
@@ -37,8 +34,8 @@
             <if test="channelCode != null and channelCode != ''">
                 and channel_code = #{channelCode}
             </if>
-            <if test="status != null and status != ''">
-                and status = #{status}
+            <if test="billSource != null and billSource != ''">
+                and bill_source = #{billSource}
             </if>
         </where>
         order by bill_date desc, id desc
@@ -46,7 +43,7 @@
 
     <select id="selectByUniqueKey" resultMap="BaseResultMap">
         select *
-        from t_reconciliation
+        from t_channel_bill
         where bill_date = #{billDate}
           and channel_code = #{channelCode}
           <choose>

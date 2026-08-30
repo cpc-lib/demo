@@ -51,8 +51,13 @@ public class WxPayBillService implements WxPayBillFacade {
         log.warn("申请微信账单接口调用 billDate={}, type={}, billType={}, accountType={}, tarType={}",
                 billDate, type, billType, accountType, tarType);
 
-        validateBillDate(billDate);
         PaymentAppConfig payConfig = resolveWxPayConfig();
+        return queryBill(payConfig, billDate, type, billType, accountType, tarType);
+    }
+
+    private String queryBill(PaymentAppConfig payConfig, String billDate, String type,
+                             String billType, String accountType, String tarType) {
+        validateBillDate(billDate);
         String url = buildBillUrl(payConfig, billDate, type, billType, accountType, tarType);
 
         String bodyAsString;
@@ -72,11 +77,17 @@ public class WxPayBillService implements WxPayBillFacade {
 
     @Override
     public String downloadBill(String billDate, String type, String billType, String accountType, String tarType) {
+        return downloadBill(null, billDate, type, billType, accountType, tarType);
+    }
+
+    @Override
+    public String downloadBill(Long paymentAppId, String billDate, String type,
+                               String billType, String accountType, String tarType) {
         log.warn("下载微信账单接口调用 billDate={}, type={}, billType={}, accountType={}, tarType={}",
                 billDate, type, billType, accountType, tarType);
 
-        PaymentAppConfig payConfig = resolveWxPayConfig();
-        String downloadUrl = queryBill(billDate, type, billType, accountType, tarType);
+        PaymentAppConfig payConfig = resolveWxPayConfig(paymentAppId);
+        String downloadUrl = queryBill(payConfig, billDate, type, billType, accountType, tarType);
         try {
             return wxPayHttpClient.getNoSign(payConfig, downloadUrl, "下载微信账单异常");
         } catch (IOException e) {
@@ -149,6 +160,17 @@ public class WxPayBillService implements WxPayBillFacade {
         fallback.setDomain(wxPayConfig.getDomain());
         fallback.setNotifyUrl(wxPayConfig.getNotifyDomain());
         return fallback;
+    }
+
+    private PaymentAppConfig resolveWxPayConfig(Long paymentAppId) {
+        if (paymentAppId == null) {
+            return resolveWxPayConfig();
+        }
+        PaymentAppConfig config = paymentConfigLoader.getRequiredAppConfig(paymentAppId);
+        if (!PaymentConfigLoader.CHANNEL_WXPAY.equals(config.getChannelCode())) {
+            throw new BizException("指定的支付应用不属于微信渠道");
+        }
+        return config;
     }
 
     private String required(String value, String message) {

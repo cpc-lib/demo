@@ -1,26 +1,27 @@
 package cc.ivera.service.impl.reconciliation;
 
-import cc.ivera.config.PaymentAppConfig;
-import cc.ivera.config.PaymentConfigLoader;
 import cc.ivera.dto.ReconciliationExecuteRequest;
+import cc.ivera.entity.ChannelBill;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.PaymentInfo;
 import cc.ivera.entity.Reconciliation;
 import cc.ivera.entity.ReconciliationDetail;
+import cc.ivera.entity.RefundInfo;
 import cc.ivera.enums.DiffType;
+import cc.ivera.enums.PayType;
 import cc.ivera.enums.ReconciliationStatus;
+import cc.ivera.enums.RefundApprovalStatus;
 import cc.ivera.exception.BizException;
+import cc.ivera.mapper.ChannelBillMapper;
 import cc.ivera.mapper.OrderInfoMapper;
 import cc.ivera.mapper.PaymentInfoMapper;
 import cc.ivera.mapper.ReconciliationDetailMapper;
 import cc.ivera.mapper.ReconciliationMapper;
-import cc.ivera.service.AliPayService;
+import cc.ivera.mapper.RefundInfoMapper;
 import cc.ivera.service.reconciliation.ReconciliationService;
-import cc.ivera.service.wxpay.WxPayBillFacade;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cc.ivera.util.HttpClientUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,6 @@ import org.springframework.util.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
@@ -51,11 +51,11 @@ public class ReconciliationServiceImpl implements ReconciliationService {
 
     private final ReconciliationMapper reconciliationMapper;
     private final ReconciliationDetailMapper reconciliationDetailMapper;
+    private final ChannelBillMapper channelBillMapper;
     private final OrderInfoMapper orderInfoMapper;
     private final PaymentInfoMapper paymentInfoMapper;
-    private final WxPayBillFacade wxPayBillFacade;
-    private final AliPayService aliPayService;
-    private final PaymentConfigLoader paymentConfigLoader;
+    private final RefundInfoMapper refundInfoMapper;
+    private final WxPaymentRefundMatcher wxPaymentRefundMatcher;
     private final WxBillParser wxBillParser;
     private final AliPayBillParser aliPayBillParser;
     private final StringRedisTemplate stringRedisTemplate;
@@ -63,22 +63,22 @@ public class ReconciliationServiceImpl implements ReconciliationService {
     public ReconciliationServiceImpl(
         ReconciliationMapper reconciliationMapper,
         ReconciliationDetailMapper reconciliationDetailMapper,
+        ChannelBillMapper channelBillMapper,
         OrderInfoMapper orderInfoMapper,
         PaymentInfoMapper paymentInfoMapper,
-        WxPayBillFacade wxPayBillFacade,
-        AliPayService aliPayService,
-        PaymentConfigLoader paymentConfigLoader,
+        RefundInfoMapper refundInfoMapper,
+        WxPaymentRefundMatcher wxPaymentRefundMatcher,
         WxBillParser wxBillParser,
         AliPayBillParser aliPayBillParser,
         StringRedisTemplate stringRedisTemplate
     ) {
         this.reconciliationMapper = reconciliationMapper;
         this.reconciliationDetailMapper = reconciliationDetailMapper;
+        this.channelBillMapper = channelBillMapper;
         this.orderInfoMapper = orderInfoMapper;
         this.paymentInfoMapper = paymentInfoMapper;
-        this.wxPayBillFacade = wxPayBillFacade;
-        this.aliPayService = aliPayService;
-        this.paymentConfigLoader = paymentConfigLoader;
+        this.refundInfoMapper = refundInfoMapper;
+        this.wxPaymentRefundMatcher = wxPaymentRefundMatcher;
         this.wxBillParser = wxBillParser;
         this.aliPayBillParser = aliPayBillParser;
         this.stringRedisTemplate = stringRedisTemplate;
@@ -162,18 +162,39 @@ public class ReconciliationServiceImpl implements ReconciliationService {
 
     private void doReconcile(Reconciliation reconciliation, LocalDate billDate,
                               String channelCode, Long paymentAppId, String billType) {
-        String billContent = downloadBill(billDate, channelCode, paymentAppId, billType);
-        String billHash = sha256(billContent);
-        reconciliation.setBillHash(billHash);
+        // 对账依据：必须先导入渠道账单（渠道账单为T+1出账，当日无法对账）
+        ChannelBill bill = channelBillMapper.selectByUniqueKey(billDate, channelCode, paymentAppId, billType);
+        if (bill == null) {
+            throw new BizException("渠道账单未导入，请先导入 " + billDate + " 的 " + channelCode
+                    + " 账单（渠道账单为T+1出账，当日账单次日可导入）");
+        }
 
-        List<ChannelBillRecord> channelRecords = parseBill(billContent, channelCode);
-        log.info("渠道账单解析完成，共{}条记录", channelRecords.size());
+        reconciliation.setBillId(bill.getId());
+        reconciliation.setBillHash(bill.getBillHash());
 
-        List<OrderInfo> localOrders = queryLocalOrders(billDate, channelCode, paymentAppId);
-        Map<String, PaymentInfo> paymentInfoMap = queryPaymentInfos(localOrders);
-        log.info("本地订单查询完成，共{}条成功支付订单", localOrders.size());
+        List<ChannelBillRecord> channelRecords = parseBill(bill.getBillContent(), channelCode);
+        log.info("渠道账单解析完成，billId={}，共{}条记录", bill.getId(), channelRecords.size());
 
-        List<ReconciliationDetail> details = matchRecords(channelRecords, localOrders, paymentInfoMap, reconciliation.getId());
+        List<ReconciliationDetail> details;
+        if (CHANNEL_WXPAY.equals(channelCode)) {
+            List<PaymentInfo> localPayments = queryLocalWxPayments(billDate);
+            List<RefundInfo> localRefunds = queryLocalWxRefunds(billDate);
+            Set<String> eligibleOrderNos = queryEligibleWxOrderNos(localPayments, localRefunds, paymentAppId);
+            localPayments = localPayments.stream()
+                    .filter(payment -> eligibleOrderNos.contains(payment.getOrderNo()))
+                    .collect(Collectors.toList());
+            localRefunds = localRefunds.stream()
+                    .filter(refund -> eligibleOrderNos.contains(refund.getOrderNo()))
+                    .collect(Collectors.toList());
+            log.info("本地微信流水查询完成，进账{}条，退款{}条", localPayments.size(), localRefunds.size());
+            details = wxPaymentRefundMatcher.match(
+                    channelRecords, localPayments, localRefunds, reconciliation.getId());
+        } else {
+            List<OrderInfo> localOrders = queryLocalOrders(billDate, channelCode, paymentAppId);
+            Map<String, PaymentInfo> paymentInfoMap = queryPaymentInfos(localOrders);
+            log.info("本地订单查询完成，共{}条成功支付订单", localOrders.size());
+            details = matchRecords(channelRecords, localOrders, paymentInfoMap, reconciliation.getId());
+        }
 
         int matchCount = 0;
         int diffCount = 0;
@@ -213,33 +234,6 @@ public class ReconciliationServiceImpl implements ReconciliationService {
                 details.size(), matchCount, diffCount, diffAmount);
     }
 
-    private String downloadBill(LocalDate billDate, String channelCode, Long paymentAppId, String billType) {
-        String billDateStr = billDate.toString();
-        validateBillDate(billDate);
-
-        if (CHANNEL_WXPAY.equals(channelCode)) {
-            return wxPayBillFacade.downloadBill(billDateStr, "tradebill", billType, null, null);
-        } else if (CHANNEL_ALIPAY.equals(channelCode)) {
-            String downloadUrl = aliPayService.queryBill(billDateStr, "trade");
-            try {
-                HttpClientUtils httpClient = new HttpClientUtils(downloadUrl);
-                if (downloadUrl.startsWith("https://")) {
-                    httpClient.setHttps(true);
-                }
-                httpClient.get();
-                String content = httpClient.getContent();
-                if (content == null || content.trim().isEmpty()) {
-                    throw new BizException("支付宝账单下载内容为空");
-                }
-                return content;
-            } catch (Exception e) {
-                log.error("下载支付宝账单失败，url={}", downloadUrl, e);
-                throw new BizException("下载支付宝账单失败", e);
-            }
-        }
-        throw new BizException("不支持的渠道：" + channelCode);
-    }
-
     private List<ChannelBillRecord> parseBill(String billContent, String channelCode) {
         if (CHANNEL_WXPAY.equals(channelCode)) {
             return wxBillParser.parse(billContent);
@@ -276,6 +270,56 @@ public class ReconciliationServiceImpl implements ReconciliationService {
         List<PaymentInfo> paymentInfos = paymentInfoMapper.selectList(queryWrapper);
         return paymentInfos.stream()
                 .collect(Collectors.toMap(PaymentInfo::getOrderNo, p -> p, (a, b) -> a));
+    }
+
+    private List<PaymentInfo> queryLocalWxPayments(LocalDate billDate) {
+        Date startOfDay = Date.from(billDate.atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
+        Date endOfDay = Date.from(billDate.plusDays(1).atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
+        QueryWrapper<PaymentInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.ge("create_time", startOfDay)
+                .lt("create_time", endOfDay)
+                .eq("payment_type", PayType.WXPAY.getType());
+        return paymentInfoMapper.selectList(queryWrapper);
+    }
+
+    private List<RefundInfo> queryLocalWxRefunds(LocalDate billDate) {
+        Date startOfDay = Date.from(billDate.atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
+        Date endOfDay = Date.from(billDate.plusDays(1).atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
+        QueryWrapper<RefundInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.ge("approved_time", startOfDay)
+                .lt("approved_time", endOfDay)
+                .eq("approval_status", RefundApprovalStatus.APPROVED.getType());
+        return refundInfoMapper.selectList(queryWrapper);
+    }
+
+    private Set<String> queryEligibleWxOrderNos(List<PaymentInfo> payments,
+                                                 List<RefundInfo> refunds,
+                                                 Long paymentAppId) {
+        Set<String> orderNos = new HashSet<>();
+        for (PaymentInfo payment : payments) {
+            if (StringUtils.hasText(payment.getOrderNo())) {
+                orderNos.add(payment.getOrderNo());
+            }
+        }
+        for (RefundInfo refund : refunds) {
+            if (StringUtils.hasText(refund.getOrderNo())) {
+                orderNos.add(refund.getOrderNo());
+            }
+        }
+        if (orderNos.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        QueryWrapper<OrderInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("order_no", orderNos)
+                .eq("payment_channel_code", CHANNEL_WXPAY);
+        if (paymentAppId != null) {
+            queryWrapper.eq("payment_app_id", paymentAppId);
+        }
+        return orderInfoMapper.selectList(queryWrapper).stream()
+                .map(OrderInfo::getOrderNo)
+                .filter(StringUtils::hasText)
+                .collect(Collectors.toSet());
     }
 
     private List<ReconciliationDetail> matchRecords(List<ChannelBillRecord> channelRecords,
@@ -456,13 +500,16 @@ public class ReconciliationServiceImpl implements ReconciliationService {
              OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
 
             writer.write('\ufeff');
-            writer.write("差异类型,商户订单号,渠道交易号,渠道金额(分),本地金额(分),差异金额(分),渠道状态,本地状态,备注\n");
+            writer.write("业务类型,差异类型,商户订单号,渠道交易号,商户退款单号,渠道退款单号,渠道金额(分),本地金额(分),差异金额(分),渠道状态,本地状态,备注\n");
 
             for (ReconciliationDetail detail : details) {
-                writer.write(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                writer.write(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                        escapeCsv(detail.getBusinessType()),
                         escapeCsv(detail.getDiffType()),
                         escapeCsv(detail.getOrderNo()),
                         escapeCsv(detail.getTransactionId()),
+                        escapeCsv(detail.getRefundNo()),
+                        escapeCsv(detail.getRefundId()),
                         detail.getChannelAmount() == null ? "" : detail.getChannelAmount(),
                         detail.getLocalAmount() == null ? "" : detail.getLocalAmount(),
                         detail.getDiffAmount() == null ? "" : detail.getDiffAmount(),
@@ -503,16 +550,6 @@ public class ReconciliationServiceImpl implements ReconciliationService {
         }
     }
 
-    private void validateBillDate(LocalDate billDate) {
-        LocalDate today = LocalDate.now();
-        if (!billDate.isBefore(today)) {
-            throw new BizException("微信账单只能申请历史日期，请使用" + today.minusDays(1) + "或更早日期");
-        }
-        if (billDate.isBefore(today.minusMonths(3))) {
-            throw new BizException("微信账单只能申请近三个月内的账单");
-        }
-    }
-
     private String buildLockKey(LocalDate billDate, String channelCode, Long paymentAppId) {
         return RECON_LOCK_PREFIX + billDate + ":" + channelCode + ":" + (paymentAppId == null ? "default" : paymentAppId);
     }
@@ -522,23 +559,5 @@ public class ReconciliationServiceImpl implements ReconciliationService {
             return null;
         }
         return message.length() > maxLength ? message.substring(0, maxLength) : message;
-    }
-
-    private String sha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            return null;
-        }
     }
 }

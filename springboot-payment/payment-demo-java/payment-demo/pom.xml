@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>cc.ivera</groupId>
-    <artifactId>payment-demo-v5</artifactId>
+    <artifactId>payment-demo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>payment-demo</name>
     <description>Demo project for Spring Boot</description>
@@ -48,6 +48,13 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.32</version>
+        </dependency>
+
+        <!-- 微信商户平台手动下载的 XLSX 账单 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.5.1</version>
         </dependency>
 
         <!--mysql 驱动-->

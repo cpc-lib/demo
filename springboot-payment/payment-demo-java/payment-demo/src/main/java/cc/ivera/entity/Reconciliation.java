@@ -35,6 +35,9 @@ public class Reconciliation extends BaseEntity {
 
     private String billHash;
 
+    /** 本次对账消费的渠道账单ID（t_channel_bill.id） */
+    private Long billId;
+
     private String errorMessage;
 
     private Date startTime;
