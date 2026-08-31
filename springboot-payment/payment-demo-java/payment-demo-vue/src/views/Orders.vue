@@ -7,7 +7,11 @@
       <el-table :data="list" v-loading="loading" border style="width: 100%" @expand-change="loadItems">
         <el-table-column type="expand">
           <template slot-scope="scope">
-            <div v-if="itemsByOrder[scope.row.orderNo] && itemsByOrder[scope.row.orderNo].length" class="order-items">
+            <div v-if="itemsErrorByOrder[scope.row.orderNo]">
+              <span>订单明细加载失败</span>
+              <el-button type="text" @click.stop="retryItems(scope.row)">重试</el-button>
+            </div>
+            <div v-else-if="itemsByOrder[scope.row.orderNo] && itemsByOrder[scope.row.orderNo].length" class="order-items">
               <div v-for="item in itemsByOrder[scope.row.orderNo]" :key="item.id || item.productId">
                 <span>{{ item.productTitle }}</span>
                 <span>¥{{ (item.unitPrice / 100).toFixed(2) }} × {{ item.quantity }}</span>
@@ -154,6 +158,7 @@ export default {
       loading: true,
       auth: authState,
       itemsByOrder: {},
+      itemsErrorByOrder: {},
       payingOrderNo: '',
       payDialog: { open: false, codeUrl: '', orderNo: '' },
       timer: null,
@@ -200,13 +205,21 @@ export default {
     },
 
     loadItems(row, expandedRows) {
-      if (!expandedRows.length || this.itemsByOrder[row.orderNo]) return
+      if (!expandedRows.length || (this.itemsByOrder[row.orderNo] && !this.itemsErrorByOrder[row.orderNo])) return
+      this.$set(this.itemsErrorByOrder, row.orderNo, false)
       orderInfoApi.items(row.orderNo).then(response => {
         this.$set(this.itemsByOrder, row.orderNo, response.data || [])
+        this.$delete(this.itemsErrorByOrder, row.orderNo)
       }).catch(() => {
-        this.$set(this.itemsByOrder, row.orderNo, [])
+        this.$set(this.itemsErrorByOrder, row.orderNo, true)
         this.$message.error('订单明细加载失败')
       })
+    },
+
+    retryItems(row) {
+      this.$delete(this.itemsByOrder, row.orderNo)
+      this.$set(this.itemsErrorByOrder, row.orderNo, false)
+      this.loadItems(row, [row])
     },
 
     openWxPay(response, orderNo) {
