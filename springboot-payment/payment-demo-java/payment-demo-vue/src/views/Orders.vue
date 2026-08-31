@@ -14,6 +14,7 @@
                 <strong>¥{{ (item.subtotal / 100).toFixed(2) }}</strong>
               </div>
             </div>
+            <span v-else-if="itemsByOrder[scope.row.orderNo]">暂无订单明细</span>
             <span v-else>正在读取订单明细...</span>
           </template>
         </el-table-column>
@@ -189,7 +190,10 @@ export default {
       this.loading = true
       const request = this.isAdmin ? orderInfoApi.list() : orderInfoApi.myList()
       request.then((response) => {
-        this.list = response.data.list
+        this.list = response.data.list || []
+      }).catch(() => {
+        this.list = []
+        this.$message.error('订单列表加载失败')
       }).finally(() => {
         this.loading = false
       })
@@ -199,6 +203,9 @@ export default {
       if (!expandedRows.length || this.itemsByOrder[row.orderNo]) return
       orderInfoApi.items(row.orderNo).then(response => {
         this.$set(this.itemsByOrder, row.orderNo, response.data || [])
+      }).catch(() => {
+        this.$set(this.itemsByOrder, row.orderNo, [])
+        this.$message.error('订单明细加载失败')
       })
     },
 
