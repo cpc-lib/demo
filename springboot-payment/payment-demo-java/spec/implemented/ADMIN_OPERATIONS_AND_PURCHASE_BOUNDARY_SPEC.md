@@ -2,9 +2,10 @@
 
 ## 元信息
 
-- **状态**：planned
+- **状态**：implemented
 - **分类**：`type: design-change`
 - **计划版本**：v0.4.0
+- **实现提交**：`c6344af`, `01a9cc7`, `57d9747`, `3de9775`, `7ed3f7e`, `718a2ee`, `f400ac7`
 - **设计日期**：2026-08-31
 - **依赖**：SPEC-008
 - **影响范围**：认证鉴权、订单支付、退款、React 前端、Vue 前端、测试
@@ -67,13 +68,30 @@ React/Vue 同步：
 - 新增 `/refunds` 退款审核页面，支持审核备注、通过、拒绝和退款状态查询；
 - ADMIN 不请求购物车数量。
 
+## 实现锚点
+
+| 模块 | 文件 | 关键实现 |
+|------|------|---------|
+| 购买边界 | `payment-demo/src/main/java/cc/ivera/security/AuthContext.java` | `requireShoppingUser()` |
+| 购物车/结算/退款申请 | `CartController.java`, `OrderInfoController.java`, `RefundApplicationController.java` | ADMIN 统一抛出 403 |
+| 三渠道支付入口 | `WxPayController.java`, `WxPayV2Controller.java`, `AliPayController.java` | 商品支付与已有订单支付使用购物用户校验 |
+| 管理员支付查单 | `WxPayController.java`, `AliPayController.java`, `WebMvcConfig.java` | 微信既有查单复用，支付宝薄包装查单并返回本地状态 |
+| 退款运维 | `RefundInfoController.java`, `RefundApplicationServiceImpl.java` | 审核、单笔查询、按订单核对复用既有服务 |
+| React 管理端 | `payment-demo-react/src/pages/Refunds.jsx`, `Orders.jsx` | 退款审批、支付查单、退款核对与角色路由 |
+| Vue 管理端 | `payment-demo-vue/src/views/Refunds.vue`, `Orders.vue` | 与 React 保持同一角色和操作边界 |
+
+## 测试覆盖
+
+- 后端全量：135 个测试，31 个测试类，Failures=0，Errors=0。
+- 本变更专用锚点：`AdminPurchaseBoundaryTest`（6）、`AdminOrderCreationBoundaryTest`（1）、`PaymentStatusControllerTest`（5）、`ApiAuthorizationMatrixTest`（2），共 14 个测试。
+- 前端构建：React `npm run build`、Vue `npm run build` 和 `npm run lint` 均通过；仅有既有 bundle 体积警告。
+
 ## 验收标准
 
-- [ ] ADMIN 访问购物车、结算、商品支付、已有订单支付和退款申请均得到 403；
-- [ ] USER 购买、结算、支付和退款申请回归测试全绿；
-- [ ] ADMIN 可以查看全部订单和明细；
-- [ ] ADMIN 可以查询微信/支付宝支付状态并看到本地状态刷新；
-- [ ] ADMIN 可以通过/拒绝退款申请并查询退款状态；
-- [ ] React、Vue 构建通过；
-- [ ] 完成后 spec 从 `planned` 迁移到 `implemented`，补充实现锚点和测试数量。
-
+- [x] ADMIN 访问购物车、结算、商品支付、已有订单支付和退款申请均得到 403；
+- [x] USER 购买、结算、支付和退款申请回归测试全绿；
+- [x] ADMIN 可以查看全部订单和明细；
+- [x] ADMIN 可以查询微信/支付宝支付状态并看到本地状态刷新；
+- [x] ADMIN 可以通过/拒绝退款申请并查询退款状态；
+- [x] React、Vue 构建通过；
+- [x] spec 已从 `planned` 迁移到 `implemented`，并补充实现锚点和测试数量。

@@ -32,6 +32,7 @@
 | SPEC-006 | [渠道账单导入与对账管理](implemented/CHANNEL_BILL_IMPORT_SPEC.md) | ✅ 已实现 | 见锚点 | 15个特征测试 | 2026-08-28 |
 | SPEC-007 | [微信进账与退款逐笔对账兼容扩展](implemented/WXPAY_PAYMENT_REFUND_RECONCILIATION_COMPAT_SPEC.md) | ✅ 已实现 | 见锚点 | 36个相关测试 | 2026-08-30 |
 | SPEC-008 | [登录、服务端购物车与多课程合并下单兼容扩展](implemented/AUTH_CART_MULTI_ITEM_ORDER_COMPAT_SPEC.md) | ✅ 已实现 | 见锚点 | 48个相关测试 | 2026-08-31 |
+| SPEC-009 | [管理员运营边界与主动状态核对](implemented/ADMIN_OPERATIONS_AND_PURCHASE_BOUNDARY_SPEC.md) | ✅ 已实现 | 见下方锚点 | 14个专用测试，后端全量135个测试 | 2026-08-31 |
 
 ### SPEC-001 详情
 
@@ -134,7 +135,6 @@
 | SPEC-002 | V2通知处理器提取重构 | 中 | SPEC-001测试全绿 | v0.0.2 |
 | SPEC-003 | 配置热更新机制 | 低 | 无 | v0.1.0 |
 | SPEC-004 | 退款并发安全加固 | 高 | SPEC-001测试全绿 | v0.0.3 |
-| SPEC-009 | [管理员运营边界与主动状态核对](planned/ADMIN_OPERATIONS_AND_PURCHASE_BOUNDARY_SPEC.md) | 高 | SPEC-008 | v0.4.0 |
 
 ### SPEC-008 详情
 
@@ -214,7 +214,7 @@
 
 **标题**: 管理员运营边界与主动状态核对
 
-**状态**: planned
+**状态**: implemented
 
 **分类**: type: design-change（调整 ADMIN 购买边界并新增管理端运维流程）
 
@@ -222,9 +222,9 @@
 
 **设计文档**: `docs/superpowers/specs/2026-08-31-admin-operations-design.md`
 
-**实现锚点**: 待实现
+**实现锚点**: `implemented/ADMIN_OPERATIONS_AND_PURCHASE_BOUNDARY_SPEC.md`；后端购买边界见 `AuthContext.requireShoppingUser()`，支付宝主动查单见 `AliPayController.checkOrderStatus()`，React/Vue 退款审批见各自 `Refunds` 页面。
 
-**测试覆盖**: 待实现
+**测试覆盖**: 14 个专用测试；后端全量 135 个测试通过；React 构建、Vue 构建与 lint 通过。
 
 ---
 
@@ -250,6 +250,7 @@
 | 2026-08-30 | SPEC-008 | - | planned | 新增登录、两级角色、服务端购物车和多课程合并下单设计 |
 | 2026-08-30 | SPEC-008 | planned | implemented | 完成认证、服务端购物车、多课程合单、三渠道按订单支付、权限隔离、双前端与47个相关测试 |
 | 2026-08-31 | SPEC-009 | - | planned | 新增管理员购买边界、退款审核、支付查单和退款状态核对设计 |
+| 2026-08-31 | SPEC-009 | planned | implemented | 完成 ADMIN 购买边界、双前端退款审批与支付/退款状态核对；后端全量135个测试及前端构建通过 |
 
 ---
 
