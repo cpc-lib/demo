@@ -55,6 +55,7 @@ function orderStatusTag(status) {
 
 export default function Orders() {
   const auth = useAuth()
+  const isAdmin = auth.user?.role === 'ADMIN'
   const timerRef = useRef(null)
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -70,6 +71,8 @@ export default function Orders() {
   const [currentOrderTotalFee, setCurrentOrderTotalFee] = useState(0)
   const [refundSubmitBtnDisabled, setRefundSubmitBtnDisabled] = useState(false)
   const [paymentType, setPaymentType] = useState('')
+  const [checkingPaymentOrderNo, setCheckingPaymentOrderNo] = useState('')
+  const [reconcilingOrderNo, setReconcilingOrderNo] = useState('')
 
   const showOrderList = () => {
     setLoading(true)
@@ -161,6 +164,41 @@ export default function Orders() {
     })
   }
 
+  const checkPaymentStatus = async (row) => {
+    setCheckingPaymentOrderNo(row.orderNo)
+    try {
+      const response = await orderInfoApi.checkPaymentStatus(
+        row.orderNo,
+        row.paymentChannelCode || row.paymentType
+      )
+      const nextStatus = response?.data?.orderStatus || response?.data?.localStatus
+      if (nextStatus) {
+        setList((current) => current.map((item) => (
+          item.orderNo === row.orderNo ? { ...item, orderStatus: nextStatus } : item
+        )))
+      }
+      message.success(nextStatus ? `支付状态：${nextStatus}` : '支付状态查询完成')
+    } catch (_) {
+      // request interceptor has already shown the server error.
+    } finally {
+      setCheckingPaymentOrderNo('')
+    }
+  }
+
+  const reconcileRefunds = async (row) => {
+    setReconcilingOrderNo(row.orderNo)
+    try {
+      const response = await refundInfoApi.reconcile(row.orderNo)
+      setRefundRecordList(response?.data?.list || [])
+      setRefundRecordDialogVisible(true)
+      message.success(response.message || '订单退款状态对账完成')
+    } catch (_) {
+      // request interceptor has already shown the server error.
+    } finally {
+      setReconcilingOrderNo('')
+    }
+  }
+
   const closeDialog = () => {
     setRefundDialogVisible(false)
     setOrderNo('')
@@ -229,9 +267,27 @@ export default function Orders() {
     },
     {
       title: '操作',
-      width: 340,
+      width: isAdmin ? 300 : 340,
       align: 'center',
-      render: (_, row) => (
+      render: (_, row) => isAdmin ? (
+        <>
+          <Button
+            type="link"
+            loading={checkingPaymentOrderNo === row.orderNo}
+            onClick={() => checkPaymentStatus(row)}
+          >
+            查询支付状态
+          </Button>
+          <Button
+            type="link"
+            loading={reconcilingOrderNo === row.orderNo}
+            onClick={() => reconcileRefunds(row)}
+          >
+            对账退款
+          </Button>
+          <Button type="link" onClick={() => showRefundRecords(row)}>退款记录</Button>
+        </>
+      ) : (
         <>
           {row.orderStatus === '未支付' ? (
             <>

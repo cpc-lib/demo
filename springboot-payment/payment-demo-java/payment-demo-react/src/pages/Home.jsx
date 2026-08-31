@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button, Empty, message, Skeleton } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 
 import productApi from '@/api/product'
 import cartApi from '@/api/cart'
@@ -14,12 +14,15 @@ export default function Home() {
   const [products, setProducts] = useState([])
 
   useEffect(() => {
+    if (auth.user?.role === 'ADMIN') {
+      return
+    }
     productApi.list().then((response) => {
       setProducts(response?.data?.productList || [])
     }).catch(() => {
       setProducts([])
     }).finally(() => setLoading(false))
-  }, [])
+  }, [auth.user?.role])
 
   const addToCart = async (product) => {
     if (!auth.user) {
@@ -34,6 +37,10 @@ export default function Home() {
     } finally {
       setAddingId(null)
     }
+  }
+
+  if (auth.user?.role === 'ADMIN') {
+    return <Navigate to="/orders" replace />
   }
 
   return (

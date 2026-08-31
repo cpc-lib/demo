@@ -29,5 +29,13 @@ export default {
       method: 'post',
       data: { approveRemark }
     })
+  },
+
+  query(refundNo) {
+    return request.post(`/api/refund-info/query/${refundNo}`)
+  },
+
+  reconcile(orderNo) {
+    return request.post(`/api/refund-info/reconcile/${orderNo}`)
   }
 }

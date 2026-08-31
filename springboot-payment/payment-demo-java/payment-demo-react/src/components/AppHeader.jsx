@@ -6,6 +6,7 @@ import { useAuth } from '@/auth/AuthContext'
 export default function AppHeader() {
   const auth = useAuth()
   const navigate = useNavigate()
+  const isAdmin = auth.user?.role === 'ADMIN'
 
   const logout = async () => {
     await auth.logout()
@@ -24,18 +25,21 @@ export default function AppHeader() {
           <img src={logo} alt="课程支付中心" />
         </Link>
         <nav className="nav" aria-label="主导航">
-          <NavLink to="/" end>课程</NavLink>
-          {auth.user ? <NavLink to="/orders">我的订单</NavLink> : null}
-          {auth.user?.role === 'ADMIN' ? <NavLink to="/download">账单</NavLink> : null}
-          {auth.user?.role === 'ADMIN' ? <NavLink to="/payment-config">支付配置</NavLink> : null}
-          {auth.user?.role === 'ADMIN' ? <NavLink to="/reconciliation">对账</NavLink> : null}
+          {!isAdmin ? <NavLink to="/" end>课程</NavLink> : null}
+          {auth.user ? <NavLink to="/orders">{isAdmin ? '全部订单' : '我的订单'}</NavLink> : null}
+          {isAdmin ? <NavLink to="/refunds">退款审批</NavLink> : null}
+          {isAdmin ? <NavLink to="/download">账单</NavLink> : null}
+          {isAdmin ? <NavLink to="/payment-config">支付配置</NavLink> : null}
+          {isAdmin ? <NavLink to="/reconciliation">对账</NavLink> : null}
         </nav>
         <div className="header-actions">
           {auth.user ? (
             <>
-              <Badge count={auth.cartCount} size="small" overflowCount={99}>
-                <Button onClick={() => navigate('/cart')}>购物车</Button>
-              </Badge>
+              {!isAdmin ? (
+                <Badge count={auth.cartCount} size="small" overflowCount={99}>
+                  <Button onClick={() => navigate('/cart')}>购物车</Button>
+                </Badge>
+              ) : null}
               <Dropdown menu={{ items: accountItems }} placement="bottomRight">
                 <Button type="text">{auth.user.username}</Button>
               </Dropdown>

@@ -25,5 +25,15 @@ export default {
       url: `/api/order-info/query-order-status/${orderNo}`,
       method: 'get'
     })
+  },
+
+  checkPaymentStatus(orderNo, channelCode) {
+    const normalizedChannel = String(channelCode || '').trim().toUpperCase()
+    const isAlipay = normalizedChannel === 'ALIPAY'
+      || normalizedChannel.includes('ALI')
+      || String(channelCode || '').includes('支付宝')
+    const path = isAlipay ? 'ali-pay' : 'wx-pay'
+
+    return request.get(`/api/${path}/check-order-status/${orderNo}`)
   }
 }

@@ -25,7 +25,8 @@ export function AuthProvider({ children }) {
   }, [])
 
   const refreshCartCount = useCallback(() => {
-    if (!getSession().user) {
+    const user = getSession().user
+    if (!user || user.role !== 'USER') {
       setCartCount(0)
       return Promise.resolve()
     }
