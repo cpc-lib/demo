@@ -38,15 +38,22 @@
             <el-tag v-if="scope.row.orderStatus === '退款异常'" type="danger">{{ scope.row.orderStatus }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="340" align="center">
+        <el-table-column label="操作" :width="isAdmin ? 300 : 340" align="center">
           <template slot-scope="scope">
-            <template v-if="scope.row.orderStatus === '未支付'">
-              <el-button type="text" :loading="payingOrderNo === scope.row.orderNo" @click="retryPay(scope.row)">重试支付</el-button>
-              <el-button v-if="scope.row.paymentChannelCode === 'WXPAY' || scope.row.paymentType === '微信'" type="text" @click="retryPay(scope.row, 'V2')">微信 V2</el-button>
-              <el-button type="text" @click="cancel(scope.row.orderNo, scope.row.paymentType)">取消</el-button>
+            <template v-if="isAdmin">
+              <el-button type="text" :loading="checkingPaymentOrderNo === scope.row.orderNo" @click="checkPaymentStatus(scope.row)">查询支付状态</el-button>
+              <el-button type="text" :loading="reconcilingOrderNo === scope.row.orderNo" @click="reconcileRefunds(scope.row)">对账退款</el-button>
+              <el-button type="text" @click="showRefundRecords(scope.row)">退款记录</el-button>
             </template>
-            <el-button v-if="canApplyRefund(scope.row.orderStatus)" type="text" @click="refund(scope.row)">退款申请</el-button>
-            <el-button type="text" @click="showRefundRecords(scope.row)">退款申请记录</el-button>
+            <template v-else>
+              <template v-if="scope.row.orderStatus === '未支付'">
+                <el-button type="text" :loading="payingOrderNo === scope.row.orderNo" @click="retryPay(scope.row)">重试支付</el-button>
+                <el-button v-if="scope.row.paymentChannelCode === 'WXPAY' || scope.row.paymentType === '微信'" type="text" @click="retryPay(scope.row, 'V2')">微信 V2</el-button>
+                <el-button type="text" @click="cancel(scope.row.orderNo, scope.row.paymentType)">取消</el-button>
+              </template>
+              <el-button v-if="canApplyRefund(scope.row.orderStatus)" type="text" @click="refund(scope.row)">退款申请</el-button>
+              <el-button type="text" @click="showRefundRecords(scope.row)">退款申请记录</el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -157,7 +164,9 @@ export default {
       refundAmountYuan: 0.01,
       currentOrderTotalFee: 0,
       refundSubmitBtnDisabled: false,
-      paymentType: ''
+      paymentType: '',
+      checkingPaymentOrderNo: '',
+      reconcilingOrderNo: ''
     }
   },
 
@@ -267,6 +276,41 @@ export default {
         this.refundRecordList = response.data.list || []
         this.refundRecordDialogVisible = true
       })
+    },
+
+    async checkPaymentStatus(row) {
+      this.checkingPaymentOrderNo = row.orderNo
+      try {
+        const response = await orderInfoApi.checkPaymentStatus(
+          row.orderNo,
+          row.paymentChannelCode || row.paymentType
+        )
+        const nextStatus = response.data && (response.data.orderStatus || response.data.localStatus)
+        if (nextStatus) {
+          this.list = this.list.map(item => item.orderNo === row.orderNo
+            ? { ...item, orderStatus: nextStatus }
+            : item)
+        }
+        this.$message.success(nextStatus ? `支付状态：${nextStatus}` : '支付状态查询完成')
+      } catch (_) {
+        // request interceptor has already shown the server error.
+      } finally {
+        this.checkingPaymentOrderNo = ''
+      }
+    },
+
+    async reconcileRefunds(row) {
+      this.reconcilingOrderNo = row.orderNo
+      try {
+        const response = await refundInfoApi.reconcile(row.orderNo)
+        this.refundRecordList = (response.data && response.data.list) || []
+        this.refundRecordDialogVisible = true
+        this.$message.success(response.message || '订单退款状态对账完成')
+      } catch (_) {
+        // request interceptor has already shown the server error.
+      } finally {
+        this.reconcilingOrderNo = ''
+      }
     },
 
     closeDialog() {

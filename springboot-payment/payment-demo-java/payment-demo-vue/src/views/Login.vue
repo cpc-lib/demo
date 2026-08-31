@@ -57,8 +57,12 @@ export default {
             ? await authApi.login(this.form)
             : await authApi.register(this.form)
           setSession(response.data)
-          const cartResponse = await cartApi.get()
-          authState.cartCount = (cartResponse.data && cartResponse.data.totalQuantity) || 0
+          if (response.data && response.data.user && response.data.user.role === 'USER') {
+            const cartResponse = await cartApi.get()
+            authState.cartCount = (cartResponse.data && cartResponse.data.totalQuantity) || 0
+          } else {
+            authState.cartCount = 0
+          }
           this.$message.success(this.mode === 'login' ? '登录成功' : '注册成功')
           this.$router.replace(this.$route.query.redirect || '/')
         } finally {

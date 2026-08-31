@@ -11,6 +11,7 @@ import Download from '../views/Download'
 import Success from '../views/Success'
 import PaymentConfig from '../views/PaymentConfig'
 import Reconciliation from '../views/Reconciliation'
+import Refunds from '../views/Refunds'
 import Login from '../views/Login'
 import Cart from '../views/Cart'
 import Account from '../views/Account'
@@ -34,7 +35,7 @@ const router = new VueRouter({
         {
             path: '/cart',
             component: Cart,
-            meta: { requiresAuth: true }
+            meta: { requiresAuth: true, role: 'USER' }
         },
         {
             path: '/account',
@@ -57,9 +58,14 @@ const router = new VueRouter({
             meta: { requiresAuth: true, role: 'ADMIN' }
         },
         {
+            path: '/refunds',
+            component: Refunds,
+            meta: { requiresAuth: true, role: 'ADMIN' }
+        },
+        {
             path: '/success',
             component: Success,
-            meta: { requiresAuth: true }
+            meta: { requiresAuth: true, role: 'USER' }
         }
     ]
 })
@@ -77,8 +83,12 @@ router.beforeEach(async (to, from, next) => {
     next({ path: '/login', query: { redirect: to.fullPath } })
     return
   }
+  if (to.path === '/' && authState.user && authState.user.role === 'ADMIN') {
+    next('/orders')
+    return
+  }
   if (to.meta.role && (!authState.user || authState.user.role !== to.meta.role)) {
-    next('/')
+    next(authState.user && authState.user.role === 'ADMIN' ? '/orders' : '/')
     return
   }
   if (to.path === '/login' && authState.user) {

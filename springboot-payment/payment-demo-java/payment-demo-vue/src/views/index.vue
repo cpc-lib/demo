@@ -52,6 +52,10 @@ export default {
     }
   },
   created() {
+    if (authState.user && authState.user.role === 'ADMIN') {
+      this.$router.replace('/orders')
+      return
+    }
     productApi.list().then(response => {
       this.products = (response.data && response.data.productList) || []
     }).catch(() => {

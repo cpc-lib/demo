@@ -5,15 +5,16 @@
         <img src="../assets/img/logo.png" alt="课程支付中心">
       </router-link>
       <nav class="nav" aria-label="主导航">
-        <router-link to="/" exact>课程</router-link>
-        <router-link v-if="auth.user" to="/orders">我的订单</router-link>
+        <router-link v-if="!isAdmin" to="/" exact>课程</router-link>
+        <router-link v-if="auth.user" to="/orders">{{ isAdmin ? '全部订单' : '我的订单' }}</router-link>
+        <router-link v-if="isAdmin" to="/refunds">退款审批</router-link>
         <router-link v-if="isAdmin" to="/download">账单</router-link>
         <router-link v-if="isAdmin" to="/payment-config">支付配置</router-link>
         <router-link v-if="isAdmin" to="/reconciliation">对账</router-link>
       </nav>
       <div class="header-actions">
         <template v-if="auth.user">
-          <el-badge :value="auth.cartCount" :hidden="!auth.cartCount" :max="99">
+          <el-badge v-if="!isAdmin" :value="auth.cartCount" :hidden="!auth.cartCount" :max="99">
             <el-button @click="$router.push('/cart')">购物车</el-button>
           </el-badge>
           <el-dropdown trigger="click" @command="handleCommand">
@@ -48,12 +49,14 @@ export default {
     'auth.user': {
       immediate: true,
       handler(user) {
-        if (user) {
+        if (user && user.role === 'USER') {
           cartApi.get().then(response => {
             authState.cartCount = (response.data && response.data.totalQuantity) || 0
           }).catch(() => {
             authState.cartCount = 0
           })
+        } else {
+          authState.cartCount = 0
         }
       }
     }
