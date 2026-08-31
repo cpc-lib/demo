@@ -56,6 +56,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/refund-info/reject/**",
                         "/api/refund-info/query/**",
                         "/api/refund-info/reconcile/**",
+                        "/api/wx-pay/check-order-status/**",
+                        "/api/ali-pay/check-order-status/**",
                         "/api/wx-pay/querybill/**",
                         "/api/wx-pay/downloadbill/**",
                         "/api/ali-pay/bill/**"

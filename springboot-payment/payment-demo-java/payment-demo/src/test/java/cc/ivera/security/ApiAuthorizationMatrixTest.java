@@ -54,6 +54,8 @@ class ApiAuthorizationMatrixTest {
         assertTrue(admin.matches("/api/refund-info/list", pathMatcher));
         assertTrue(admin.matches("/api/refund-info/approve/R1", pathMatcher));
         assertTrue(admin.matches("/api/refund-info/query/R1", pathMatcher));
+        assertTrue(admin.matches("/api/wx-pay/check-order-status/ORDER-1", pathMatcher));
+        assertTrue(admin.matches("/api/ali-pay/check-order-status/ORDER-1", pathMatcher));
         assertFalse(admin.matches("/api/payment-app/list", pathMatcher));
         assertFalse(admin.matches("/api/order-info/my-list", pathMatcher));
         assertFalse(admin.matches("/api/refund-info/list/ORDER-1", pathMatcher));
