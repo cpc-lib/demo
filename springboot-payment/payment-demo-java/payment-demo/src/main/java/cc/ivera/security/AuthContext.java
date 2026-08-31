@@ -29,7 +29,7 @@ public final class AuthContext {
 
     public static AuthUser requireShoppingUser() {
         AuthUser user = requireUser();
-        if (user.getRole() == UserRole.ADMIN) {
+        if (user.getRole() != UserRole.USER) {
             throw new ForbiddenException("管理员账号不参与购物");
         }
         return user;

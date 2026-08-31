@@ -11,6 +11,7 @@ import cc.ivera.security.AuthUser;
 import cc.ivera.service.OrderCloseMessageService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,6 +40,7 @@ class AdminOrderCreationBoundaryTest {
                 transactionTemplate,
                 mock(OrderItemMapper.class)
         );
+        ReflectionTestUtils.setField(service, "baseMapper", orderInfoMapper);
 
         assertThrows(ForbiddenException.class,
                 () -> service.createOrReuseOrder(9L, "微信", 1L, "WXPAY"));
