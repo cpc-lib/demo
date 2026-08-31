@@ -55,6 +55,7 @@ public class AliPayController {
     @PostMapping("/trade/page/pay/{productId}")
     public R<Map<String, Object>> tradePagePay(@PathVariable @Positive(message = "商品ID必须大于0") Long productId,
                                                @RequestParam(required = false) Long paymentAppId) {
+        AuthContext.requireShoppingUser();
         log.info("统一收单下单并支付页面接口的调用，productId={}, paymentAppId={}", productId, paymentAppId);
         //支付宝开放平台接受 request 请求对象后
         // 会为开发者生成一个html 形式的 form表单，包含自动提交的脚本
@@ -69,7 +70,7 @@ public class AliPayController {
     public R<Map<String, Object>> tradePagePayOrder(
             @PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo
     ) {
-        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireShoppingUser());
         return R.ok().data("formStr", aliPayService.tradeCreateOrder(orderNo));
     }
 

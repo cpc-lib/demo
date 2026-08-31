@@ -5,6 +5,7 @@ import cc.ivera.entity.OrderItem;
 import cc.ivera.dto.CheckoutRequest;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.security.AuthContext;
+import cc.ivera.security.AuthUser;
 import cc.ivera.service.CheckoutService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.vo.CheckoutResult;
@@ -61,8 +62,9 @@ public class OrderInfoController {
     @ApiOperation("购物车结算")
     @PostMapping("/checkout")
     public R<CheckoutResult> checkout(@RequestBody @javax.validation.Valid CheckoutRequest request) {
+        AuthUser authUser = AuthContext.requireShoppingUser();
         CheckoutResult result = checkoutService.checkout(
-                AuthContext.requireUser().getUserId(),
+                authUser.getUserId(),
                 request.getPaymentAppId(),
                 request.getCheckoutRequestId()
         );

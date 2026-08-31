@@ -67,6 +67,7 @@ public class WxPayController {
     @PostMapping("/native/{productId}")
     public R<Map<String, Object>> nativePay(@PathVariable @Positive(message = "商品ID必须大于0") Long productId,
                                             @RequestParam(required = false) Long paymentAppId) {
+        AuthContext.requireShoppingUser();
         log.info("发起支付请求 v3，productId={}, paymentAppId={}", productId, paymentAppId);
 
         //返回支付二维码连接和订单号
@@ -80,7 +81,7 @@ public class WxPayController {
     public R<Map<String, Object>> nativePayOrder(
             @PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 50, message = "订单号长度不能超过50个字符") String orderNo
     ) {
-        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireShoppingUser());
         return R.ok(wxPayOrderFacade.nativePayOrder(orderNo));
     }
 
@@ -201,6 +202,7 @@ public class WxPayController {
     @PostMapping("/jsapi")
     public R<Map<String, Object>> jsapiPay(OrderInfo orderInfo,
                                            @NotBlank(message = "openid不能为空") @Size(max = 128, message = "openid长度不能超过128个字符") String openid) {
+        AuthContext.requireShoppingUser();
         log.info("发起支付请求");
         Map<String, Object> map = wxPayOrderFacade.jsapiPay(orderInfo, openid);
         return R.ok().setData(map);

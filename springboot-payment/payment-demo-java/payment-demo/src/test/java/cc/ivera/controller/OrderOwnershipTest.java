@@ -4,6 +4,7 @@ import cc.ivera.dto.CheckoutRequest;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.enums.UserRole;
+import cc.ivera.exception.ForbiddenException;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
 import cc.ivera.service.CheckoutService;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,5 +65,13 @@ class OrderOwnershipTest {
         controller.queryOrderStatus("ORDER-43");
 
         verify(orderInfoService).getOrderStatusForUser("ORDER-43", user);
+    }
+
+    @Test
+    void adminCannotCheckout() {
+        AuthContext.setUser(new AuthUser(1L, "admin", UserRole.ADMIN));
+
+        assertThrows(ForbiddenException.class,
+                () -> controller.checkout(new CheckoutRequest(9L, "admin-checkout")));
     }
 }

@@ -70,6 +70,9 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         validateCreateOrderParams(productId, paymentType);
 
         AuthUser authUser = AuthContext.getUser();
+        if (authUser != null && authUser.getRole() == UserRole.ADMIN) {
+            throw new ForbiddenException("管理员账号不参与购物");
+        }
         Long userId = authUser == null ? null : authUser.getUserId();
         String lockKey = buildCreateOrderLockKey(productId, paymentType, paymentAppId, userId);
         return distributedLockTemplate.execute(

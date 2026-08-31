@@ -4,6 +4,7 @@ import cc.ivera.dto.RefundRequest;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.security.AuthContext;
+import cc.ivera.security.AuthUser;
 import cc.ivera.vo.R;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -66,8 +67,9 @@ public class RefundApplicationController {
     }
 
     private void checkOwnership(String orderNo) {
+        AuthUser authUser = AuthContext.requireShoppingUser();
         if (orderInfoService != null) {
-            orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
+            orderInfoService.getOrderForUser(orderNo, authUser);
         }
     }
 }

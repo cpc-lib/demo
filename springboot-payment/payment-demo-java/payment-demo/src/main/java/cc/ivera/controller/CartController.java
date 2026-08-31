@@ -60,6 +60,6 @@ public class CartController {
     }
 
     private Long currentUserId() {
-        return AuthContext.requireUser().getUserId();
+        return AuthContext.requireShoppingUser().getUserId();
     }
 }

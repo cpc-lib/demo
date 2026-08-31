@@ -131,6 +131,7 @@ class PublicApiCharacterizationTest {
     void current_refund_apply_body_endpoint_delegates_and_returns_pending_review_message() {
         RefundApplicationService refundApplicationService = mock(RefundApplicationService.class);
         RefundApplicationController controller = new RefundApplicationController(refundApplicationService);
+        authenticateUser();
         RefundRequest request = new RefundRequest();
         request.setOrderNo("ORD-REFUND");
         request.setRefundAmount(50);
@@ -148,6 +149,7 @@ class PublicApiCharacterizationTest {
     void current_legacy_refund_apply_endpoint_passes_null_refund_amount() {
         RefundApplicationService refundApplicationService = mock(RefundApplicationService.class);
         RefundApplicationController controller = new RefundApplicationController(refundApplicationService);
+        authenticateUser();
 
         R<Map<String, Object>> response = controller.applyLegacy("ORD-LEGACY", "legacy reason");
 

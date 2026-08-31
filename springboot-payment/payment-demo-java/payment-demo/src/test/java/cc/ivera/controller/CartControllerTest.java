@@ -3,6 +3,7 @@ package cc.ivera.controller;
 import cc.ivera.dto.CartItemRequest;
 import cc.ivera.dto.CartQuantityRequest;
 import cc.ivera.enums.UserRole;
+import cc.ivera.exception.ForbiddenException;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
 import cc.ivera.service.CartService;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,5 +46,12 @@ class CartControllerTest {
         verify(cartService).updateItem(77L, 101L, 4);
         verify(cartService).removeItem(77L, 101L);
         verify(cartService).clear(77L);
+    }
+
+    @Test
+    void adminCannotReadCart() {
+        AuthContext.setUser(new AuthUser(1L, "admin", UserRole.ADMIN));
+
+        assertThrows(ForbiddenException.class, controller::getCart);
     }
 }

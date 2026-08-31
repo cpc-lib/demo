@@ -1,5 +1,7 @@
 package cc.ivera.security;
 
+import cc.ivera.enums.UserRole;
+import cc.ivera.exception.ForbiddenException;
 import cc.ivera.exception.UnauthorizedException;
 
 public final class AuthContext {
@@ -21,6 +23,14 @@ public final class AuthContext {
         AuthUser user = CURRENT_USER.get();
         if (user == null) {
             throw new UnauthorizedException("请先登录");
+        }
+        return user;
+    }
+
+    public static AuthUser requireShoppingUser() {
+        AuthUser user = requireUser();
+        if (user.getRole() == UserRole.ADMIN) {
+            throw new ForbiddenException("管理员账号不参与购物");
         }
         return user;
     }

@@ -81,6 +81,7 @@ public class WxPayV2Controller {
     public R<Map<String, Object>> createNative(@PathVariable @Positive(message = "商品ID必须大于0") Long productId,
                                                @RequestParam(required = false) Long paymentAppId,
                                                HttpServletRequest request) {
+        AuthContext.requireShoppingUser();
         log.info("发起支付请求 v2，productId={}, paymentAppId={}", productId, paymentAppId);
 
         String remoteAddr = request.getRemoteAddr();
@@ -95,7 +96,7 @@ public class WxPayV2Controller {
             @PathVariable String orderNo,
             HttpServletRequest request
     ) {
-        orderInfoService.getOrderForUser(orderNo, AuthContext.requireUser());
+        orderInfoService.getOrderForUser(orderNo, AuthContext.requireShoppingUser());
         Map<String, Object> map = wxPayOrderFacade.nativePayV2Order(orderNo, request.getRemoteAddr());
         return R.ok(map);
     }
