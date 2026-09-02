@@ -11,58 +11,38 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 /**
- * @Author : JCccc
- * @CreateTime : 2020/8/26
- * @Description :
- **/
+ * Bind the userid sent in the STOMP CONNECT frame to Spring's Principal.
+ * This is required by convertAndSendToUser(...), otherwise /user destinations
+ * cannot resolve the target WebSocket session.
+ */
 @Component
 public class WebSocketAuthInterceptor extends ChannelInterceptorAdapter {
 
-//    @Override
-//    public Message<?> preSend(Message<?> message, MessageChannel channel) {
-//        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-//        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-//            Object raw = message.getHeaders().get(SimpMessageHeaderAccessor.NATIVE_HEADERS);
-//            if (raw instanceof Map) {
-//                Object name = ((Map) raw).get("userid");
-//                System.out.println(name);
-//                if (name instanceof LinkedList) {
-//                    // 设置当前访问的认证用户
-//                    accessor.setUser(new UserPrincipal(((LinkedList) name).get(0).toString()));
-//                }
-//            }
-//        }
-//        return message;
-//    }
-
-
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        final StompHeaderAccessor accessor = readHeaderAccessor(message);
-        if (accessor.getCommand() == StompCommand.CONNECT) {
-            String wsId = readWebSocketIdHeader(accessor);
+        StompHeaderAccessor accessor = readHeaderAccessor(message);
+        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+            String userId = readWebSocketIdHeader(accessor);
+            accessor.setUser(new UserPrincipal(userId));
             accessor.setHeader("connection-time", LocalDateTime.now().toString());
         }
         return message;
     }
 
-    /**
-     * Instantiate an object for retrieving the STOMP headers
-     */
     private StompHeaderAccessor readHeaderAccessor(Message<?> message) {
-        final StompHeaderAccessor accessor = getAccessor(message);
+        StompHeaderAccessor accessor = getAccessor(message);
         if (accessor == null) {
-            throw new RuntimeException();
+            throw new IllegalStateException("Unable to read STOMP headers");
         }
         return accessor;
     }
 
     private String readWebSocketIdHeader(StompHeaderAccessor accessor) {
-        final String userId = accessor.getFirstNativeHeader("userid");
+        String userId = accessor.getFirstNativeHeader("userid");
         if (userId == null || userId.trim().isEmpty()) {
-            throw new RuntimeException();
+            throw new IllegalArgumentException("STOMP CONNECT header 'userid' must not be empty");
         }
-        return userId;
+        return userId.trim();
     }
 
     StompHeaderAccessor getAccessor(Message<?> message) {

@@ -1,41 +1,35 @@
 package cc.ivera;
 
 import cc.ivera.config.WxPayConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 
+import java.io.IOException;
 import java.security.PrivateKey;
+import java.util.Properties;
 
-@SpringBootTest(properties = "spring.rabbitmq.listener.simple.auto-startup=false")
+import static org.assertj.core.api.Assertions.assertThat;
+
 class PaymentDemoApplicationTests {
-
-    private final WxPayConfig wxPayConfig;
-
-    private final CloseableHttpClient wxPayClient;
-
-    @Autowired
-    public PaymentDemoApplicationTests( WxPayConfig wxPayConfig,CloseableHttpClient wxPayClient){
-        this.wxPayConfig=wxPayConfig;
-        this.wxPayClient=wxPayClient;
-    }
-
 
     /**
      * 获取商户的私钥
      */
     @Test
-    void testGetPrivateKey() {
+    void testGetPrivateKey() throws IOException {
+        Properties properties = PropertiesLoaderUtils.loadProperties(new ClassPathResource("wxpay.properties"));
+        String privateKeyPath = properties.getProperty("wxpay.private-key-path");
+        WxPayConfig wxPayConfig = new WxPayConfig();
 
-        //获取私钥路径
-        String privateKeyPath = wxPayConfig.getPrivateKeyPath();
+        assertThat(privateKeyPath).isNotBlank();
+        assertThat(new ClassPathResource(privateKeyPath).exists()).isTrue();
 
-        //获取私钥
         PrivateKey privateKey = wxPayConfig.getPrivateKey(privateKeyPath);
 
-        System.out.println(privateKey);
-
+        assertThat(privateKey).isNotNull();
+        assertThat(privateKey.getAlgorithm()).isEqualTo("RSA");
+        assertThat(privateKey.getEncoded()).isNotEmpty();
     }
 
 }

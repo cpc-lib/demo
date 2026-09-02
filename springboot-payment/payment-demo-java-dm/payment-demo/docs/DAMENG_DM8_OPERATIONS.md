@@ -45,7 +45,7 @@ cd /opt/dmdbms/bin
 spring:
   datasource:
     driver-class-name: dm.jdbc.driver.DmDriver
-    url: jdbc:dm://${DM_HOST:192.168.220.200}:${DM_PORT:5236}?schema=${DM_SCHEMA:SYSDBA}&connectTimeout=30000
+    url: jdbc:dm://${DM_HOST:192.168.1.200}:${DM_PORT:5236}?schema=${DM_SCHEMA:SYSDBA}&connectTimeout=30000
     username: ${DM_USERNAME:SYSDBA}
     password: ${DM_PASSWORD:Cpc2026#@Dm}
 ```

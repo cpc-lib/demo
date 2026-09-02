@@ -1,0 +1,90 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: sha256-api
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:192.168.1.200}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:sha256_demo}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USERNAME:sha256}
+    password: ${MYSQL_PASSWORD:sha256-demo}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: ${MYSQL_POOL_SIZE:10}
+  data:
+    redis:
+      host: ${REDIS_HOST:192.168.1.200}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:192.168.1.200}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:sha256}
+    password: ${RABBITMQ_PASSWORD:sha256-demo}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:192.168.1.200:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+  webflux:
+    multipart:
+      max-in-memory-size: 1MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+sha256:
+  broker: ${SHA256_BROKER:rabbitmq}
+  storage:
+    provider: ${SHA256_STORAGE_PROVIDER:minio}
+    endpoint: ${SHA256_STORAGE_ENDPOINT:http://192.168.1.200:9000}
+    # 预签名 URL 必须让浏览器能够访问；为空时复用 endpoint。
+    public-endpoint: ${SHA256_STORAGE_PUBLIC_ENDPOINT:http://192.168.1.200:9000}
+    region: ${SHA256_STORAGE_REGION:us-east-1}
+    access-key: ${SHA256_STORAGE_ACCESS_KEY:sha256minio}
+    secret-key: ${SHA256_STORAGE_SECRET_KEY:sha256-minio-secret}
+    bucket: ${SHA256_STORAGE_BUCKET:sha256-files}
+    path-style-access: ${SHA256_STORAGE_PATH_STYLE:true}
+    chunked-encoding: ${SHA256_STORAGE_CHUNKED_ENCODING:true}
+    auto-create-bucket: ${SHA256_STORAGE_AUTO_CREATE_BUCKET:true}
+    delete-after-success: ${SHA256_STORAGE_DELETE_AFTER_SUCCESS:true}
+  upload:
+    part-size-mb: ${SHA256_UPLOAD_PART_SIZE_MB:16}
+    recommended-concurrency: ${SHA256_UPLOAD_CONCURRENCY:4}
+    presign-expire-minutes: ${SHA256_UPLOAD_PRESIGN_EXPIRE_MINUTES:30}
+    session-ttl-hours: ${SHA256_UPLOAD_SESSION_TTL_HOURS:24}
+    completed-resume-minutes: ${SHA256_UPLOAD_COMPLETED_RESUME_MINUTES:10}
+    max-presign-batch: ${SHA256_UPLOAD_MAX_PRESIGN_BATCH:100}
+  task:
+    ttl-minutes: ${SHA256_TASK_TTL_MINUTES:30}
+    lock-ttl-minutes: ${SHA256_LOCK_TTL_MINUTES:60}
+  outbox:
+    poll-interval-ms: ${SHA256_OUTBOX_POLL_INTERVAL_MS:1000}
+    batch-size: ${SHA256_OUTBOX_BATCH_SIZE:50}
+    lease-seconds: ${SHA256_OUTBOX_LEASE_SECONDS:60}
+    base-retry-delay-ms: ${SHA256_OUTBOX_BASE_RETRY_DELAY_MS:1000}
+    max-retry-delay-ms: ${SHA256_OUTBOX_MAX_RETRY_DELAY_MS:60000}
+  rabbit:
+    exchange: ${SHA256_RABBIT_EXCHANGE:sha256.exchange}
+    queue: ${SHA256_RABBIT_QUEUE:sha256.tasks}
+    routing-key: ${SHA256_RABBIT_ROUTING_KEY:sha256.calculate}
+    retry-exchange: ${SHA256_RABBIT_RETRY_EXCHANGE:sha256.retry.exchange}
+    retry-queue: ${SHA256_RABBIT_RETRY_QUEUE:sha256.tasks.retry}
+    retry-routing-key: ${SHA256_RABBIT_RETRY_ROUTING_KEY:sha256.retry}
+    retry-delay-ms: ${SHA256_RABBIT_RETRY_DELAY_MS:5000}
+    max-retries: ${SHA256_RABBIT_MAX_RETRIES:3}
+    dlx: ${SHA256_RABBIT_DLX:sha256.dlx}
+    dlq: ${SHA256_RABBIT_DLQ:sha256.tasks.dlq}
+    dlq-routing-key: ${SHA256_RABBIT_DLQ_ROUTING_KEY:sha256.dead}
+    publisher-confirm-timeout-ms: ${SHA256_RABBIT_CONFIRM_TIMEOUT_MS:10000}
+  kafka:
+    topic: ${SHA256_KAFKA_TOPIC:sha256.tasks}
+    partitions: ${SHA256_KAFKA_PARTITIONS:6}
+    group-id: ${SHA256_KAFKA_GROUP_ID:sha256-workers}

@@ -20,16 +20,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(final StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
+        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
     }
 
     @Override
     public void configureMessageBroker(final MessageBrokerRegistry registry) {
         registry.setUserDestinationPrefix("/user");
         registry.setApplicationDestinationPrefixes("/app");
-        registry.enableStompBrokerRelay("/exchange", "/topic", "/queue", "/amq/queue").setVirtualHost("/").setRelayHost("114.132.210.77").setClientLogin("admin").setClientPasscode("admin").setSystemLogin("admin").setSystemPasscode("admin")
+        registry.enableStompBrokerRelay("/exchange", "/topic", "/queue", "/amq/queue")
+                .setVirtualHost("/").setRelayHost("192.168.1.200")
+                .setClientLogin("guest").setClientPasscode("guest")
+                .setSystemLogin("guest").setSystemPasscode("guest")
                 .setSystemHeartbeatSendInterval(5000)
                 .setSystemHeartbeatReceiveInterval(4000);
     }

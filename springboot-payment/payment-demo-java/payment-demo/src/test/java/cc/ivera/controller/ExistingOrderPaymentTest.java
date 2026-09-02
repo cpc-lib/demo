@@ -71,6 +71,7 @@ class ExistingOrderPaymentTest {
                 mock(WxPayConfig.class),
                 orderInfoService,
                 mock(PaymentInfoService.class),
+                mock(cc.ivera.service.InventoryService.class),
                 mock(DistributedLockTemplate.class),
                 mock(TransactionTemplate.class),
                 mock(StringRedisTemplate.class)

@@ -78,7 +78,7 @@ services:
       # ---- ZK 配置 ----
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       # ---- 广播地址（外部访问用 localhost:9092）----
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://192.168.220.200:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://192.168.1.200:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       # ---- 单节点必须全部为 1 ----
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1

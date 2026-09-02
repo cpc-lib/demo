@@ -23,7 +23,7 @@ rag:
     username: ${MILVUS_USERNAME:root}
     password: ${MILVUS_PASSWORD:Milvus}
     default-alias: ${MILVUS_DEFAULT_ALIAS:default}
-    host: ${MILVUS_HOST:192.168.220.200}
+    host: ${MILVUS_HOST:192.168.1.200}
     port: ${MILVUS_PORT:19530}
     rpc-deadline-ms: ${MILVUS_RPC_DEADLINE_MS:0}
     collection: ${MILVUS_COLLECTION:demo_kb}
@@ -116,7 +116,7 @@ rag:
 
   object-storage:
     type: ${RAG_OBJECT_STORAGE_TYPE:local}
-    endpoint: ${RAG_OBJECT_STORAGE_ENDPOINT:http://192.168.220.200:9000}
+    endpoint: ${RAG_OBJECT_STORAGE_ENDPOINT:http://192.168.1.200:9000}
     access-key: ${RAG_OBJECT_STORAGE_ACCESS_KEY:minioadmin}
     secret-key: ${RAG_OBJECT_STORAGE_SECRET_KEY:minioadmin}
     bucket: ${RAG_OBJECT_STORAGE_BUCKET:rag-objects}
@@ -157,7 +157,7 @@ rag:
   keyword-index:
     enabled: ${RAG_KEYWORD_INDEX_ENABLED:true}
     provider: ${RAG_KEYWORD_INDEX_PROVIDER:elasticsearch}
-    base-url: ${RAG_ELASTICSEARCH_BASE_URL:http://192.168.220.200:9200}
+    base-url: ${RAG_ELASTICSEARCH_BASE_URL:http://192.168.1.200:9200}
     index-name: ${RAG_ELASTICSEARCH_INDEX:rag_chunks}
     index-alias: ${RAG_ELASTICSEARCH_ALIAS:rag_chunks_current}
     index-version: ${RAG_ELASTICSEARCH_INDEX_VERSION:v2}
@@ -246,20 +246,20 @@ rag:
 
 spring:
   rabbitmq:
-    host: ${RABBITMQ_HOST:192.168.220.200}
+    host: ${RABBITMQ_HOST:192.168.1.200}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
     virtual-host: ${RABBITMQ_VHOST:/}
   data:
     redis:
-      host: ${REDIS_HOST:192.168.220.200}
+      host: ${REDIS_HOST:192.168.1.200}
       port: ${REDIS_PORT:6379}
       database: ${REDIS_DATABASE:0}
       timeout: 5s
       password: ${REDIS_PASSWORD:ragdemo}
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://192.168.220.200:3306/ragdemo?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
+    url: ${MYSQL_URL:jdbc:mysql://192.168.1.200:3306/ragdemo?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
     username: ${MYSQL_USERNAME:ragdemo}
     password: ${MYSQL_PASSWORD:cpc!23#@}
     driver-class-name: com.mysql.cj.jdbc.Driver

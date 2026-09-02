@@ -1,0 +1,46 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: sha256-api
+  data:
+    redis:
+      host: ${REDIS_HOST:192.168.1.200}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:192.168.1.200}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:sha256}
+    password: ${RABBITMQ_PASSWORD:sha256-demo}
+    publisher-confirm-type: correlated
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+  webflux:
+    multipart:
+      max-in-memory-size: 1MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+sha256:
+  broker: ${SHA256_BROKER:rabbitmq}
+  storage-dir: ${SHA256_STORAGE_DIR:${user.home}/.sha256-demo/uploads}
+  task:
+    ttl-minutes: ${SHA256_TASK_TTL_MINUTES:30}
+    lock-ttl-minutes: ${SHA256_LOCK_TTL_MINUTES:60}
+  rabbit:
+    exchange: ${SHA256_RABBIT_EXCHANGE:sha256.exchange}
+    queue: ${SHA256_RABBIT_QUEUE:sha256.tasks}
+    routing-key: ${SHA256_RABBIT_ROUTING_KEY:sha256.calculate}
+  kafka:
+    topic: ${SHA256_KAFKA_TOPIC:sha256.tasks}
+    partitions: ${SHA256_KAFKA_PARTITIONS:6}
+    group-id: ${SHA256_KAFKA_GROUP_ID:sha256-workers}

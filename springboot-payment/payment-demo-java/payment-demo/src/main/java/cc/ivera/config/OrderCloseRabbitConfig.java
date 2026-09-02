@@ -44,7 +44,10 @@ public class OrderCloseRabbitConfig {
 
     @Bean(name = "orderCloseReleaseQueue")
     public Queue orderCloseReleaseQueue() {
-        return new Queue(ORDER_CLOSE_RELEASE_QUEUE, true);
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-dead-letter-exchange", ORDER_CLOSE_EVENT_EXCHANGE);
+        args.put("x-dead-letter-routing-key", ORDER_CLOSE_DELAY_ROUTING_KEY);
+        return new Queue(ORDER_CLOSE_RELEASE_QUEUE, true, false, false, args);
     }
 
     @Bean

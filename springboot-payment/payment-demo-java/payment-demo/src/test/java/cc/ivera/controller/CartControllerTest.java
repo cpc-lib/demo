@@ -54,4 +54,16 @@ class CartControllerTest {
 
         assertThrows(ForbiddenException.class, controller::getCart);
     }
+
+    @Test
+    void adminCannotMutateCart() {
+        AuthContext.setUser(new AuthUser(1L, "admin", UserRole.ADMIN));
+
+        assertThrows(ForbiddenException.class,
+                () -> controller.addItem(new CartItemRequest(101L, 1)));
+        assertThrows(ForbiddenException.class,
+                () -> controller.updateItem(101L, new CartQuantityRequest(1)));
+        assertThrows(ForbiddenException.class, () -> controller.removeItem(101L));
+        assertThrows(ForbiddenException.class, controller::clear);
+    }
 }

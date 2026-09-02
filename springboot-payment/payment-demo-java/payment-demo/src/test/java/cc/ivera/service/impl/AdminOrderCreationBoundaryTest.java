@@ -9,6 +9,8 @@ import cc.ivera.mapper.ProductMapper;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
 import cc.ivera.service.OrderCloseMessageService;
+import cc.ivera.service.OrderIdempotencyService;
+import cc.ivera.service.InventoryService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -38,12 +40,14 @@ class AdminOrderCreationBoundaryTest {
                 mock(OrderCloseMessageService.class),
                 lockTemplate,
                 transactionTemplate,
-                mock(OrderItemMapper.class)
+                mock(OrderItemMapper.class),
+                mock(OrderIdempotencyService.class),
+                mock(InventoryService.class)
         );
         ReflectionTestUtils.setField(service, "baseMapper", orderInfoMapper);
 
         assertThrows(ForbiddenException.class,
-                () -> service.createOrReuseOrder(9L, "微信", 1L, "WXPAY"));
+                () -> service.createOrReuseOrder(9L, "微信", 1L, "WXPAY", "key-1"));
 
         verifyNoInteractions(productMapper, orderInfoMapper, lockTemplate, transactionTemplate);
     }

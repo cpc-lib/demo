@@ -10,7 +10,7 @@ spring:
   ##################### DB #####################
   datasource:
     ds0:
-      url: jdbc:mysql://192.168.220.200:3308/bank1?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
+      url: jdbc:mysql://192.168.1.200:3308/bank1?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
       username: root
       password: wZKicHYoEgIMIVAU
       type: com.alibaba.druid.pool.DruidDataSource
@@ -40,7 +40,7 @@ org:
       #started: true
       hmilyDbConfig:
         driverClassName: com.mysql.jdbc.Driver
-        url: jdbc:mysql://192.168.220.200:3308/hmily?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
+        url: jdbc:mysql://192.168.1.200:3308/hmily?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
         username: root
         password: wZKicHYoEgIMIVAU
 

@@ -1,40 +1,45 @@
 package cc.ivera.service.impl;
 
+import cc.ivera.entity.OrderIdempotency;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.entity.Product;
 import cc.ivera.enums.OrderStatus;
+import cc.ivera.enums.InventoryStatus;
+import cc.ivera.enums.ProductStatus;
 import cc.ivera.enums.UserRole;
 import cc.ivera.exception.BizException;
+import cc.ivera.exception.ConflictException;
 import cc.ivera.exception.ForbiddenException;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.mapper.OrderInfoMapper;
 import cc.ivera.mapper.OrderItemMapper;
 import cc.ivera.mapper.ProductMapper;
 import cc.ivera.service.OrderCloseMessageService;
+import cc.ivera.service.InventoryService;
 import cc.ivera.service.OrderInfoService;
+import cc.ivera.service.OrderIdempotencyService;
 import cc.ivera.security.AuthUser;
 import cc.ivera.security.AuthContext;
 import cc.ivera.util.OrderNoUtils;
+import cc.ivera.util.OrderRequestFingerprint;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
 public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> implements OrderInfoService {
 
     private static final long ORDER_CREATE_LOCK_WAIT_MS = 3000L;
-    private static final long ORDER_CREATE_LOCK_LEASE_MS = 10000L;
+    private static final long ORDER_CREATE_LOCK_LEASE_MS = -1L;
 
     private final ProductMapper productMapper;
 
@@ -46,46 +51,65 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
     private final OrderItemMapper orderItemMapper;
 
+    private final OrderIdempotencyService orderIdempotencyService;
+
+    private final InventoryService inventoryService;
+
     public OrderInfoServiceImpl(
         ProductMapper productMapper,
         OrderCloseMessageService orderCloseMessageService,
         DistributedLockTemplate distributedLockTemplate,
         TransactionTemplate transactionTemplate,
-        OrderItemMapper orderItemMapper
+        OrderItemMapper orderItemMapper,
+        OrderIdempotencyService orderIdempotencyService,
+        InventoryService inventoryService
     ) {
         this.productMapper = productMapper;
         this.orderCloseMessageService = orderCloseMessageService;
         this.distributedLockTemplate = distributedLockTemplate;
         this.transactionTemplate = transactionTemplate;
         this.orderItemMapper = orderItemMapper;
+        this.orderIdempotencyService = orderIdempotencyService;
+        this.inventoryService = inventoryService;
     }
 
     @Override
-    public OrderInfo createOrReuseOrder(Long productId, String paymentType) {
-        return createOrReuseOrder(productId, paymentType, null, null);
-    }
-
-    @Override
-    public OrderInfo createOrReuseOrder(Long productId, String paymentType, Long paymentAppId, String paymentChannelCode) {
+    public OrderInfo createOrReuseOrder(
+            Long productId,
+            String paymentType,
+            Long paymentAppId,
+            String paymentChannelCode,
+            String idempotencyKey
+    ) {
+        AuthUser authUser = AuthContext.requireShoppingUser();
         validateCreateOrderParams(productId, paymentType);
-
-        AuthUser authUser = AuthContext.getUser();
-        if (authUser != null && authUser.getRole() == UserRole.ADMIN) {
-            throw new ForbiddenException("管理员账号不参与购物");
+        if (!StringUtils.hasText(idempotencyKey) || idempotencyKey.length() > 64) {
+            throw new ConflictException("订单幂等键无效");
         }
-        Long userId = authUser == null ? null : authUser.getUserId();
-        String lockKey = buildCreateOrderLockKey(productId, paymentType, paymentAppId, userId);
+        Long userId = authUser.getUserId();
+        String requestFingerprint = OrderRequestFingerprint.directBuy(
+                productId,
+                1,
+                paymentAppId,
+                paymentChannelCode
+        );
+        String lockKey = "payment:order:create:" + userId + ":" + idempotencyKey;
         return distributedLockTemplate.execute(
                 lockKey,
                 ORDER_CREATE_LOCK_WAIT_MS,
                 ORDER_CREATE_LOCK_LEASE_MS,
-                () -> transactionTemplate.execute(status -> doCreateOrReuseOrder(
-                        productId,
-                        paymentType,
-                        paymentAppId,
-                        paymentChannelCode,
-                        userId
-                ))
+                () -> {
+                    orderIdempotencyService.expireIssuedKeyIfNeeded(userId, idempotencyKey);
+                    return transactionTemplate.execute(status -> doCreateOrReuseOrder(
+                            productId,
+                            paymentType,
+                            paymentAppId,
+                            paymentChannelCode,
+                            userId,
+                            idempotencyKey,
+                            requestFingerprint
+                    ));
+                }
         );
     }
 
@@ -94,26 +118,35 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             String paymentType,
             Long paymentAppId,
             String paymentChannelCode,
-            Long userId
+            Long userId,
+            String idempotencyKey,
+            String requestFingerprint
     ) {
-        // 第一层防护：Redis 分布式锁，挡住多实例并发。
-        // 第二层防护：select ... for update，挡住同库事务并发。
-        OrderInfo noPayOrder = baseMapper.selectNoPayOrderForUpdate(
-                productId,
-                paymentType,
-                OrderStatus.NOTPAY.getType(),
-                paymentAppId,
-                userId
+        OrderIdempotency idempotency = orderIdempotencyService.requireForUpdate(
+                userId,
+                idempotencyKey,
+                requestFingerprint
         );
-        if (noPayOrder != null) {
-            log.info("复用未支付订单，productId={}, paymentType={}, orderNo={}",
-                    productId, paymentType, noPayOrder.getOrderNo());
-            return noPayOrder;
+        if ("COMPLETED".equals(idempotency.getStatus())) {
+            OrderInfo existing = baseMapper.selectById(idempotency.getOrderId());
+            if (existing == null || !Objects.equals(userId, existing.getUserId())) {
+                throw new ConflictException("订单幂等键关联订单不存在");
+            }
+            return existing;
         }
 
-        Product product = productMapper.selectById(productId);
+        Product product = productMapper.selectByIdForUpdate(productId);
         if (product == null) {
-            throw new BizException("商品不存在");
+            throw new ConflictException("商品不存在或已删除");
+        }
+        if (product.getStatus() != ProductStatus.ON_SHELF) {
+            throw new ConflictException("商品已下架");
+        }
+        if (product.getAvailableStock() == null || product.getAvailableStock() < 1) {
+            throw new ConflictException("商品库存不足");
+        }
+        if (product.getPrice() == null || product.getPrice() < 0) {
+            throw new BizException("商品价格无效");
         }
 
         OrderInfo orderInfo = new OrderInfo();
@@ -126,28 +159,29 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         orderInfo.setPaymentType(paymentType);
         orderInfo.setPaymentAppId(paymentAppId);
         orderInfo.setPaymentChannelCode(paymentChannelCode);
+        orderInfo.setCheckoutRequestId(idempotencyKey);
         orderInfo.setVersion(0);
 
-        try {
-            baseMapper.insert(orderInfo);
-        } catch (DuplicateKeyException e) {
-            // 极小概率订单号碰撞，或者历史数据存在并发写入时，兜底重新查询未支付订单。
-            log.warn("订单插入触发唯一约束，尝试复用已有订单，productId={}, paymentType={}", productId, paymentType, e);
-            OrderInfo existOrder = baseMapper.selectNoPayOrderForUpdate(
-                    productId,
-                    paymentType,
-                    OrderStatus.NOTPAY.getType(),
-                    paymentAppId,
-                    userId
-            );
-            if (existOrder != null) {
-                return existOrder;
-            }
-            throw e;
+        if (baseMapper.insert(orderInfo) != 1 || orderInfo.getId() == null) {
+            throw new BizException("订单创建失败");
         }
 
-        // 订单成功落库后再发送延迟关单消息，避免消息先于事务提交。
-        sendCloseOrderMessageAfterCommit(orderInfo);
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrderId(orderInfo.getId());
+        orderItem.setProductId(product.getId());
+        orderItem.setProductTitle(product.getTitle());
+        orderItem.setUnitPrice(product.getPrice());
+        orderItem.setQuantity(1);
+        orderItem.setSubtotal(product.getPrice());
+        orderItem.setInventoryStatus(InventoryStatus.RESERVED);
+        orderItem.setRefundedQuantity(0);
+        if (orderItemMapper.insert(orderItem) != 1) {
+            throw new BizException("订单明细创建失败");
+        }
+
+        inventoryService.reserve(orderInfo, java.util.Collections.singletonList(orderItem));
+        orderCloseMessageService.sendCloseOrderMessage(orderInfo.getOrderNo(), orderInfo.getPaymentType());
+        orderIdempotencyService.complete(idempotency.getId(), requestFingerprint, orderInfo.getId());
         return orderInfo;
     }
 
@@ -256,24 +290,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return baseMapper.selectByOrderNoForUpdate(orderNo);
     }
 
-    private void sendCloseOrderMessageAfterCommit(OrderInfo orderInfo) {
-        if (orderInfo == null || !StringUtils.hasText(orderInfo.getOrderNo())) {
-            return;
-        }
-
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            orderCloseMessageService.sendCloseOrderMessage(orderInfo.getOrderNo(), orderInfo.getPaymentType());
-            return;
-        }
-
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                orderCloseMessageService.sendCloseOrderMessage(orderInfo.getOrderNo(), orderInfo.getPaymentType());
-            }
-        });
-    }
-
     @Override
     public OrderInfo getOrderForUser(String orderNo, AuthUser authUser) {
         return requireAccessibleOrder(orderNo, authUser);
@@ -299,9 +315,4 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         }
     }
 
-    private String buildCreateOrderLockKey(Long productId, String paymentType, Long paymentAppId, Long userId) {
-        return "payment:order:create:" + productId + ":" + paymentType + ":"
-                + (paymentAppId == null ? "default" : paymentAppId) + ":"
-                + (userId == null ? "legacy" : userId);
-    }
 }

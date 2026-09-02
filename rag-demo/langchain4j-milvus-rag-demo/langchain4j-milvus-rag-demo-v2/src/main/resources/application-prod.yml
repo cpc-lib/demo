@@ -15,7 +15,7 @@ rag:
     username: ${MILVUS_USERNAME:}
     password: ${MILVUS_PASSWORD:}
     default-alias: ${MILVUS_DEFAULT_ALIAS:default}
-    host: ${MILVUS_HOST:192.168.220.200}
+    host: ${MILVUS_HOST:192.168.1.200}
     port: ${MILVUS_PORT:19530}
     collection: ${MILVUS_COLLECTION:demo_kb}
     top-k: ${MILVUS_TOP_K:6}
@@ -64,13 +64,13 @@ rag:
 spring:
   data:
     redis:
-      host: ${REDIS_HOST:192.168.220.200}
+      host: ${REDIS_HOST:192.168.1.200}
       port: ${REDIS_PORT:6379}
       database: ${REDIS_DATABASE:0}
       timeout: 5s
       password: ${REDIS_PASSWORD:cpc!23#@}
   datasource:
-    url: jdbc:mysql://192.168.220.200:3308/db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://192.168.1.200:3308/db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: root
     password: cpc!23#@
     driver-class-name: com.mysql.cj.jdbc.Driver

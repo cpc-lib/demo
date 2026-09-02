@@ -3,13 +3,13 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://192.168.220.200:3306/points_demo_5?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://192.168.1.200:3306/points_demo_5?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     password: cpc!23#@
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   rabbitmq:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 5672
     username: guest
     password: guest

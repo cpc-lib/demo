@@ -3,6 +3,9 @@ package cc.ivera.service;
 import cc.ivera.entity.Product;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 public interface ProductService extends IService<Product> {
 
+    List<Product> listPublicSaleable();
 }

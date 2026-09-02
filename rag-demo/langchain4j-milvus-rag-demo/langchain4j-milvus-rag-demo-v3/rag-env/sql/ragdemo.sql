@@ -1,10 +1,10 @@
 /*
  Navicat Premium Dump SQL
 
- Source Server         : 192.168.220.200_3306
+ Source Server         : 192.168.1.200_3306
  Source Server Type    : MySQL
  Source Server Version : 80410 (8.4.10)
- Source Host           : 192.168.220.200:3306
+ Source Host           : 192.168.1.200:3306
  Source Schema         : ragdemo
 
  Target Server Type    : MySQL

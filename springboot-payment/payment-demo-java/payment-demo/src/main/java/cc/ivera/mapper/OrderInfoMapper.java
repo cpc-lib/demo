@@ -11,17 +11,4 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
      */
     OrderInfo selectByOrderNoForUpdate(@Param("orderNo") String orderNo);
 
-    /**
-     * 查询指定商品 + 支付方式下最新的一笔未支付订单，并加行级排他锁。
-     *
-     * 用途：创建订单时配合 Redis 分布式锁，避免并发场景重复创建未支付订单。
-     */
-    OrderInfo selectNoPayOrderForUpdate(@Param("productId") Long productId,
-                                        @Param("paymentType") String paymentType,
-                                        @Param("orderStatus") String orderStatus,
-                                        @Param("paymentAppId") Long paymentAppId,
-                                        @Param("userId") Long userId);
-
-    OrderInfo selectByCheckoutKey(@Param("userId") Long userId,
-                                  @Param("checkoutRequestId") String checkoutRequestId);
 }

@@ -10,13 +10,13 @@ spring:
     time-zone: GMT+8
 
   rabbitmq:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 5672
     username: guest
     password: guest
 
   redis:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 6379
     database: 0
     timeout: 3000ms
@@ -25,7 +25,7 @@ spring:
   datasource:
     # 达梦 DM8：默认由 docker-compose.dm8.yml 暴露到本机 5236
     driver-class-name: dm.jdbc.driver.DmDriver
-    url: jdbc:dm://${DM_HOST:192.168.220.200}:${DM_PORT:5236}?schema=${DM_SCHEMA:SYSDBA}&connectTimeout=30000
+    url: jdbc:dm://${DM_HOST:192.168.1.200}:${DM_PORT:5236}?schema=${DM_SCHEMA:SYSDBA}&connectTimeout=30000
     username: ${DM_USERNAME:SYSDBA}
     password: ${DM_PASSWORD:Cpc2026#@Dm}
 

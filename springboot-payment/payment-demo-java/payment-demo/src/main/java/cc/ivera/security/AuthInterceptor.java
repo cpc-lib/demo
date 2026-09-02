@@ -21,6 +21,9 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
         String authorization = request.getHeader("Authorization");
         if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
             throw new UnauthorizedException("请先登录");

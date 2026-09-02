@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sha256-online-async-demo
+  webflux:
+    multipart:
+      max-in-memory-size: 1MB
+      max-disk-usage-per-part: 10GB
+      max-parts: 10
+
+logging:
+  level:
+    root: INFO

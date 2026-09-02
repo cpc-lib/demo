@@ -1,60 +1,246 @@
 <!DOCTYPE HTML>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Test My WebSocket</title>
+    <style>
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 40px 16px;
+        }
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        h1 {
+            font-size: 20px;
+            margin: 0 0 16px;
+            color: #333;
+        }
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        input[type="text"] {
+            flex: 1;
+            min-width: 140px;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: #40a9ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        input[type="text"]:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #fff;
+        }
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .btn-connect { background: #1890ff; }
+        .btn-connect:hover:not(:disabled) { background: #40a9ff; }
+        .btn-send { background: #52c41a; }
+        .btn-send:hover:not(:disabled) { background: #73d13d; }
+        .btn-close { background: #ff4d4f; }
+        .btn-close:hover:not(:disabled) { background: #ff7875; }
+        .status {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+        .status.open { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .status.closed { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e; }
+        .status.connecting { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+        #message {
+            height: 320px;
+            overflow-y: auto;
+            border: 1px solid #f0f0f0;
+            border-radius: 4px;
+            background: #fafafa;
+            padding: 12px;
+            font-size: 14px;
+            color: #333;
+        }
+        #message .msg-item {
+            padding: 4px 0;
+            border-bottom: 1px dashed #eee;
+            word-break: break-all;
+        }
+        #message .msg-item .time {
+            color: #999;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        #message .msg-item.system { color: #1890ff; }
+        #message .msg-item.error { color: #ff4d4f; }
+    </style>
 </head>
 <body>
-Test<br/>
-<input id="text" type="text"/>
-<button onclick="send()">Send</button>
-<button onclick="closeWebSocket()">Close</button>
-<div id="message">
+<div class="container">
+    <h1>WebSocket 测试页面</h1>
+
+    <span id="status" class="status closed">已断开</span>
+
+    <div class="toolbar">
+        <input id="userId" type="text" placeholder="用户ID" value=""/>
+        <button id="connectBtn" class="btn-connect" onclick="connect()">连接</button>
+        <button id="closeBtn" class="btn-close" onclick="closeWebSocket()" disabled>关闭连接</button>
+    </div>
+
+    <div class="toolbar">
+        <input id="text" type="text" placeholder="输入要发送的消息"/>
+        <button id="sendBtn" class="btn-send" onclick="send()" disabled>发送</button>
+    </div>
+
+    <div id="message">
+    </div>
 </div>
 </body>
 <script type="text/javascript">
     var websocket = null;
-    //判断当前浏览器是否支持WebSocket
-    if ('WebSocket' in window) {
-        //连接WebSocket节点
-        websocket = new WebSocket("ws://localhost:8066/productWebSocket/001");
-    } else {
-        alert('Not support websocket')
+
+    //状态显示
+    function setStatus(state) {
+        var statusEl = document.getElementById('status');
+        var map = {
+            CONNECTING: ['connecting', '连接中...'],
+            OPEN: ['open', '已连接'],
+            CLOSING: ['connecting', '关闭中...'],
+            CLOSED: ['closed', '已断开']
+        };
+        var item = map[state] || ['closed', '已断开'];
+        statusEl.className = 'status ' + item[0];
+        statusEl.innerText = item[1];
+
+        var connected = state === 'OPEN';
+        document.getElementById('connectBtn').disabled = connected;
+        document.getElementById('closeBtn').disabled = !connected;
+        document.getElementById('sendBtn').disabled = !connected;
+        document.getElementById('userId').disabled = connected;
     }
-    //连接发生错误的回调方法
-    websocket.onerror = function () {
-        setMessageInnerHTML("error");
-    };
-    //连接成功建立的回调方法
-    websocket.onopen = function (event) {
-        setMessageInnerHTML("open");
+
+    //连接WebSocket
+    function connect() {
+        var userId = document.getElementById('userId').value.trim();
+        if (!userId) {
+            setMessageInnerHTML('请输入用户ID', 'error');
+            return;
+        }
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            setMessageInnerHTML('当前已存在连接，请先关闭', 'error');
+            return;
+        }
+        //判断当前浏览器是否支持WebSocket
+        if (!('WebSocket' in window)) {
+            alert('Not support websocket');
+            return;
+        }
+        //固定连接后端8066端口，避免IDE内置预览服务器等场景下location.host端口不匹配
+        var url = 'ws://localhost:8066/productWebSocket/' + userId;
+        setMessageInnerHTML('正在连接 ' + url, 'system');
+        websocket = new WebSocket(url);
+        setStatus('CONNECTING');
+
+        //连接发生错误的回调方法
+        websocket.onerror = function () {
+            setMessageInnerHTML('连接发生错误', 'error');
+        };
+        //连接成功建立的回调方法
+        websocket.onopen = function (event) {
+            setStatus('OPEN');
+            setMessageInnerHTML('连接成功', 'system');
+        };
+        //接收到消息的回调方法
+        websocket.onmessage = function (event) {
+            setMessageInnerHTML(event.data);
+        };
+        //连接关闭的回调方法
+        websocket.onclose = function () {
+            setStatus('CLOSED');
+            setMessageInnerHTML('连接已关闭', 'system');
+        };
     }
-    //接收到消息的回调方法
-    websocket.onmessage = function (event) {
-        setMessageInnerHTML(event.data);
-    }
-    //连接关闭的回调方法
-    websocket.onclose = function () {
-        setMessageInnerHTML("close");
-    }
+
     //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
     window.onbeforeunload = function () {
-        websocket.close();
+        if (websocket) {
+            websocket.close();
+        }
     }
 
     //将消息显示在网页上
-    function setMessageInnerHTML(innerHTML) {
-        document.getElementById('message').innerHTML += innerHTML + '<br/>';
+    function setMessageInnerHTML(innerHTML, type) {
+        var messageEl = document.getElementById('message');
+        var time = new Date().toLocaleTimeString();
+        var div = document.createElement('div');
+        div.className = 'msg-item' + (type ? ' ' + type : '');
+        var timeSpan = document.createElement('span');
+        timeSpan.className = 'time';
+        timeSpan.innerText = time;
+        div.appendChild(timeSpan);
+        div.appendChild(document.createTextNode(innerHTML));
+        messageEl.appendChild(div);
+        messageEl.scrollTop = messageEl.scrollHeight;
     }
 
     //关闭连接
     function closeWebSocket() {
-        websocket.close();
+        if (websocket) {
+            websocket.close();
+        }
     }
 
     //发送消息
     function send() {
+        if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+            setMessageInnerHTML('连接未建立，无法发送', 'error');
+            return;
+        }
         var message = document.getElementById('text').value;
+        if (!message.trim()) {
+            return;
+        }
         websocket.send(message);
+        //消息由服务器广播给所有在线用户（包括自己），此处不再本地回显
+        document.getElementById('text').value = '';
     }
+
+    //输入框回车快捷操作
+    document.getElementById('userId').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            connect();
+        }
+    });
+    document.getElementById('text').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            send();
+        }
+    });
+
+    //初始化状态
+    setStatus('CLOSED');
 </script>
 </html>

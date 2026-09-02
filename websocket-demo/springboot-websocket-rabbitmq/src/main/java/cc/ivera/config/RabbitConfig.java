@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import cc.ivera.service.ChatService;
 
+import java.nio.charset.StandardCharsets;
+
 
 @Configuration
 public class RabbitConfig {
@@ -38,9 +40,9 @@ public class RabbitConfig {
 
     @Bean
     public ConnectionFactory connectionFactory() {
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory("114.132.210.77", 5672);
-        connectionFactory.setUsername("admin");
-        connectionFactory.setPassword("admin");
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory("192.168.1.200", 5672);
+        connectionFactory.setUsername("guest");
+        connectionFactory.setPassword("guest");
         connectionFactory.setVirtualHost("/");
         connectionFactory.setPublisherConfirms(true); // 必须要设置
         connectionFactory.setPublisherReturns(true);
@@ -104,12 +106,15 @@ public class RabbitConfig {
         container.setMessageListener(new ChannelAwareMessageListener() {
             public void onMessage(Message message, com.rabbitmq.client.Channel channel) throws Exception {
                 byte[] body = message.getBody();
-                String msg = new String(body);
+                String msg = new String(body, StandardCharsets.UTF_8);
                 System.out.println("rabbitmq收到消息 : " +msg);
                 Boolean sendToWebsocket = chatService.sendMsg(msg);
                 if (sendToWebsocket){
                     System.out.println("消息处理成功！ 已经推送到websocket！");
-                    channel.basicAck(message.getMessageProperties().getDeliveryTag(), true); //确认消息成功消费
+                    channel.basicAck(message.getMessageProperties().getDeliveryTag(), false); //确认当前消息成功消费
+                } else {
+                    System.out.println("消息处理失败，拒绝当前消息，避免毒消息无限重试！");
+                    channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);
                 }
             }
 

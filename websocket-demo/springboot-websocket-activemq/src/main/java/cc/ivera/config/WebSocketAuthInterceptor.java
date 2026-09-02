@@ -1,39 +1,51 @@
 package cc.ivera.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.support.ChannelInterceptorAdapter;
+import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
-
-import java.util.LinkedList;
-import java.util.Map;
+import org.springframework.util.StringUtils;
 
 /**
- * @Author : JCccc
- * @CreateTime : 2020/8/26
- * @Description :
- **/
+ * Binds the logical chat username from the STOMP CONNECT frame to Spring's
+ * WebSocket Principal. Spring's /user destination resolution relies on this
+ * Principal name to find the target user's active WebSocket sessions.
+ */
 @Component
-public class WebSocketAuthInterceptor extends ChannelInterceptorAdapter {
+public class WebSocketAuthInterceptor implements ChannelInterceptor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketAuthInterceptor.class);
+    private static final String USER_ID_HEADER = "userid";
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            Object raw = message.getHeaders().get(SimpMessageHeaderAccessor.NATIVE_HEADERS);
-            if (raw instanceof Map) {
-                Object name = ((Map) raw).get("userid");
-                System.out.println(name);
-                if (name instanceof LinkedList) {
-                    // 设置当前访问的认证用户
-                    accessor.setUser(new UserPrincipal(((LinkedList) name).get(0).toString()));
-                }
+        if (accessor == null) {
+            return message;
+        }
+
+        StompCommand command = accessor.getCommand();
+        if (StompCommand.CONNECT.equals(command) || StompCommand.STOMP.equals(command)) {
+            // IMPORTANT: do not cast native header values to LinkedList.
+            // Spring exposes native headers as List<String> and commonly stores
+            // them as ArrayList. getFirstNativeHeader() is the supported API.
+            String userId = accessor.getFirstNativeHeader(USER_ID_HEADER);
+            if (StringUtils.hasText(userId)) {
+                String username = userId.trim();
+                accessor.setUser(new UserPrincipal(username));
+                LOGGER.info("WebSocket user authenticated: username={}, sessionId={}",
+                        username, accessor.getSessionId());
+            } else {
+                LOGGER.warn("WebSocket CONNECT rejected from user routing: missing '{}' header, sessionId={}",
+                        USER_ID_HEADER, accessor.getSessionId());
             }
         }
+
         return message;
     }
 }

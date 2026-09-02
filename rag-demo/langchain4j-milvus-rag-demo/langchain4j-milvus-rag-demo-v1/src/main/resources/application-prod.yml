@@ -15,7 +15,7 @@ rag:
     username: ${MILVUS_USERNAME:}
     password: ${MILVUS_PASSWORD:}
     default-alias: "default"
-    host: "192.168.220.200"
+    host: "192.168.1.200"
     port: 19530
     collection: "demo_kb"
     top-k: 6
@@ -32,7 +32,7 @@ tavily:
 spring:
   data:
     redis:
-      host: "192.168.220.200"
+      host: "192.168.1.200"
       port: 6379
       database: 0
       timeout: 5s

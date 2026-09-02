@@ -9,12 +9,18 @@
 -- 6. 渠道账单导入（渠道账单表 + 对账账单关联）
 -- 7. 微信进账与退款逐笔对账（业务类型 + 退款标识字段）
 -- 8. 用户认证、服务端购物车与多课程合单
+-- 9. 商品库存、订单幂等、按明细退款与可靠消息
 -- 本文件是唯一数据库初始化脚本，无需再执行其他升级脚本。
 -- ===============================================================
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS `t_message_consume_log`;
+DROP TABLE IF EXISTS `t_message_outbox`;
+DROP TABLE IF EXISTS `t_inventory_operation`;
+DROP TABLE IF EXISTS `t_refund_item`;
+DROP TABLE IF EXISTS `t_order_idempotency`;
 DROP TABLE IF EXISTS `t_order_item`;
 DROP TABLE IF EXISTS `t_cart_item`;
 DROP TABLE IF EXISTS `t_cart`;
@@ -88,18 +94,26 @@ CREATE TABLE `t_product`  (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '商品id',
   `title` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '商品名称',
   `price` int(11) NULL DEFAULT NULL COMMENT '价格（分）',
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'OFF_SHELF' COMMENT '商品状态：ON_SHELF、OFF_SHELF',
+  `available_stock` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '可用库存',
+  `locked_stock` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '订单预占库存',
+  `sold_stock` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '已售库存',
+  `version` int(11) NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`) USING BTREE
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_product_status` (`status`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_product
 -- ----------------------------
-INSERT INTO `t_product` VALUES (1, 'Java课程', 1, '2023-02-04 23:34:20', '2023-02-04 23:34:20');
-INSERT INTO `t_product` VALUES (2, '大数据课程', 1, '2023-02-04 23:34:20', '2023-02-04 23:34:20');
-INSERT INTO `t_product` VALUES (3, '前端课程', 1, '2023-02-04 23:34:20', '2023-02-04 23:34:20');
-INSERT INTO `t_product` VALUES (4, 'UI课程', 1, '2023-02-04 23:34:20', '2023-02-04 23:34:20');
+-- 商品总库存由 available_stock + locked_stock + sold_stock 计算，不保存冗余总库存列。
+INSERT INTO `t_product` (`id`, `title`, `price`, `status`, `available_stock`, `locked_stock`, `sold_stock`, `version`, `create_time`, `update_time`) VALUES
+(1, 'Java课程', 1, 'ON_SHELF', 100, 0, 0, 0, '2023-02-04 23:34:20', '2023-02-04 23:34:20'),
+(2, '大数据课程', 1, 'ON_SHELF', 100, 0, 0, 0, '2023-02-04 23:34:20', '2023-02-04 23:34:20'),
+(3, '前端课程', 1, 'ON_SHELF', 100, 0, 0, 0, '2023-02-04 23:34:20', '2023-02-04 23:34:20'),
+(4, 'UI课程', 1, 'ON_SHELF', 100, 0, 0, 0, '2023-02-04 23:34:20', '2023-02-04 23:34:20');
 
 -- ----------------------------
 -- Table structure for t_user
@@ -214,6 +228,8 @@ CREATE TABLE `t_order_item`  (
   `unit_price` int(11) NOT NULL COMMENT '下单时单价快照（分）',
   `quantity` int(11) UNSIGNED NOT NULL COMMENT '购买数量',
   `subtotal` int(11) NOT NULL COMMENT '小计（分）',
+  `inventory_status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'RESERVED' COMMENT '库存状态：RESERVED、SOLD、RELEASED',
+  `refunded_quantity` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '累计成功退款数量',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
@@ -221,6 +237,29 @@ CREATE TABLE `t_order_item`  (
   KEY `idx_order_item_product` (`product_id`) USING BTREE,
   CONSTRAINT `fk_order_item_order` FOREIGN KEY (`order_id`) REFERENCES `t_order_info` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_order_item_product` FOREIGN KEY (`product_id`) REFERENCES `t_product` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_order_idempotency
+-- 后端签发的一次性下单幂等键；COMPLETED 记录忽略 expires_at
+-- ----------------------------
+CREATE TABLE `t_order_idempotency`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '幂等记录ID',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '签发目标用户ID',
+  `idempotency_key` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL COMMENT '后端签发UUID',
+  `request_fingerprint` char(64) CHARACTER SET ascii COLLATE ascii_general_ci NULL DEFAULT NULL COMMENT '订单意图SHA-256指纹',
+  `order_id` bigint(20) UNSIGNED NULL DEFAULT NULL COMMENT '成功绑定的订单ID',
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'ISSUED' COMMENT 'ISSUED、COMPLETED、EXPIRED',
+  `expires_at` datetime NOT NULL COMMENT '未使用键的首次提交截止时间',
+  `completed_at` datetime NULL DEFAULT NULL COMMENT '绑定订单时间',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_order_idempotency_key` (`idempotency_key`) USING BTREE,
+  UNIQUE KEY `uk_order_idempotency_order` (`order_id`) USING BTREE,
+  KEY `idx_order_idempotency_user_status` (`user_id`, `status`, `expires_at`) USING BTREE,
+  CONSTRAINT `fk_order_idempotency_user` FOREIGN KEY (`user_id`) REFERENCES `t_user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_idempotency_order` FOREIGN KEY (`order_id`) REFERENCES `t_order_info` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
@@ -255,6 +294,7 @@ CREATE TABLE `t_refund_info`  (
   `order_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商户订单编号',
   `refund_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商户退款单编号',
   `refund_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '支付系统退款单号',
+  `application_request_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '用户退款申请幂等请求号',
   `total_fee` int(11) NULL DEFAULT NULL COMMENT '原订单金额(分)',
   `refund` int(11) NULL DEFAULT NULL COMMENT '退款金额(分)',
   `reason` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '退款原因',
@@ -269,8 +309,113 @@ CREATE TABLE `t_refund_info`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uk_refund_no` (`refund_no`) USING BTREE,
   UNIQUE KEY `uk_refund_id` (`refund_id`) USING BTREE,
+  UNIQUE KEY `uk_refund_order_request` (`order_no`, `application_request_id`) USING BTREE,
   KEY `idx_order_approval_status` (`order_no`, `approval_status`) USING BTREE,
   KEY `idx_order_status` (`order_no`, `refund_status`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_refund_item
+-- 退款商品明细：金额由订单快照单价和退款数量计算
+-- ----------------------------
+CREATE TABLE `t_refund_item`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '退款明细ID',
+  `refund_id` bigint(20) UNSIGNED NOT NULL COMMENT '退款单ID',
+  `order_item_id` bigint(20) UNSIGNED NOT NULL COMMENT '订单明细ID',
+  `product_id` bigint(20) NOT NULL COMMENT '商品ID',
+  `product_title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商品标题快照',
+  `unit_price` int(11) NOT NULL COMMENT '订单单价快照（分）',
+  `quantity` int(11) UNSIGNED NOT NULL COMMENT '退款数量',
+  `refund_amount` int(11) NOT NULL COMMENT '明细退款金额（分）',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_refund_item` (`refund_id`, `order_item_id`) USING BTREE,
+  KEY `idx_refund_item_order_item` (`order_item_id`) USING BTREE,
+  KEY `idx_refund_item_product` (`product_id`) USING BTREE,
+  CONSTRAINT `fk_refund_item_refund` FOREIGN KEY (`refund_id`) REFERENCES `t_refund_info` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_refund_item_order_item` FOREIGN KEY (`order_item_id`) REFERENCES `t_order_item` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_refund_item_product` FOREIGN KEY (`product_id`) REFERENCES `t_product` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_inventory_operation
+-- 操作类型：ADMIN_ADJUST、ORDER_RESERVE、ORDER_COMMIT、ORDER_RELEASE、REFUND_RESTORE
+-- ----------------------------
+CREATE TABLE `t_inventory_operation`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '库存流水ID',
+  `business_key` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '库存变化全局幂等键',
+  `product_id` bigint(20) NOT NULL COMMENT '商品ID',
+  `operation_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '库存操作类型：ADMIN_ADJUST、ORDER_RESERVE、ORDER_COMMIT、ORDER_RELEASE、REFUND_RESTORE',
+  `order_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '关联订单号',
+  `refund_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '关联退款单号',
+  `available_delta` int(11) NOT NULL DEFAULT 0 COMMENT '可用库存变化量',
+  `locked_delta` int(11) NOT NULL DEFAULT 0 COMMENT '锁定库存变化量',
+  `sold_delta` int(11) NOT NULL DEFAULT 0 COMMENT '已售库存变化量',
+  `available_before` int(11) UNSIGNED NOT NULL COMMENT '变化前可用库存',
+  `available_after` int(11) UNSIGNED NOT NULL COMMENT '变化后可用库存',
+  `locked_before` int(11) UNSIGNED NOT NULL COMMENT '变化前锁定库存',
+  `locked_after` int(11) UNSIGNED NOT NULL COMMENT '变化后锁定库存',
+  `sold_before` int(11) UNSIGNED NOT NULL COMMENT '变化前已售库存',
+  `sold_after` int(11) UNSIGNED NOT NULL COMMENT '变化后已售库存',
+  `operator_id` bigint(20) UNSIGNED NULL DEFAULT NULL COMMENT '操作用户ID，系统操作可为空',
+  `operator_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '操作人快照',
+  `reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '操作原因',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_inventory_business_key` (`business_key`) USING BTREE,
+  KEY `idx_inventory_product_time` (`product_id`, `create_time`) USING BTREE,
+  KEY `idx_inventory_order_no` (`order_no`) USING BTREE,
+  KEY `idx_inventory_refund_no` (`refund_no`) USING BTREE,
+  CONSTRAINT `fk_inventory_product` FOREIGN KEY (`product_id`) REFERENCES `t_product` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_operator` FOREIGN KEY (`operator_id`) REFERENCES `t_user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_message_outbox
+-- 业务事务内落库，RabbitMQ 发布确认后才标记 SENT
+-- ----------------------------
+CREATE TABLE `t_message_outbox`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Outbox记录ID',
+  `event_id` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL COMMENT '稳定事件ID',
+  `event_key` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '业务事件唯一键',
+  `aggregate_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '聚合类型',
+  `aggregate_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '聚合标识',
+  `event_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '事件类型',
+  `payload` json NOT NULL COMMENT '事件内容JSON',
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'NEW' COMMENT 'NEW、SENDING、SENT、FAILED',
+  `retry_count` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '发布重试次数',
+  `next_retry_time` datetime NULL DEFAULT NULL COMMENT '下次重试时间',
+  `locked_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '认领实例',
+  `lock_expire_time` datetime NULL DEFAULT NULL COMMENT '认领过期时间',
+  `last_error` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '最后发布错误',
+  `sent_at` datetime NULL DEFAULT NULL COMMENT '确认发布时间',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_outbox_event_id` (`event_id`) USING BTREE,
+  UNIQUE KEY `uk_outbox_event_key` (`event_key`) USING BTREE,
+  KEY `idx_outbox_status_retry` (`status`, `next_retry_time`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_message_consume_log
+-- Inbox 消费记录与本地业务状态在同一事务提交
+-- ----------------------------
+CREATE TABLE `t_message_consume_log`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Inbox记录ID',
+  `event_id` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL COMMENT '事件ID',
+  `consumer_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '消费者名称',
+  `event_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '事件类型',
+  `business_key` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '本地业务幂等键',
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'PROCESSING' COMMENT 'PROCESSING、CONSUMED、FAILED',
+  `locked_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '消费租约持有者',
+  `lock_expire_time` datetime NULL DEFAULT NULL COMMENT '消费租约过期时间',
+  `last_error` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '最后消费错误',
+  `consumed_at` datetime NULL DEFAULT NULL COMMENT '消费完成时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_consume_event_consumer` (`event_id`, `consumer_name`) USING BTREE,
+  KEY `idx_consume_business_key` (`business_key`) USING BTREE,
+  KEY `idx_consume_status_lease` (`status`, `lock_expire_time`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
@@ -375,6 +520,10 @@ CREATE TABLE `t_reconciliation_detail`  (
 -- 6. t_reconciliation.uk_bill_date_channel_app：防止同一日期同一渠道同一应用重复对账
 -- 7. t_order_info.uk_order_user_checkout：防止同一用户重复提交同一次购物车结算
 -- 8. t_refresh_token.uk_refresh_token_hash：防止刷新令牌哈希重复入库
+-- 9. t_order_idempotency.uk_order_idempotency_key：防止一次下单意图创建多张订单
+-- 10. t_inventory_operation.uk_inventory_business_key：防止同一业务重复变更库存
+-- 11. t_message_outbox.uk_outbox_event_key：防止业务事务重复创建事件
+-- 12. t_message_consume_log.uk_consume_event_consumer：防止消费者重复处理事件
 --
 -- 配合代码层的优化：
 -- - 通知幂等检查（Redis + notifyId）

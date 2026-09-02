@@ -117,11 +117,11 @@ func TestDatabaseDSN_CurrentBehaviorBuildsDamengDSNFromRawURL(t *testing.T) {
 
 func TestDatabaseDSN_CurrentBehaviorKeepsSpecialPasswordCharacters(t *testing.T) {
 	got := databaseURLToDSN(
-		"jdbc:dm://192.168.220.200:5236?schema=PAYMENT_DEMO&connectTimeout=30000",
+		"jdbc:dm://192.168.1.200:5236?schema=PAYMENT_DEMO&connectTimeout=30000",
 		"SYSDBA",
 		"Cpc2026#@Dm",
 	)
-	want := "dm://SYSDBA:Cpc2026#@Dm@192.168.220.200:5236?connectTimeout=30000&schema=PAYMENT_DEMO"
+	want := "dm://SYSDBA:Cpc2026#@Dm@192.168.1.200:5236?connectTimeout=30000&schema=PAYMENT_DEMO"
 	if got != want {
 		t.Fatalf("databaseURLToDSN() = %q, want %q", got, want)
 	}

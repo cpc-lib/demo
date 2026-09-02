@@ -10,4 +10,73 @@
         for update
     </select>
 
+    <select id="selectOnShelf" resultType="cc.ivera.entity.Product">
+        select *
+        from t_product
+        where status = 'ON_SHELF'
+        order by id
+    </select>
+
+    <update id="updateBasicInfo">
+        update t_product
+        set title = #{title},
+            price = #{price},
+            version = version + 1
+        where id = #{id}
+          and version = #{version}
+    </update>
+
+    <update id="updateStatus">
+        update t_product
+        set status = #{status},
+            version = version + 1
+        where id = #{id}
+          and version = #{version}
+    </update>
+
+    <update id="updateAvailableStock">
+        update t_product
+        set available_stock = #{availableStock},
+            version = version + 1
+        where id = #{id}
+          and version = #{version}
+    </update>
+
+    <update id="reserveStock">
+        update t_product
+        set available_stock = available_stock - #{quantity},
+            locked_stock = locked_stock + #{quantity},
+            version = version + 1
+        where id = #{id}
+          and status = 'ON_SHELF'
+          and available_stock >= #{quantity}
+    </update>
+
+    <update id="commitReservedStock">
+        update t_product
+        set locked_stock = locked_stock - #{quantity},
+            sold_stock = sold_stock + #{quantity},
+            version = version + 1
+        where id = #{id}
+          and locked_stock >= #{quantity}
+    </update>
+
+    <update id="releaseReservedStock">
+        update t_product
+        set available_stock = available_stock + #{quantity},
+            locked_stock = locked_stock - #{quantity},
+            version = version + 1
+        where id = #{id}
+          and locked_stock >= #{quantity}
+    </update>
+
+    <update id="restoreSoldStock">
+        update t_product
+        set available_stock = available_stock + #{quantity},
+            sold_stock = sold_stock - #{quantity},
+            version = version + 1
+        where id = #{id}
+          and sold_stock >= #{quantity}
+    </update>
+
 </mapper>

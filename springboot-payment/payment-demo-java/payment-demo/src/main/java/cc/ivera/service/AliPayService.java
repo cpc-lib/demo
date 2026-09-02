@@ -6,9 +6,7 @@ import cc.ivera.service.refund.RefundStatusSyncResult;
 import java.util.Map;
 
 public interface AliPayService {
-    String tradeCreate(Long productId);
-
-    String tradeCreate(Long productId, Long paymentAppId);
+    String tradeCreate(Long productId, Long paymentAppId, String idempotencyKey);
 
     String tradeCreateOrder(String orderNo);
 
@@ -19,6 +17,8 @@ public interface AliPayService {
     String queryOrder(String orderNo);
 
     void checkOrderStatus(String orderNo);
+
+    void checkOrderStatusAndCloseIfUnpaid(String orderNo);
 
     void executeRefund(RefundInfo refundInfo);
 

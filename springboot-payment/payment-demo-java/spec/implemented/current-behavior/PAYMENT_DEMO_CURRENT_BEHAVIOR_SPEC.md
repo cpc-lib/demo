@@ -149,8 +149,8 @@
 |------|-----|------|------|
 | 微信支付 V3 | `https://api.mch.weixin.qq.com` | 下单、退款、查单 | HTTPS + JSON |
 | 支付宝沙箱 | `https://openapi-sandbox.dl.alipaydev.com` | 下单、退款 | HTTPS + Form |
-| Redis | `192.168.220.200:6379` | 分布式锁、幂等 | RESP |
-| RabbitMQ | `192.168.220.200:5672` | 延迟消息 | AMQP |
+| Redis | `192.168.1.200:6379` | 分布式锁、幂等 | RESP |
+| RabbitMQ | `192.168.1.200:5672` | 延迟消息 | AMQP |
 
 ---
 

@@ -10,6 +10,8 @@ public interface RefundApplicationService {
 
     void approve(String refundNo, String approveRemark);
 
+    void submitApprovedRefund(String refundNo);
+
     void reject(String refundNo, String approveRemark);
 
     List<RefundInfo> listAll();

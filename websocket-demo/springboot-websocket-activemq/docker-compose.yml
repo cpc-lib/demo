@@ -1,0 +1,17 @@
+services:
+  artemis:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/activemq-artemis:latest-alpine
+    container_name: artemis
+    restart: unless-stopped
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    environment:
+      ARTEMIS_USER: artemis
+      ARTEMIS_PASSWORD: artemis
+      ANONYMOUS_LOGIN: "false"
+    volumes:
+      - artemis-data:/var/lib/artemis-instance
+
+volumes:
+  artemis-data:

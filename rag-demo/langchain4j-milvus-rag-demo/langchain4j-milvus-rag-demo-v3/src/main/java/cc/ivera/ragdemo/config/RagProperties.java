@@ -433,7 +433,7 @@ public class RagProperties {
     public static class ObjectStorage {
         /** Storage backend type: "local" or "minio". */
         private String type = "local";
-        /** MinIO endpoint URL (e.g., http://192.168.220.200:9000). */
+        /** MinIO endpoint URL (e.g., http://192.168.1.200:9000). */
         private String endpoint;
         /** MinIO access key. */
         private String accessKey;

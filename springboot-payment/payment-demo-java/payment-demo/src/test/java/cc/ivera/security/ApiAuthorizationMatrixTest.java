@@ -24,6 +24,10 @@ class ApiAuthorizationMatrixTest {
         AntPathMatcher pathMatcher = new AntPathMatcher();
 
         assertFalse(authenticated.matches("/api/product/list", pathMatcher));
+        assertTrue(authenticated.matches("/api/product/test", pathMatcher));
+        assertTrue(authenticated.matches("/api/admin/products", pathMatcher));
+        assertTrue(authenticated.matches("/api/admin/products/7/stock-adjustments", pathMatcher));
+        assertTrue(authenticated.matches("/api/admin/outbox/event-1/retry", pathMatcher));
         assertFalse(authenticated.matches("/api/auth/login", pathMatcher));
         assertFalse(authenticated.matches("/api/auth/register", pathMatcher));
         assertFalse(authenticated.matches("/api/auth/refresh", pathMatcher));
@@ -33,6 +37,7 @@ class ApiAuthorizationMatrixTest {
         assertTrue(authenticated.matches("/api/auth/me", pathMatcher));
         assertTrue(authenticated.matches("/api/cart", pathMatcher));
         assertTrue(authenticated.matches("/api/order-info/checkout", pathMatcher));
+        assertTrue(authenticated.matches("/api/order-info/idempotency-keys", pathMatcher));
         assertTrue(authenticated.matches("/api/refund-info/apply", pathMatcher));
     }
 
@@ -54,10 +59,14 @@ class ApiAuthorizationMatrixTest {
         assertTrue(admin.matches("/api/refund-info/list", pathMatcher));
         assertTrue(admin.matches("/api/refund-info/approve/R1", pathMatcher));
         assertTrue(admin.matches("/api/refund-info/query/R1", pathMatcher));
+        assertTrue(admin.matches("/api/admin/products", pathMatcher));
+        assertTrue(admin.matches("/api/admin/products/7/stock-operations", pathMatcher));
+        assertTrue(admin.matches("/api/admin/outbox/event-1/retry", pathMatcher));
         assertTrue(admin.matches("/api/wx-pay/check-order-status/ORDER-1", pathMatcher));
         assertTrue(admin.matches("/api/ali-pay/check-order-status/ORDER-1", pathMatcher));
         assertFalse(admin.matches("/api/payment-app/list", pathMatcher));
         assertFalse(admin.matches("/api/order-info/my-list", pathMatcher));
+        assertFalse(admin.matches("/api/order-info/idempotency-keys", pathMatcher));
         assertFalse(admin.matches("/api/refund-info/list/ORDER-1", pathMatcher));
     }
 

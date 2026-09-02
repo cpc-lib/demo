@@ -51,7 +51,7 @@ spring:
       static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/
   redis:
     port: 6379
-    host: 192.168.220.200
+    host: 192.168.1.200
     password: cpc!23#@
     database: 3
   datasource:
@@ -65,7 +65,7 @@ spring:
     #      auto-commit: true
     #      max-lifetime: 120000
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.220.200:3308/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:mysql://192.168.1.200:3308/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
     username: root
     password: wZKicHYoEgIMIVAU
     type: com.alibaba.druid.pool.DruidDataSource

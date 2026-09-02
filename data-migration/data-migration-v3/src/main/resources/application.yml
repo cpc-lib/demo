@@ -3,7 +3,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.220.200:3308/migration_demo?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true&useServerPrepStmts=false&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://192.168.1.200:3308/migration_demo?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true&useServerPrepStmts=false&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: "cpc!23#@"
     hikari:

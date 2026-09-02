@@ -1,6 +1,5 @@
 package cc.ivera.characterization;
 
-import cc.ivera.config.OrderCloseRabbitConfig;
 import cc.ivera.config.WxPayConfig;
 import cc.ivera.controller.WxPayV2Controller;
 import cc.ivera.entity.OrderInfo;
@@ -9,8 +8,9 @@ import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.PayType;
 import cc.ivera.mapper.PaymentInfoMapper;
 import cc.ivera.mapper.RefundInfoMapper;
-import cc.ivera.mq.OrderCloseMessage;
+import cc.ivera.mq.OutboxEventTypes;
 import cc.ivera.service.AliPayService;
+import cc.ivera.service.MessageOutboxService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.impl.OrderCloseMessageServiceImpl;
@@ -18,12 +18,12 @@ import cc.ivera.service.impl.PaymentInfoServiceImpl;
 import cc.ivera.service.refund.OrderRefundStatusService;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.lock.DistributedLockTemplate;
+import cc.ivera.util.JsonUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.dao.DuplicateKeyException;
@@ -66,6 +66,7 @@ class InfrastructureBehaviorCharacterizationTest {
                 wxPayConfig,
                 orderInfoService,
                 paymentInfoService,
+                mock(cc.ivera.service.InventoryService.class),
                 distributedLockTemplate,
                 transactionTemplate,
                 stringRedisTemplate);
@@ -130,27 +131,30 @@ class InfrastructureBehaviorCharacterizationTest {
     }
 
     @Test
-    @DisplayName("现状: 延迟关单事件发送到固定 exchange 和 routing key")
-    void current_order_close_message_uses_fixed_exchange_and_routing_key() {
-        RabbitTemplate rabbitTemplate = mock(RabbitTemplate.class);
-        OrderCloseMessageServiceImpl service = new OrderCloseMessageServiceImpl(rabbitTemplate);
+    @DisplayName("关单事件先按订单号幂等写入 Outbox")
+    void order_close_message_is_persisted_to_outbox() {
+        MessageOutboxService outboxService = mock(MessageOutboxService.class);
+        OrderCloseMessageServiceImpl service = new OrderCloseMessageServiceImpl(outboxService);
 
         service.sendCloseOrderMessage("ORD-CLOSE", PayType.WXPAY.getType());
 
-        ArgumentCaptor<OrderCloseMessage> captor = ArgumentCaptor.forClass(OrderCloseMessage.class);
-        verify(rabbitTemplate).convertAndSend(
-                eq(OrderCloseRabbitConfig.ORDER_CLOSE_EVENT_EXCHANGE),
-                eq(OrderCloseRabbitConfig.ORDER_CLOSE_DELAY_ROUTING_KEY),
-                captor.capture());
-        assertThat(captor.getValue().getOrderNo()).isEqualTo("ORD-CLOSE");
-        assertThat(captor.getValue().getPaymentType()).isEqualTo(PayType.WXPAY.getType());
+        ArgumentCaptor<String> payload = ArgumentCaptor.forClass(String.class);
+        verify(outboxService).insertOnce(
+                eq("ORDER_CLOSE_SCHEDULED:ORD-CLOSE"),
+                eq("ORDER"),
+                eq("ORD-CLOSE"),
+                eq(OutboxEventTypes.ORDER_CLOSE_SCHEDULED),
+                payload.capture());
+        assertThat(JsonUtils.toObjectMap(payload.getValue()))
+                .containsEntry("orderNo", "ORD-CLOSE")
+                .containsEntry("paymentType", PayType.WXPAY.getType());
     }
 
     @Test
     @DisplayName("现状: 延迟关单事件缺少订单号或支付类型时抛 IllegalArgumentException")
     void current_order_close_message_rejects_blank_order_or_payment_type() {
-        RabbitTemplate rabbitTemplate = mock(RabbitTemplate.class);
-        OrderCloseMessageServiceImpl service = new OrderCloseMessageServiceImpl(rabbitTemplate);
+        MessageOutboxService outboxService = mock(MessageOutboxService.class);
+        OrderCloseMessageServiceImpl service = new OrderCloseMessageServiceImpl(outboxService);
 
         assertThatThrownBy(() -> service.sendCloseOrderMessage("", PayType.WXPAY.getType()))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -158,7 +162,7 @@ class InfrastructureBehaviorCharacterizationTest {
         assertThatThrownBy(() -> service.sendCloseOrderMessage("ORD-CLOSE", ""))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("订单号或支付类型为空");
-        verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), any(OrderCloseMessage.class));
+        verifyNoInteractions(outboxService);
     }
 
     @Test

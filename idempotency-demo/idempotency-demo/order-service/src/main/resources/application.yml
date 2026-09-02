@@ -1,0 +1,19 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:mysql://192.168.1.200:3306/idem_demo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+  data:
+    redis:
+      host: 192.168.1.200
+      port: 6379
+      timeout: 2s
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.1.200:8848

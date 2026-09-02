@@ -1,54 +1,81 @@
 <!DOCTYPE html>
-<html>
-  <head>
-      <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-      <title>Spring Boot WebSocket Chat Application | CalliCoder</title>
-      <link rel="stylesheet" href="/css/main.css" />
-  </head>
-  <body>
-    <noscript>
-      <h2>Sorry! Your browser doesn't support Javascript</h2>
-    </noscript>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+    <title>WebSocket 消息室</title>
+    <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+<noscript>
+    <h2>当前浏览器未启用 JavaScript，无法使用消息室。</h2>
+</noscript>
 
-    <div id="username-page">
-        <div class="username-page-container">
-            <h1 class="title">接收消息测试</h1>
-            <form id="usernameForm" name="usernameForm">
-                <div class="form-group">
-                    <input type="text" id="name" placeholder="Username" autocomplete="off" class="form-control" />
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="accent username-submit">进入消息接收室</button>
-                </div>
-            </form>
-        </div>
+<div id="username-page">
+    <div class="username-page-container">
+        <h1 class="title">WebSocket 消息室</h1>
+        <p class="subtitle">输入用户名后进入消息室</p>
+        <form id="usernameForm" name="usernameForm">
+            <div class="form-group">
+                <input type="text" id="name" placeholder="请输入用户名" autocomplete="off" class="form-control" />
+            </div>
+            <div class="form-group">
+                <button type="submit" class="accent username-submit">进入消息室</button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div id="chat-page" class="hidden">
-        <div class="chat-container">
+<div id="chat-page" class="hidden">
+    <div class="chat-shell">
+        <aside class="online-panel">
+            <div class="online-panel-header">
+                <div>
+                    <h3>在线用户</h3>
+                    <span id="onlineCount">0 人在线</span>
+                </div>
+                <span class="status-dot"></span>
+            </div>
+
+            <button id="allUsersButton" type="button" class="recipient-item active" data-recipient="all">
+                <span class="recipient-avatar group-avatar">群</span>
+                <span class="recipient-info">
+                    <strong>所有人</strong>
+                    <small>群发消息</small>
+                </span>
+            </button>
+
+            <div id="onlineUsers" class="online-users"></div>
+        </aside>
+
+        <main class="chat-container">
             <div class="chat-header">
-                <h2>消息测试</h2>
+                <div>
+                    <h2 id="chatTitle">消息室</h2>
+                    <p id="chatTarget">当前发送给：所有人</p>
+                </div>
+                <span id="currentUser" class="current-user"></span>
             </div>
-            <div class="connecting">
-                Connecting...
-            </div>
-            <ul id="messageArea">
 
-            </ul>
-            <form id="messageForm" name="messageForm" nameForm="messageForm">
-                <div class="form-group">
-                    <div class="input-group clearfix">
-                        <input type="text" id="message" placeholder="Type a message..." autocomplete="off" class="form-control"/>
-                        <button type="submit" class="primary">Send</button>
-                    </div>
+            <div class="connecting">正在连接 WebSocket...</div>
+            <ul id="messageArea"></ul>
+
+            <form id="messageForm" name="messageForm">
+                <div class="message-target-bar">
+                    <span>发送目标：</span>
+                    <strong id="selectedRecipientLabel">所有人</strong>
+                </div>
+                <div class="input-group clearfix">
+                    <input type="text" id="message" placeholder="输入消息..." autocomplete="off" class="form-control" />
+                    <button type="submit" class="primary">发送</button>
                 </div>
             </form>
-        </div>
+        </main>
     </div>
+</div>
 
-    <script src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
-    <script src="https://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
-    <script src="/js/main.js"></script>
-  </body>
+<script src="/js/sockjs.min.js"></script>
+<script src="/js/stomp.min.js"></script>
+<script src="/js/main.js"></script>
+</body>
 </html>

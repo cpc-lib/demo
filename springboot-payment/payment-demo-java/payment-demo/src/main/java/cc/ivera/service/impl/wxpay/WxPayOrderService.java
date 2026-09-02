@@ -10,9 +10,11 @@ import cc.ivera.enums.wxpay.WxApiType;
 import cc.ivera.enums.wxpay.WxNotifyType;
 import cc.ivera.enums.wxpay.WxTradeState;
 import cc.ivera.exception.BizException;
+import cc.ivera.exception.ConflictException;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
+import cc.ivera.service.InventoryService;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.util.HttpClientUtils;
 import cc.ivera.util.JsonUtils;
@@ -41,10 +43,13 @@ public class WxPayOrderService implements WxPayOrderFacade {
 
     private static final long PAY_NOTIFY_LOCK_WAIT_MS = 5000L;
 
+    private static final String ORDER_TRANSITION_LOCK_PREFIX = "payment:order:transition:";
+
     private final WxPayConfig wxPayConfig;
     private final PaymentConfigLoader paymentConfigLoader;
     private final OrderInfoService orderInfoService;
     private final PaymentInfoService paymentInfoService;
+    private final InventoryService inventoryService;
     private final WxPayHttpClient wxPayHttpClient;
     private final WxPayNotificationDecoder wxPayNotificationDecoder;
     private final DistributedLockTemplate distributedLockTemplate;
@@ -54,6 +59,7 @@ public class WxPayOrderService implements WxPayOrderFacade {
                              PaymentConfigLoader paymentConfigLoader,
                              OrderInfoService orderInfoService,
                              PaymentInfoService paymentInfoService,
+                             InventoryService inventoryService,
                              WxPayHttpClient wxPayHttpClient,
                              WxPayNotificationDecoder wxPayNotificationDecoder,
                              DistributedLockTemplate distributedLockTemplate,
@@ -62,6 +68,7 @@ public class WxPayOrderService implements WxPayOrderFacade {
         this.paymentConfigLoader = paymentConfigLoader;
         this.orderInfoService = orderInfoService;
         this.paymentInfoService = paymentInfoService;
+        this.inventoryService = inventoryService;
         this.wxPayHttpClient = wxPayHttpClient;
         this.wxPayNotificationDecoder = wxPayNotificationDecoder;
         this.distributedLockTemplate = distributedLockTemplate;
@@ -69,17 +76,16 @@ public class WxPayOrderService implements WxPayOrderFacade {
     }
 
     @Override
-    public Map<String, Object> nativePay(Long productId) {
-        return nativePay(productId, null);
-    }
-
-    @Override
-    public Map<String, Object> nativePay(Long productId, Long paymentAppId) {
+    public Map<String, Object> nativePay(
+            Long productId,
+            Long paymentAppId,
+            String idempotencyKey
+    ) {
         return distributedLockTemplate.execute(
-                "payment:wx:native:v3:" + productId + ":" + (paymentAppId == null ? "default" : paymentAppId),
+                "payment:wx:native:v3:" + idempotencyKey,
                 3000L,
                 -1L,
-                () -> doNativePay(productId, paymentAppId)
+                () -> doNativePay(productId, paymentAppId, idempotencyKey)
         );
     }
 
@@ -97,13 +103,18 @@ public class WxPayOrderService implements WxPayOrderFacade {
         );
     }
 
-    private Map<String, Object> doNativePay(Long productId, Long paymentAppId) {
+    private Map<String, Object> doNativePay(
+            Long productId,
+            Long paymentAppId,
+            String idempotencyKey
+    ) {
         PaymentAppConfig payConfig = resolveWxPayConfig(paymentAppId);
         OrderInfo orderInfo = orderInfoService.createOrReuseOrder(
                 productId,
                 PayType.WXPAY.getType(),
                 payConfig.getAppId(),
-                PaymentConfigLoader.CHANNEL_WXPAY
+                PaymentConfigLoader.CHANNEL_WXPAY,
+                idempotencyKey
         );
         if (orderInfo == null) {
             throw new BizException("订单创建失败");
@@ -165,7 +176,7 @@ public class WxPayOrderService implements WxPayOrderFacade {
         }
 
         String notifyId = getString(bodyMap, "id");
-        distributedLockTemplate.execute("payment:wx:notify:pay:" + orderNo, PAY_NOTIFY_LOCK_WAIT_MS, -1L, () ->
+        distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, PAY_NOTIFY_LOCK_WAIT_MS, -1L, () ->
                 transactionTemplate.execute(status -> {
                     doProcessOrderNotifyInTransaction(orderNo, plainTextMap, plainText, notifyId);
                     return null;
@@ -196,6 +207,7 @@ public class WxPayOrderService implements WxPayOrderFacade {
             return;
         }
 
+        requirePaymentInventoryCommitted(orderNo);
         paymentInfoService.createPaymentInfo(plainText);
         log.info("微信支付通知处理完成，orderNo={}, notifyId={}", orderNo, notifyId);
     }
@@ -205,21 +217,21 @@ public class WxPayOrderService implements WxPayOrderFacade {
         if (!StringUtils.hasText(orderNo)) {
             throw new BizException("订单号不能为空");
         }
-        distributedLockTemplate.execute("payment:order:cancel:" + orderNo, 3000L, -1L, () ->
-                transactionTemplate.execute(status -> {
-                    OrderInfo lockedOrder = orderInfoService.getOrderByOrderNoForUpdate(orderNo);
-                    if (lockedOrder == null) {
-                        throw new BizException("订单不存在，orderNo=" + orderNo);
-                    }
-                    if (!OrderStatus.NOTPAY.getType().equals(lockedOrder.getOrderStatus())) {
-                        log.info("订单当前状态不允许取消，orderNo={}, currentStatus={}", orderNo, lockedOrder.getOrderStatus());
-                        return null;
-                    }
-                    closeOrder(orderNo);
-                    orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CANCEL);
-                    return null;
-                })
-        );
+        distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, 3000L, -1L, () -> {
+            OrderInfo currentOrder = orderInfoService.getOrderByOrderNo(orderNo);
+            if (currentOrder == null) {
+                throw new BizException("订单不存在，orderNo=" + orderNo);
+            }
+            if (!OrderStatus.NOTPAY.getType().equals(currentOrder.getOrderStatus())) {
+                log.info("订单当前状态不允许取消，orderNo={}, currentStatus={}", orderNo, currentOrder.getOrderStatus());
+                return null;
+            }
+            closeOrder(orderNo);
+            return transactionTemplate.execute(status -> {
+                transitionToClosedInTransaction(orderNo, OrderStatus.CANCEL);
+                return null;
+            });
+        });
     }
 
     @Override
@@ -256,12 +268,10 @@ public class WxPayOrderService implements WxPayOrderFacade {
         String tradeStateDesc = getString(resultMap, "trade_state_desc");
         String localStatusBefore = orderInfo.getOrderStatus();
 
-        distributedLockTemplate.execute("payment:wx:query:order:" + orderNo, 5000L, -1L, () ->
-                transactionTemplate.execute(status -> {
-                    doSyncOrderStatusFromWxQuery(orderNo, resultMap, result, tradeState, false);
-                    return null;
-                })
-        );
+        if (WxTradeState.SUCCESS.getType().equals(tradeState)
+                || WxTradeState.CLOSED.getType().equals(tradeState)) {
+            syncWxOrderStatus(orderNo, resultMap, result, tradeState);
+        }
 
         String localStatusAfter = orderInfoService.getOrderStatus(orderNo);
         return buildPaymentStatusResult(orderNo, tradeState, tradeStateDesc, localStatusBefore, localStatusAfter, resultMap);
@@ -272,9 +282,40 @@ public class WxPayOrderService implements WxPayOrderFacade {
         String result = queryOrder(orderNo);
         Map<String, Object> resultMap = JsonUtils.toObjectMap(result);
         String tradeState = getString(resultMap, "trade_state");
-        distributedLockTemplate.execute("payment:wx:check:order:" + orderNo, 5000L, -1L, () ->
+        if (WxTradeState.SUCCESS.getType().equals(tradeState)
+                || WxTradeState.CLOSED.getType().equals(tradeState)) {
+            syncWxOrderStatus(orderNo, resultMap, result, tradeState);
+            return;
+        }
+        if (WxTradeState.NOTPAY.getType().equals(tradeState)) {
+            distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, 5000L, -1L, () -> {
+                OrderInfo currentOrder = orderInfoService.getOrderByOrderNo(orderNo);
+                if (currentOrder == null) {
+                    throw new BizException("查单同步对应订单不存在，orderNo=" + orderNo);
+                }
+                if (!OrderStatus.NOTPAY.getType().equals(currentOrder.getOrderStatus())) {
+                    return null;
+                }
+                closeOrder(orderNo);
+                return transactionTemplate.execute(status -> {
+                    transitionToClosedInTransaction(orderNo, OrderStatus.CLOSED);
+                    return null;
+                });
+            });
+            return;
+        }
+        throw new BizException("微信订单状态不明确，请稍后重试，orderNo=" + orderNo);
+    }
+
+    private void syncWxOrderStatus(
+            String orderNo,
+            Map<String, Object> resultMap,
+            String result,
+            String tradeState
+    ) {
+        distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, 5000L, -1L, () ->
                 transactionTemplate.execute(status -> {
-                    doSyncOrderStatusFromWxQuery(orderNo, resultMap, result, tradeState, true);
+                    doSyncOrderStatusFromWxQuery(orderNo, resultMap, result, tradeState);
                     return null;
                 })
         );
@@ -283,8 +324,7 @@ public class WxPayOrderService implements WxPayOrderFacade {
     private void doSyncOrderStatusFromWxQuery(String orderNo,
                                               Map<String, Object> resultMap,
                                               String result,
-                                              String tradeState,
-                                              boolean closeUnpaidOrder) {
+                                              String tradeState) {
         OrderInfo lockedOrder = orderInfoService.getOrderByOrderNoForUpdate(orderNo);
         if (lockedOrder == null) {
             throw new BizException("查单同步对应订单不存在，orderNo=" + orderNo);
@@ -297,32 +337,29 @@ public class WxPayOrderService implements WxPayOrderFacade {
         if (WxTradeState.SUCCESS.getType().equals(tradeState)) {
             validateWxPayOrderNotify(lockedOrder, resultMap);
             if (orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.SUCCESS)) {
+                requirePaymentInventoryCommitted(orderNo);
                 paymentInfoService.createPaymentInfo(result);
             }
             return;
         }
-        if (WxTradeState.NOTPAY.getType().equals(tradeState) && closeUnpaidOrder) {
-            closeOrder(orderNo);
-            orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CLOSED);
-            return;
-        }
         if (WxTradeState.CLOSED.getType().equals(tradeState)) {
-            orderInfoService.updateStatusByOrderNoIfStatus(orderNo, OrderStatus.NOTPAY, OrderStatus.CLOSED);
+            validateWxPayOrderNotify(lockedOrder, resultMap);
+            transitionToClosedInTransaction(orderNo, OrderStatus.CLOSED, lockedOrder);
         }
     }
 
     @Override
-    public Map<String, Object> nativePayV2(Long productId, String remoteAddr) {
-        return nativePayV2(productId, remoteAddr, null);
-    }
-
-    @Override
-    public Map<String, Object> nativePayV2(Long productId, String remoteAddr, Long paymentAppId) {
+    public Map<String, Object> nativePayV2(
+            Long productId,
+            String remoteAddr,
+            Long paymentAppId,
+            String idempotencyKey
+    ) {
         return distributedLockTemplate.execute(
-                "payment:wx:native:v2:" + productId + ":" + (paymentAppId == null ? "default" : paymentAppId),
+                "payment:wx:native:v2:" + idempotencyKey,
                 3000L,
                 -1L,
-                () -> doNativePayV2(productId, remoteAddr, paymentAppId)
+                () -> doNativePayV2(productId, remoteAddr, paymentAppId, idempotencyKey)
         );
     }
 
@@ -340,13 +377,19 @@ public class WxPayOrderService implements WxPayOrderFacade {
         );
     }
 
-    private Map<String, Object> doNativePayV2(Long productId, String remoteAddr, Long paymentAppId) {
+    private Map<String, Object> doNativePayV2(
+            Long productId,
+            String remoteAddr,
+            Long paymentAppId,
+            String idempotencyKey
+    ) {
         PaymentAppConfig payConfig = resolveWxPayConfig(paymentAppId);
         OrderInfo orderInfo = orderInfoService.createOrReuseOrder(
                 productId,
                 PayType.WXPAY.getType(),
                 payConfig.getAppId(),
-                PaymentConfigLoader.CHANNEL_WXPAY
+                PaymentConfigLoader.CHANNEL_WXPAY,
+                idempotencyKey
         );
         if (orderInfo == null) {
             throw new BizException("订单创建失败");
@@ -444,24 +487,60 @@ public class WxPayOrderService implements WxPayOrderFacade {
         }
     }
 
+    private void requirePaymentInventoryCommitted(String orderNo) {
+        if (!inventoryService.commitPayment(orderNo)) {
+            throw new ConflictException("订单库存状态不一致，支付状态未提交");
+        }
+    }
+
+    private void transitionToClosedInTransaction(String orderNo, OrderStatus targetStatus) {
+        OrderInfo lockedOrder = orderInfoService.getOrderByOrderNoForUpdate(orderNo);
+        if (lockedOrder == null) {
+            throw new BizException("订单不存在，orderNo=" + orderNo);
+        }
+        transitionToClosedInTransaction(orderNo, targetStatus, lockedOrder);
+    }
+
+    private void transitionToClosedInTransaction(
+            String orderNo,
+            OrderStatus targetStatus,
+            OrderInfo lockedOrder
+    ) {
+        if (!OrderStatus.NOTPAY.getType().equals(lockedOrder.getOrderStatus())) {
+            log.info("订单关闭状态更新被忽略，orderNo={}, currentStatus={}", orderNo, lockedOrder.getOrderStatus());
+            return;
+        }
+        boolean updated = orderInfoService.updateStatusByOrderNoIfStatus(
+                orderNo,
+                OrderStatus.NOTPAY,
+                targetStatus
+        );
+        if (updated && !inventoryService.releaseReservation(orderNo)) {
+            throw new ConflictException("订单库存状态不一致，关闭状态未提交");
+        }
+    }
+
     private void validateWxPayOrderNotify(OrderInfo orderInfo, Map<String, Object> notifyMap) {
         if (!PayType.WXPAY.getType().equals(orderInfo.getPaymentType())) {
             throw new BizException("支付通知支付类型不匹配，orderNo=" + orderInfo.getOrderNo());
         }
         PaymentAppConfig payConfig = resolveWxPayConfig(orderInfo.getPaymentAppId());
+        String notifyOrderNo = getString(notifyMap, "out_trade_no");
+        if (!orderInfo.getOrderNo().equals(notifyOrderNo)) {
+            throw new BizException("支付通知订单号与本地订单不匹配，orderNo=" + orderInfo.getOrderNo());
+        }
         String notifyMchId = getString(notifyMap, "mchid");
-        if (StringUtils.hasText(notifyMchId) && !notifyMchId.equals(payConfig.getMchId())) {
+        if (!StringUtils.hasText(notifyMchId) || !notifyMchId.equals(payConfig.getMchId())) {
             throw new BizException("支付通知商户号不匹配，orderNo=" + orderInfo.getOrderNo());
         }
         String notifyAppid = getString(notifyMap, "appid");
-        if (StringUtils.hasText(notifyAppid) && !notifyAppid.equals(payConfig.getAppid())) {
+        if (!StringUtils.hasText(notifyAppid) || !notifyAppid.equals(payConfig.getAppid())) {
             throw new BizException("支付通知appid不匹配，orderNo=" + orderInfo.getOrderNo());
         }
 
         Integer notifyTotal = getWxPayTotalAmount(notifyMap);
         if (notifyTotal == null) {
-            log.warn("微信支付通知缺少金额字段，跳过金额校验，orderNo={}", orderInfo.getOrderNo());
-            return;
+            throw new BizException("支付通知缺少金额字段，orderNo=" + orderInfo.getOrderNo());
         }
         if (!notifyTotal.equals(orderInfo.getTotalFee())) {
             throw new BizException("支付通知金额与订单金额不一致，orderNo=" + orderInfo.getOrderNo());

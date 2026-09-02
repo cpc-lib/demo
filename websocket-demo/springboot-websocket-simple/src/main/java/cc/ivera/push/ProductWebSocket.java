@@ -1,8 +1,6 @@
 package cc.ivera.push;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,14 +31,12 @@ public class ProductWebSocket {
     // 静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
     private static final AtomicInteger OnlineCount = new AtomicInteger(0);
 
-    // concurrent包的线程安全Set，用来存放每个客户端对应的ProductWebSocket对象。
-    private static CopyOnWriteArraySet<ProductWebSocket> webSocketSet = new CopyOnWriteArraySet<ProductWebSocket>();
+    // concurrent包的线程安全Set，用来存放所有客户端的连接会话。
+    // 注意：EndpointConfigure返回的是Spring单例，所有连接共享同一个ProductWebSocket实例，
+    // 因此不能把session、userId存为成员变量（会被连接间互相覆盖），需绑定到各自的Session上。
+    private static CopyOnWriteArraySet<Session> webSocketSet = new CopyOnWriteArraySet<Session>();
 
-    // 与某个客户端的连接会话，需要通过它来给客户端发送数据
-    private Session session;
-
-
-    private Logger log = LoggerFactory.getLogger(ProductWebSocket.class);
+    private static final Logger log = LoggerFactory.getLogger(ProductWebSocket.class);
 
     /**
      * 连接建立成功调用的方法
@@ -48,37 +44,35 @@ public class ProductWebSocket {
     @OnOpen
     public void onOpen(@PathParam("userId") String userId, Session session) {
         log.info("新客户端连入，用户id：" + userId);
-        this.session = session;
-        webSocketSet.add(this); // 加入set中
+        // 将userId绑定到该连接自己的session上
+        session.getUserProperties().put("userId", userId);
+        webSocketSet.add(session); // 加入set中
         addOnlineCount(); // 在线数加1
         if (userId != null) {
-            List<String> totalPushMsgs = new ArrayList<String>();
-            totalPushMsgs.add(userId + "连接成功-" + "-当前在线人数为：" + getOnlineCount());
-            if (totalPushMsgs != null && !totalPushMsgs.isEmpty()) {
-                totalPushMsgs.forEach(e -> sendMessage(e));
-            }
+            sendMessage(session, userId + "连接成功-" + "-当前在线人数为：" + getOnlineCount());
         }
-
     }
 
     /**
      * 连接关闭调用的方法
      */
     @OnClose
-    public void onClose() {
+    public void onClose(Session session) {
         log.info("一个客户端关闭连接");
-        webSocketSet.remove(this); // 从set中删除
+        webSocketSet.remove(session); // 从set中删除
         subOnlineCount(); // 在线数减1
     }
 
     /**
-     * 收到客户端消息后调用的方法
+     * 收到客户端消息后调用的方法，将消息转发给所有在线用户
      *
      * @param message 客户端发送过来的消息
      */
     @OnMessage
-    public void onMessage(String message, Session session) {
-        log.info("用户发送过来的消息为：" + message);
+    public void onMessage(String message, Session session) throws IOException {
+        String userId = (String) session.getUserProperties().get("userId");
+        log.info("用户" + userId + "发送过来的消息为：" + message);
+        sendInfo(userId + ": " + message);
     }
 
     /**
@@ -90,9 +84,12 @@ public class ProductWebSocket {
         error.printStackTrace();
     }
 
-    public void sendMessage(String message) {
+    /**
+     * 向指定客户端发送消息
+     */
+    public static void sendMessage(Session session, String message) {
         try {
-            this.session.getBasicRemote().sendText(message);
+            session.getBasicRemote().sendText(message);
             log.info("推送消息成功，消息为：" + message);
         } catch (IOException e) {
             e.printStackTrace();
@@ -103,8 +100,8 @@ public class ProductWebSocket {
      * 群发自定义消息
      */
     public static void sendInfo(String message) throws IOException {
-        for (ProductWebSocket productWebSocket : webSocketSet) {
-            productWebSocket.sendMessage(message);
+        for (Session session : webSocketSet) {
+            sendMessage(session, message);
         }
     }
 
@@ -117,6 +114,6 @@ public class ProductWebSocket {
     }
 
     public static synchronized void subOnlineCount() {
-        OnlineCount.decrementAndGet(); // 在线数加1
+        OnlineCount.decrementAndGet(); // 在线数减1
     }
 }

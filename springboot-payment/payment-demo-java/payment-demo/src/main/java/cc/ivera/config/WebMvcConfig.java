@@ -31,7 +31,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
-                        "/api/product/**",
+                        "/api/product/list",
                         "/api/auth/register",
                         "/api/auth/login",
                         "/api/auth/refresh",
@@ -50,6 +50,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/payment-app/**",
                         "/api/bill/**",
                         "/api/reconciliation/**",
+                        "/api/admin/products/**",
+                        "/api/admin/outbox/**",
                         "/api/order-info/list",
                         "/api/refund-info/list",
                         "/api/refund-info/approve/**",

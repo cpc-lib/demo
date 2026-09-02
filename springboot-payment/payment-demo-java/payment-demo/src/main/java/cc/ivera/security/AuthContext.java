@@ -35,6 +35,14 @@ public final class AuthContext {
         return user;
     }
 
+    public static AuthUser requireAdmin() {
+        AuthUser user = requireUser();
+        if (user.getRole() != UserRole.ADMIN) {
+            throw new ForbiddenException("无权执行该操作");
+        }
+        return user;
+    }
+
     public static void clear() {
         CURRENT_USER.remove();
     }

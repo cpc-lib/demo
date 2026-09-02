@@ -1,5 +1,6 @@
 package cc.ivera.entity;
 
+import cc.ivera.enums.InventoryStatus;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,4 +21,8 @@ public class OrderItem extends BaseEntity {
     private Integer quantity;
 
     private Integer subtotal;
+
+    private InventoryStatus inventoryStatus;
+
+    private Integer refundedQuantity;
 }

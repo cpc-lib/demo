@@ -66,12 +66,15 @@ public class WxPayController {
     @ApiOperation("调用统一下单API，生成支付二维码")
     @PostMapping("/native/{productId}")
     public R<Map<String, Object>> nativePay(@PathVariable @Positive(message = "商品ID必须大于0") Long productId,
-                                            @RequestParam(required = false) Long paymentAppId) {
+                                            @RequestParam(required = false) Long paymentAppId,
+                                            @RequestHeader("Idempotency-Key")
+                                            @NotBlank(message = "订单幂等键不能为空")
+                                            @Size(max = 64, message = "订单幂等键不能超过64个字符") String idempotencyKey) {
         AuthContext.requireShoppingUser();
         log.info("发起支付请求 v3，productId={}, paymentAppId={}", productId, paymentAppId);
 
         //返回支付二维码连接和订单号
-        Map<String, Object> map = wxPayOrderFacade.nativePay(productId, paymentAppId);
+        Map<String, Object> map = wxPayOrderFacade.nativePay(productId, paymentAppId, idempotencyKey);
 
         return R.ok().setData(map);
     }

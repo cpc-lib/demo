@@ -21,7 +21,7 @@ This migration is not a business feature change. It changes the database provide
 ### 2.1 Runtime datasource
 
 - Spring datasource uses `dm.jdbc.driver.DmDriver`.
-- Default URL is `jdbc:dm://192.168.220.200:5236?schema=SYSDBA&connectTimeout=30000` through environment placeholders.
+- Default URL is `jdbc:dm://192.168.1.200:5236?schema=SYSDBA&connectTimeout=30000` through environment placeholders.
 - Default username is `SYSDBA`.
 - Default password is `Cpc2026#@Dm` because DM8 initialization rejects passwords shorter than 9 characters.
 - The project no longer depends on `mysql-connector-java`; it depends on `com.dameng:DmJdbcDriver18`.
@@ -46,7 +46,7 @@ This migration is not a business feature change. It changes the database provide
 ## 3. Acceptance Criteria
 
 - [x] `pom.xml` contains the DM8 JDBC dependency and does not contain the MySQL JDBC dependency.
-- [x] `application.yml` points to `jdbc:dm://` using `dm.jdbc.driver.DmDriver` and defaults `DM_HOST` to `192.168.220.200`.
+- [x] `application.yml` points to `jdbc:dm://` using `dm.jdbc.driver.DmDriver` and defaults `DM_HOST` to `192.168.1.200`.
 - [x] Mapper SQL and service query wrappers do not use MySQL `limit 1` or `ifnull(...)`.
 - [x] DM8 initialization SQL exists under `env/sql/dm8/` and avoids MySQL DDL tokens such as `AUTO_INCREMENT`, `ENGINE=InnoDB`, `utf8mb4`, `json NULL`, `DROP TABLE IF EXISTS`, and `ON UPDATE CURRENT_TIMESTAMP`.
 - [x] DM8 Docker Compose and shell scripts exist for startup, shutdown, and SQL initialization.

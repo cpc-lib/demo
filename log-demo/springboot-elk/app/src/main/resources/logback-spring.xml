@@ -5,7 +5,7 @@
   <!--         基础变量           -->
   <!-- ========================= -->
   <property name="APP_NAME" value="${spring.application.name:-app}"/>
-  <property name="LOGSTASH_HOST" value="${LOGSTASH_HOST:-192.168.220.200}"/>
+  <property name="LOGSTASH_HOST" value="${LOGSTASH_HOST:-192.168.1.200}"/>
   <property name="LOGSTASH_PORT" value="${LOGSTASH_PORT:-5044}"/>
 
   <!-- ========================= -->

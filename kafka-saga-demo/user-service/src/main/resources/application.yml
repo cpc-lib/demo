@@ -5,12 +5,12 @@ spring:
   application:
     name: user-service
   datasource:
-    url: jdbc:mysql://192.168.220.200:3306/user_db?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+    url: jdbc:mysql://192.168.1.200:3306/user_db?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
     username: root
     password: cpc!23#@
     driver-class-name: com.mysql.cj.jdbc.Driver
   kafka:
-    bootstrap-servers: 192.168.220.200:9092
+    bootstrap-servers: 192.168.1.200:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer

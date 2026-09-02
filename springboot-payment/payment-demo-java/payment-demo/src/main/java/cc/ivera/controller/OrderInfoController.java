@@ -4,10 +4,12 @@ import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.dto.CheckoutRequest;
 import cc.ivera.enums.OrderStatus;
+import cc.ivera.exception.ConflictException;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
 import cc.ivera.service.CheckoutService;
 import cc.ivera.service.OrderInfoService;
+import cc.ivera.util.OrderRequestFingerprint;
 import cc.ivera.vo.CheckoutResult;
 import cc.ivera.vo.R;
 import io.swagger.annotations.Api;
@@ -61,12 +63,22 @@ public class OrderInfoController {
 
     @ApiOperation("购物车结算")
     @PostMapping("/checkout")
-    public R<CheckoutResult> checkout(@RequestBody @javax.validation.Valid CheckoutRequest request) {
+    public R<CheckoutResult> checkout(
+            @RequestBody @javax.validation.Valid CheckoutRequest request,
+            @RequestHeader("Idempotency-Key")
+            @NotBlank(message = "订单幂等键不能为空")
+            @Size(max = 64, message = "订单幂等键不能超过64个字符") String idempotencyKey
+    ) {
         AuthUser authUser = AuthContext.requireShoppingUser();
+        if (request.getCheckoutRequestId() != null
+                && !idempotencyKey.equals(request.getCheckoutRequestId())) {
+            throw new ConflictException("请求头与请求体的订单幂等键不一致");
+        }
         CheckoutResult result = checkoutService.checkout(
                 authUser.getUserId(),
                 request.getPaymentAppId(),
-                request.getCheckoutRequestId()
+                idempotencyKey,
+                OrderRequestFingerprint.cartCheckout(request.getPaymentAppId())
         );
         return R.ok(result);
     }

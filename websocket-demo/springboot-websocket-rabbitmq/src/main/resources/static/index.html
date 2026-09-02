@@ -1,54 +1,192 @@
 <!DOCTYPE html>
-<html>
-  <head>
-      <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-      <title>Spring Boot WebSocket Chat Application | CalliCoder</title>
-      <link rel="stylesheet" href="/css/main.css" />
-  </head>
-  <body>
-    <noscript>
-      <h2>Sorry! Your browser doesn't support Javascript</h2>
-    </noscript>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#5b5bd6" />
+    <title>WebSocket 消息室</title>
+    <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+<noscript>
+    <div class="noscript-tip">当前浏览器未启用 JavaScript，无法使用消息室。</div>
+</noscript>
 
-    <div id="username-page">
-        <div class="username-page-container">
-            <h1 class="title">接收消息测试</h1>
+<div id="username-page" class="login-page">
+    <div class="login-shell">
+        <section class="login-intro" aria-label="产品介绍">
+            <div class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7.5 18.5 4 20l1.2-3.8A7.8 7.8 0 0 1 4 12C4 7.6 7.6 4 12 4s8 3.6 8 8-3.6 8-8 8c-1.6 0-3.2-.5-4.5-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 10.5h8M8 13.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div>
+                <p class="product-name">RabbitMQ Chat</p>
+                <h1>一个更清爽的实时消息室</h1>
+                <p class="intro-copy">支持在线成员查看、群发消息和一对一私聊。输入用户名即可加入当前聊天室。</p>
+            </div>
+            <div class="feature-list" aria-label="功能">
+                <div class="feature-item"><span class="feature-dot"></span>在线状态实时同步</div>
+                <div class="feature-item"><span class="feature-dot"></span>群聊 / 私聊快速切换</div>
+                <div class="feature-item"><span class="feature-dot"></span>Spring WebSocket + RabbitMQ STOMP</div>
+            </div>
+        </section>
+
+        <section class="login-card">
+            <div class="login-card-header">
+                <span class="login-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div>
+                    <h2>进入消息室</h2>
+                    <p>使用一个用户名标识你的身份</p>
+                </div>
+            </div>
             <form id="usernameForm" name="usernameForm">
-                <div class="form-group">
-                    <input type="text" id="name" placeholder="Username" autocomplete="off" class="form-control" />
+                <label class="field-label" for="name">用户名</label>
+                <div class="input-control input-control-large">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" id="name" placeholder="例如：zhangsan" autocomplete="off" maxlength="32" required />
                 </div>
-                <div class="form-group">
-                    <button type="submit" class="accent username-submit">进入消息接收室</button>
-                </div>
+                <button type="submit" class="primary-btn username-submit">
+                    <span>进入消息室</span>
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <p class="login-hint">无需注册，用户名仅用于本次连接。</p>
             </form>
-        </div>
+        </section>
     </div>
+</div>
 
-    <div id="chat-page" class="hidden">
-        <div class="chat-container">
-            <div class="chat-header">
-                <h2>消息测试</h2>
+<div id="chat-page" class="chat-page hidden">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-mark brand-mark-small" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M7.5 18.5 4 20l1.2-3.8A7.8 7.8 0 0 1 4 12C4 7.6 7.6 4 12 4s8 3.6 8 8-3.6 8-8 8c-1.6 0-3.2-.5-4.5-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8 10.5h8M8 13.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <strong>消息室</strong>
+                    <span>RabbitMQ STOMP</span>
+                </div>
             </div>
-            <div class="connecting">
-                Connecting...
-            </div>
-            <ul id="messageArea">
 
-            </ul>
-            <form id="messageForm" name="messageForm" nameForm="messageForm">
-                <div class="form-group">
-                    <div class="input-group clearfix">
-                        <input type="text" id="message" placeholder="Type a message..." autocomplete="off" class="form-control"/>
-                        <button type="submit" class="primary">Send</button>
+            <div class="room-summary">
+                <div class="room-summary-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2.5 19a5.5 5.5 0 0 1 11 0M10.5 19a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <span>当前房间</span>
+                    <strong>公共消息室</strong>
+                </div>
+                <span id="onlineCount" class="online-count">0 在线</span>
+            </div>
+
+            <div class="members-section">
+                <div class="section-heading">
+                    <span>在线成员</span>
+                    <button id="refreshUsersBtn" class="icon-btn" type="button" title="刷新在线成员" aria-label="刷新在线成员">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M20 6v5h-5M4 18v-5h5M18.2 9A7 7 0 0 0 6.1 6.8L4 11m16 2-2.1 4.2A7 7 0 0 1 5.8 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="onlineUsersList" class="members-list" aria-live="polite"></div>
+                <div id="onlineUsersText" class="sr-only">在线用户：-</div>
+            </div>
+
+            <div class="profile-card">
+                <div id="currentUserAvatar" class="profile-avatar">?</div>
+                <div class="profile-info">
+                    <strong id="currentUser">-</strong>
+                    <span><i class="presence-dot"></i> 已连接</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="chat-panel">
+            <header class="chat-header">
+                <div class="chat-title-wrap">
+                    <div class="chat-title-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M7.5 18.5 4 20l1.2-3.8A7.8 7.8 0 0 1 4 12C4 7.6 7.6 4 12 4s8 3.6 8 8-3.6 8-8 8c-1.6 0-3.2-.5-4.5-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 id="conversationTitle">所有在线用户</h2>
+                        <p id="conversationSubtitle">当前为群聊模式，消息会发送给所有在线成员</p>
                     </div>
                 </div>
-            </form>
-        </div>
-    </div>
 
-    <script src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
-    <script src="https://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
-    <script src="/js/main.js"></script>
-  </body>
+                <div class="target-control">
+                    <label for="targetUser">发送对象</label>
+                    <div class="select-wrap">
+                        <select id="targetUser" class="form-control" aria-label="选择消息发送对象">
+                            <option value="all">所有在线用户（群发）</option>
+                        </select>
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="m8 10 4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </header>
+
+            <div class="connection-banner connecting">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>正在连接 WebSocket 服务...</span>
+            </div>
+
+            <section class="messages-wrap" aria-label="消息列表">
+                <ul id="messageArea" class="message-area">
+                    <li id="emptyMessageState" class="empty-message-state">
+                        <div class="empty-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M7.5 18.5 4 20l1.2-3.8A7.8 7.8 0 0 1 4 12C4 7.6 7.6 4 12 4s8 3.6 8 8-3.6 8-8 8c-1.6 0-3.2-.5-4.5-1.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 10.5h8M8 13.5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h3>开始聊天吧</h3>
+                        <p>你可以给所有在线成员群发，也可以从左侧成员列表选择一个用户私聊。</p>
+                    </li>
+                </ul>
+            </section>
+
+            <footer class="composer">
+                <div id="composerTarget" class="composer-target">
+                    <span class="target-dot"></span>
+                    <span>发送给：<strong>所有在线用户</strong></span>
+                </div>
+                <form id="messageForm" name="messageForm" class="message-form">
+                    <div class="message-input-wrap">
+                        <input type="text" id="message" placeholder="输入消息，按 Enter 发送..." autocomplete="off" maxlength="1000" />
+                    </div>
+                    <button type="submit" class="send-btn" aria-label="发送消息">
+                        <span>发送</span>
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="m21 3-7.5 18-3.1-7.4L3 10.5 21 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path d="m10.4 13.6 4.1-4.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </form>
+            </footer>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
+<script src="https://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="/js/main.js"></script>
+</body>
 </html>

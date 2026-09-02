@@ -6,7 +6,7 @@ spring:
     name: user-platform-demo
 
   datasource:
-    url: jdbc:mysql://192.168.220.200:3306/user_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://192.168.1.200:3306/user_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -18,7 +18,7 @@ spring:
       max-lifetime: 600000
 
   redis:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 6379
     lettuce:
       pool:
@@ -29,10 +29,10 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://192.168.220.200:27017/user_demo
+      uri: mongodb://192.168.1.200:27017/user_demo
 
   kafka:
-    bootstrap-servers: 192.168.220.200:9092
+    bootstrap-servers: 192.168.1.200:9092
     producer:
       acks: all
       properties:
@@ -59,5 +59,5 @@ app:
   kafka:
     topic: user-change-v1
   es:
-    hosts: http://192.168.220.200:9200
+    hosts: http://192.168.1.200:9200
     index: user_search_v1

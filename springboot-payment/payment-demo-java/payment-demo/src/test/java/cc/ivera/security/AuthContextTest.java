@@ -29,4 +29,19 @@ class AuthContextTest {
 
         assertThrows(ForbiddenException.class, AuthContext::requireShoppingUser);
     }
+
+    @Test
+    void requireAdminAllowsOnlyAdminRole() {
+        AuthUser admin = new AuthUser(4L, "operator", UserRole.ADMIN);
+        AuthContext.setUser(admin);
+
+        assertSame(admin, AuthContext.requireAdmin());
+    }
+
+    @Test
+    void requireAdminRejectsUserRole() {
+        AuthContext.setUser(new AuthUser(5L, "buyer", UserRole.USER));
+
+        assertThrows(ForbiddenException.class, AuthContext::requireAdmin);
+    }
 }

@@ -7,7 +7,7 @@ spring:
     timeout-per-shutdown-phase: 30s
 
   kafka:
-    bootstrap-servers: 192.168.220.200:9092
+    bootstrap-servers: 192.168.1.200:9092
     consumer:
       group-id: demo-group
       auto-offset-reset: earliest

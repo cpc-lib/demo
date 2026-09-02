@@ -331,7 +331,7 @@ public class WxPayOrderService implements WxPayOrderFacade {
         params.put("body", orderInfo.getTitle());
         params.put("out_trade_no", orderInfo.getOrderNo());
         params.put("total_fee", String.valueOf(orderInfo.getTotalFee()));
-        params.put("spbill_create_ip", StringUtils.hasText(remoteAddr) ? remoteAddr : "192.168.220.200");
+        params.put("spbill_create_ip", StringUtils.hasText(remoteAddr) ? remoteAddr : "192.168.1.200");
         params.put("notify_url", buildNotifyUrl(payConfig, WxNotifyType.NATIVE_NOTIFY_V2));
         params.put("trade_type", "NATIVE");
 

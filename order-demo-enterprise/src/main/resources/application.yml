@@ -7,14 +7,14 @@ spring:
 
   # Redis
   redis:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 6379
     timeout: 2s
     password: cpc!23#@
 
   # Kafka
   kafka:
-    bootstrap-servers: 192.168.220.200:9092
+    bootstrap-servers: 192.168.1.200:9092
     producer:
       acks: all
       retries: 10
@@ -51,7 +51,7 @@ spring.shardingsphere:
     ds0:
       type: com.zaxxer.hikari.HikariDataSource
       driver-class-name: com.mysql.cj.jdbc.Driver
-      jdbc-url: jdbc:mysql://192.168.220.200:3306/order_ds_0?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+      jdbc-url: jdbc:mysql://192.168.1.200:3306/order_ds_0?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
       username: root
       password: cpc!23#@
       hikari:
@@ -60,7 +60,7 @@ spring.shardingsphere:
     ds1:
       type: com.zaxxer.hikari.HikariDataSource
       driver-class-name: com.mysql.cj.jdbc.Driver
-      jdbc-url: jdbc:mysql://192.168.220.200:3306/order_ds_1?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+      jdbc-url: jdbc:mysql://192.168.1.200:3306/order_ds_1?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
       username: root
       password: cpc!23#@
       hikari:
@@ -135,7 +135,7 @@ spring.shardingsphere:
 # ES
 app:
   es:
-    hosts: 192.168.220.200:9200
+    hosts: 192.168.1.200:9200
     index: order_v1
 
   kafka:

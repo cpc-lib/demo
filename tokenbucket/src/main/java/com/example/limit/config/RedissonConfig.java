@@ -14,7 +14,7 @@ public class RedissonConfig {
     public RedissonClient redissonClient() {
         Config config = new Config();
         config.setCodec(new StringCodec());
-        config.useSingleServer().setAddress("redis://192.168.220.200:6379").setDatabase(0).setPassword("cpc!23#@");
+        config.useSingleServer().setAddress("redis://192.168.1.200:6379").setDatabase(0).setPassword("cpc!23#@");
         return Redisson.create(config);
     }
 

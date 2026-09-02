@@ -9,6 +9,7 @@ import cc.ivera.controller.RefundApplicationController;
 import cc.ivera.dto.RefundRequest;
 import cc.ivera.entity.Product;
 import cc.ivera.enums.OrderStatus;
+import cc.ivera.enums.ProductStatus;
 import cc.ivera.enums.UserRole;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
@@ -52,22 +53,34 @@ class PublicApiCharacterizationTest {
     }
 
     @Test
-    @DisplayName("现状: ProductController.list 使用 productList 作为商品列表 data key")
+    @DisplayName("SPEC-010: ProductController.list 使用 productList 并只暴露公开库存视图")
+    @SuppressWarnings("unchecked")
     void current_product_list_endpoint_uses_product_list_data_key() {
         ProductService productService = mock(ProductService.class);
         Product product = new Product();
         product.setId(1L);
         product.setTitle("Java课程");
         product.setPrice(1);
+        product.setStatus(ProductStatus.ON_SHELF);
+        product.setAvailableStock(3);
         List<Product> products = Arrays.asList(product);
-        when(productService.list()).thenReturn(products);
+        when(productService.listPublicSaleable()).thenReturn(products);
         ProductController controller = new ProductController(productService);
 
         R<Map<String, Object>> response = controller.list();
 
         assertThat(response.getCode()).isEqualTo(0);
         assertThat(response.getMessage()).isEqualTo("成功");
-        assertThat(response.getData()).containsEntry("productList", products);
+        List<Map<String, Object>> productList =
+                (List<Map<String, Object>>) response.getData().get("productList");
+        assertThat(productList).hasSize(1);
+        Map<String, Object> view = productList.get(0);
+        assertThat(view).containsEntry("id", 1L)
+                .containsEntry("title", "Java课程")
+                .containsEntry("price", 1)
+                .containsEntry("availableStock", 3)
+                .containsEntry("saleable", true);
+        assertThat(view).doesNotContainKeys("status", "lockedStock", "soldStock", "version");
     }
 
     @Test

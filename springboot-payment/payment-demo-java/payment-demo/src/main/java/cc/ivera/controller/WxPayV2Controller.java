@@ -1,13 +1,17 @@
 package cc.ivera.controller;
 
 import cc.ivera.config.WxPayConfig;
+import cc.ivera.config.PaymentConfigLoader;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.enums.OrderStatus;
+import cc.ivera.enums.PayType;
 import cc.ivera.exception.BizException;
+import cc.ivera.exception.ConflictException;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.security.AuthContext;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
+import cc.ivera.service.InventoryService;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.util.HttpUtils;
 import cc.ivera.vo.R;
@@ -21,7 +25,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +52,8 @@ public class WxPayV2Controller {
 
     private final PaymentInfoService paymentInfoService;
 
+    private final InventoryService inventoryService;
+
     private final DistributedLockTemplate distributedLockTemplate;
 
     private final TransactionTemplate transactionTemplate;
@@ -57,6 +65,7 @@ public class WxPayV2Controller {
         WxPayConfig wxPayConfig,
         OrderInfoService orderInfoService,
         PaymentInfoService paymentInfoService,
+        InventoryService inventoryService,
         DistributedLockTemplate distributedLockTemplate,
         TransactionTemplate transactionTemplate,
         StringRedisTemplate stringRedisTemplate
@@ -65,6 +74,7 @@ public class WxPayV2Controller {
         this.wxPayConfig = wxPayConfig;
         this.orderInfoService = orderInfoService;
         this.paymentInfoService = paymentInfoService;
+        this.inventoryService = inventoryService;
         this.distributedLockTemplate = distributedLockTemplate;
         this.transactionTemplate = transactionTemplate;
         this.stringRedisTemplate = stringRedisTemplate;
@@ -80,13 +90,21 @@ public class WxPayV2Controller {
     @PostMapping("/native/{productId}")
     public R<Map<String, Object>> createNative(@PathVariable @Positive(message = "商品ID必须大于0") Long productId,
                                                @RequestParam(required = false) Long paymentAppId,
+                                               @RequestHeader("Idempotency-Key")
+                                               @NotBlank(message = "订单幂等键不能为空")
+                                               @Size(max = 64, message = "订单幂等键不能超过64个字符") String idempotencyKey,
                                                HttpServletRequest request) {
         AuthContext.requireShoppingUser();
         log.info("发起支付请求 v2，productId={}, paymentAppId={}", productId, paymentAppId);
 
         String remoteAddr = request.getRemoteAddr();
         //修改code_url可以重新获取到新的地址信息
-        Map<String, Object> map = wxPayOrderFacade.nativePayV2(productId, remoteAddr, paymentAppId);
+        Map<String, Object> map = wxPayOrderFacade.nativePayV2(
+                productId,
+                remoteAddr,
+                paymentAppId,
+                idempotencyKey
+        );
         return R.ok().setData(map);
     }
 
@@ -158,7 +176,7 @@ public class WxPayV2Controller {
                     return wxNotifyFail("金额校验失败");
                 }
 
-                String lockKey = "payment:wx:v2:notify:pay:" + orderNo;
+                String lockKey = "payment:order:transition:" + orderNo;
 
                 // 使用 Redisson 分布式锁（leaseTime=-1 开启看门狗自动续期）
                 distributedLockTemplate.execute(lockKey, 5000L, -1L, () ->
@@ -225,6 +243,12 @@ public class WxPayV2Controller {
         if (notifyTotalFee == null || !notifyTotalFee.equals(lockedOrder.getTotalFee().longValue())) {
             throw new BizException("微信支付v2通知金额与本地订单金额不一致，orderNo=" + orderNo);
         }
+        if (!PayType.WXPAY.getType().equals(lockedOrder.getPaymentType())
+                || (org.springframework.util.StringUtils.hasText(lockedOrder.getPaymentChannelCode())
+                && !PaymentConfigLoader.CHANNEL_WXPAY.equals(lockedOrder.getPaymentChannelCode()))) {
+            throw new BizException("微信支付v2通知支付渠道与本地订单不匹配，orderNo=" + orderNo);
+        }
+        validateWxPayV2Merchant(notifyMap, orderNo);
         if (!OrderStatus.NOTPAY.getType().equals(lockedOrder.getOrderStatus())) {
             log.info("微信支付v2通知重复或订单状态已变化，幂等忽略 ===> orderNo={}, transactionId={}, currentStatus={}",
                     orderNo, transactionId, lockedOrder.getOrderStatus());
@@ -237,6 +261,9 @@ public class WxPayV2Controller {
                 OrderStatus.NOTPAY,
                 OrderStatus.SUCCESS);
         if (updated) {
+            if (!inventoryService.commitPayment(orderNo)) {
+                throw new ConflictException("订单库存状态不一致，支付状态未提交");
+            }
             paymentInfoService.createPaymentInfoForWxPayV2(notifyMap, body);
             log.info("微信支付v2通知处理完成，orderNo={}, transactionId={}", orderNo, transactionId);
         } else {
@@ -246,6 +273,21 @@ public class WxPayV2Controller {
 
     private String wxNotifySuccess() {
         return wxNotifyResponse("SUCCESS", "OK");
+    }
+
+    private void validateWxPayV2Merchant(Map<String, String> notifyMap, String orderNo) {
+        String notifyAppId = notifyMap.get("appid");
+        if (org.springframework.util.StringUtils.hasText(notifyAppId)
+                && org.springframework.util.StringUtils.hasText(wxPayConfig.getAppid())
+                && !notifyAppId.equals(wxPayConfig.getAppid())) {
+            throw new BizException("微信支付v2通知appid不匹配，orderNo=" + orderNo);
+        }
+        String notifyMchId = notifyMap.get("mch_id");
+        if (org.springframework.util.StringUtils.hasText(notifyMchId)
+                && org.springframework.util.StringUtils.hasText(wxPayConfig.getMchId())
+                && !notifyMchId.equals(wxPayConfig.getMchId())) {
+            throw new BizException("微信支付v2通知商户号不匹配，orderNo=" + orderNo);
+        }
     }
 
     private String wxNotifyFail(String message) {

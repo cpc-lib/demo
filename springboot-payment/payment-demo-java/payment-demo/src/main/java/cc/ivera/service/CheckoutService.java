@@ -4,5 +4,6 @@ import cc.ivera.vo.CheckoutResult;
 
 public interface CheckoutService {
 
-    CheckoutResult checkout(Long userId, Long paymentAppId, String checkoutRequestId);
+    CheckoutResult checkout(Long userId, Long paymentAppId,
+                            String idempotencyKey, String requestFingerprint);
 }

@@ -8,7 +8,7 @@ app:
     max-results: 20
     base-url: https://api.tavily.com
   milvus:
-    uri: "http://192.168.220.200:19530"
+    uri: "http://192.168.1.200:19530"
     collection: "kb_documents"
     dimension: 384
     # minScore in [0,1], higher => stricter retrieval

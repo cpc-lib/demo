@@ -3,7 +3,10 @@ package cc.ivera.service.impl;
 import cc.ivera.entity.Cart;
 import cc.ivera.entity.CartItem;
 import cc.ivera.entity.Product;
+import cc.ivera.enums.ProductStatus;
 import cc.ivera.exception.BizException;
+import cc.ivera.exception.ConflictException;
+import cc.ivera.exception.NotFoundException;
 import cc.ivera.mapper.CartItemMapper;
 import cc.ivera.mapper.CartMapper;
 import cc.ivera.mapper.ProductMapper;
@@ -75,12 +78,17 @@ public class CartServiceImpl implements CartService {
             if (subtotal > Integer.MAX_VALUE || totalAmount > Integer.MAX_VALUE) {
                 throw new BizException("购物车金额超出系统限制");
             }
+            String unavailableReason = unavailableReason(product, cartItem.getQuantity());
             views.add(new CartItemView(
                     product.getId(),
                     product.getTitle(),
                     product.getPrice(),
                     cartItem.getQuantity(),
-                    (int) subtotal
+                    (int) subtotal,
+                    product.getStatus(),
+                    product.getAvailableStock(),
+                    unavailableReason == null,
+                    unavailableReason
             ));
             totalQuantity += cartItem.getQuantity();
         }
@@ -93,14 +101,16 @@ public class CartServiceImpl implements CartService {
         validateQuantity(quantity);
         Product product = productMapper.selectById(productId);
         if (product == null) {
-            throw new BizException("课程不存在");
+            throw new NotFoundException("商品不存在");
         }
+        requirePurchasable(product, quantity);
 
         Cart cart = getOrCreateCartForUpdate(userId);
         CartItem existing = cartItemMapper.selectByCartAndProduct(cart.getId(), productId);
         if (existing != null) {
             int targetQuantity = existing.getQuantity() + quantity;
             validateQuantity(targetQuantity);
+            requirePurchasable(product, targetQuantity);
             existing.setQuantity(targetQuantity);
             cartItemMapper.updateById(existing);
             return;
@@ -125,6 +135,11 @@ public class CartServiceImpl implements CartService {
         if (item == null) {
             throw new BizException("购物车中不存在该课程");
         }
+        Product product = productMapper.selectById(productId);
+        if (product == null) {
+            throw new NotFoundException("商品不存在");
+        }
+        requirePurchasable(product, quantity);
         item.setQuantity(quantity);
         cartItemMapper.updateById(item);
     }
@@ -163,6 +178,32 @@ public class CartServiceImpl implements CartService {
         if (quantity == null || quantity < 1 || quantity > MAX_QUANTITY) {
             throw new BizException("课程数量必须在1到99之间");
         }
+    }
+
+    private void requirePurchasable(Product product, int quantity) {
+        String reason = unavailableReason(product, quantity);
+        if ("OFF_SHELF".equals(reason)) {
+            throw new ConflictException("商品已下架");
+        }
+        if ("SOLD_OUT".equals(reason)) {
+            throw new ConflictException("商品已售罄");
+        }
+        if ("INSUFFICIENT_STOCK".equals(reason)) {
+            throw new ConflictException("商品可用库存不足");
+        }
+    }
+
+    private String unavailableReason(Product product, int quantity) {
+        if (!ProductStatus.ON_SHELF.equals(product.getStatus())) {
+            return "OFF_SHELF";
+        }
+        if (product.getAvailableStock() == null || product.getAvailableStock() <= 0) {
+            return "SOLD_OUT";
+        }
+        if (quantity > product.getAvailableStock()) {
+            return "INSUFFICIENT_STOCK";
+        }
+        return null;
     }
 
     private CartView emptyCart() {

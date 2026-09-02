@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分布式 SHA-256 在线计算</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<main class="page-shell">
+    <section class="card">
+        <header class="hero">
+            <div class="logo">#</div>
+            <div>
+                <h1>SHA-256 在线计算</h1>
+                <p>大文件分片直传对象存储，支持并发上传和断点续传；合并完成后由独立 Worker 异步计算。</p>
+            </div>
+        </header>
+
+        <div class="architecture-row" aria-label="system architecture">
+            <span>Browser Parts</span><b>→</b><span id="storageBadge">S3</span><b>→</b><span>Complete</span><b>→</b><span>OUTBOX</span><b>→</b><span id="brokerBadge">MQ</span><b>→</b><span>Worker</span>
+        </div>
+
+        <div class="feature-strip">
+            <span>并发分片</span>
+            <span>断点续传</span>
+            <span>预签名直传</span>
+            <span>服务端合并校验</span>
+        </div>
+
+        <div id="dropZone" class="drop-zone" tabindex="0">
+            <input id="fileInput" type="file" hidden>
+            <div class="upload-icon">↑</div>
+            <strong>拖拽大文件到这里</strong>
+            <span>或者点击选择文件；中断后重新选择同一文件即可继续</span>
+        </div>
+
+        <div id="fileInfo" class="file-info hidden">
+            <div>
+                <div id="fileName" class="file-name"></div>
+                <div id="fileSize" class="muted"></div>
+            </div>
+            <div class="action-row">
+                <button id="abortBtn" class="danger-btn hidden">取消上传</button>
+                <button id="startBtn" class="primary-btn">开始分片上传</button>
+            </div>
+        </div>
+
+        <section id="taskPanel" class="task-panel hidden">
+            <div class="task-head">
+                <span id="statusText">准备中</span>
+                <span id="progressText">0%</span>
+            </div>
+            <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+            <div id="detailText" class="muted detail-text"></div>
+            <div id="taskMeta" class="task-meta"></div>
+        </section>
+
+        <section id="resultPanel" class="result-panel hidden">
+            <div class="result-title">SHA-256</div>
+            <div class="hash-row">
+                <code id="hashValue"></code>
+                <button id="copyBtn" class="secondary-btn">复制</button>
+            </div>
+        </section>
+
+        <div id="errorBox" class="error-box hidden"></div>
+    </section>
+</main>
+<script src="/js/app.js"></script>
+</body>
+</html>

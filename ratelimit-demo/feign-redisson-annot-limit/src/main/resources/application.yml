@@ -7,7 +7,7 @@ spring:
   data:
     redis:
       port: 6379
-      host: 192.168.220.200
+      host: 192.168.1.200
       password: cpc!23#@
 
 external:

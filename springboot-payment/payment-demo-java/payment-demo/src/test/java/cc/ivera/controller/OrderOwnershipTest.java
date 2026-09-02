@@ -5,6 +5,7 @@ import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.enums.UserRole;
 import cc.ivera.exception.ForbiddenException;
+import cc.ivera.exception.ConflictException;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
 import cc.ivera.service.CheckoutService;
@@ -20,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class OrderOwnershipTest {
@@ -39,7 +41,12 @@ class OrderOwnershipTest {
         AuthContext.setUser(user);
         CheckoutRequest request = new CheckoutRequest(9L, "request-42");
         CheckoutResult checkoutResult = new CheckoutResult("ORDER-42", 5000, 9L, "WXPAY", "未支付");
-        when(checkoutService.checkout(42L, 9L, "request-42")).thenReturn(checkoutResult);
+        when(checkoutService.checkout(
+                42L,
+                9L,
+                "request-42",
+                "59c95d4442512ddf1b5f88e007778060b43e5ab64d7e2f472adba89581b7b40d"
+        )).thenReturn(checkoutResult);
         OrderInfo order = new OrderInfo();
         order.setOrderNo("ORDER-42");
         when(orderInfoService.listOrderByUserId(42L)).thenReturn(Collections.singletonList(order));
@@ -47,11 +54,16 @@ class OrderOwnershipTest {
         item.setProductTitle("Java");
         when(orderInfoService.listOrderItemsForUser("ORDER-42", user)).thenReturn(Arrays.asList(item));
 
-        assertEquals(checkoutResult, controller.checkout(request).getData());
+        assertEquals(checkoutResult, controller.checkout(request, "request-42").getData());
         assertEquals(order, ((java.util.List<?>) controller.myList().getData().get("list")).get(0));
         assertEquals(item, controller.orderItems("ORDER-42").getData().get(0));
 
-        verify(checkoutService).checkout(42L, 9L, "request-42");
+        verify(checkoutService).checkout(
+                42L,
+                9L,
+                "request-42",
+                "59c95d4442512ddf1b5f88e007778060b43e5ab64d7e2f472adba89581b7b40d"
+        );
         verify(orderInfoService).listOrderByUserId(42L);
         verify(orderInfoService).listOrderItemsForUser("ORDER-42", user);
     }
@@ -72,6 +84,19 @@ class OrderOwnershipTest {
         AuthContext.setUser(new AuthUser(1L, "admin", UserRole.ADMIN));
 
         assertThrows(ForbiddenException.class,
-                () -> controller.checkout(new CheckoutRequest(9L, "admin-checkout")));
+                () -> controller.checkout(
+                        new CheckoutRequest(9L, "admin-checkout"),
+                        "admin-checkout"
+                ));
+    }
+
+    @Test
+    void transitionBodyKeyMustMatchTheHeader() {
+        AuthContext.setUser(new AuthUser(42L, "alice", UserRole.USER));
+
+        assertThrows(ConflictException.class,
+                () -> controller.checkout(new CheckoutRequest(9L, "body-key"), "header-key"));
+
+        verifyNoInteractions(checkoutService);
     }
 }

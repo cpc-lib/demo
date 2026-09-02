@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/mysql:8.4
+    container_name: idem-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: idem_demo
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./infra/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - idem_mysql_data:/var/lib/mysql
+
+  redis:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/redis:7.4-alpine
+    container_name: idem-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - idem_redis_data:/data
+
+  nacos:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/nacos-server:v3.0.3
+    container_name: idem-nacos
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      NACOS_AUTH_TOKEN: "SecretKey012345678901234567890123456789012345678901234567890123456789"
+      NACOS_AUTH_IDENTITY_KEY: "serverIdentity"
+      NACOS_AUTH_IDENTITY_VALUE: "security"
+    ports:
+      - "8088:8080"
+      - "8848:8848"
+      - "9848:9848"
+
+  nginx:
+    image: registry.cn-hangzhou.aliyuncs.com/snow-io/nginx:stable-alpine
+    container_name: idem-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../frontend/dist:/usr/share/nginx/html:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  idem_mysql_data:
+  idem_redis_data:

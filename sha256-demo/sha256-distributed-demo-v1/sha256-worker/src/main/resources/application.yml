@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: sha256-worker
+  main:
+    web-application-type: none
+  data:
+    redis:
+      host: ${REDIS_HOST:192.168.1.200}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:192.168.1.200}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:sha256}
+    password: ${RABBITMQ_PASSWORD:sha256-demo}
+    listener:
+      simple:
+        acknowledge-mode: auto
+        default-requeue-rejected: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:192.168.1.200:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+    listener:
+      ack-mode: record
+
+sha256:
+  broker: ${SHA256_BROKER:rabbitmq}
+  storage:
+    provider: ${SHA256_STORAGE_PROVIDER:minio}
+    endpoint: ${SHA256_STORAGE_ENDPOINT:http://192.168.1.200:9000}
+    region: ${SHA256_STORAGE_REGION:us-east-1}
+    access-key: ${SHA256_STORAGE_ACCESS_KEY:sha256minio}
+    secret-key: ${SHA256_STORAGE_SECRET_KEY:sha256-minio-secret}
+    bucket: ${SHA256_STORAGE_BUCKET:sha256-files}
+    path-style-access: ${SHA256_STORAGE_PATH_STYLE:true}
+    chunked-encoding: ${SHA256_STORAGE_CHUNKED_ENCODING:true}
+    auto-create-bucket: ${SHA256_STORAGE_AUTO_CREATE_BUCKET:true}
+    delete-after-success: ${SHA256_STORAGE_DELETE_AFTER_SUCCESS:true}
+  task:
+    ttl-minutes: ${SHA256_TASK_TTL_MINUTES:30}
+    lock-ttl-minutes: ${SHA256_LOCK_TTL_MINUTES:60}
+  worker:
+    concurrency: ${SHA256_WORKER_CONCURRENCY:4}
+    progress-step-mb: ${SHA256_PROGRESS_STEP_MB:8}
+  rabbit:
+    exchange: ${SHA256_RABBIT_EXCHANGE:sha256.exchange}
+    queue: ${SHA256_RABBIT_QUEUE:sha256.tasks}
+    routing-key: ${SHA256_RABBIT_ROUTING_KEY:sha256.calculate}
+    retry-exchange: ${SHA256_RABBIT_RETRY_EXCHANGE:sha256.retry.exchange}
+    retry-queue: ${SHA256_RABBIT_RETRY_QUEUE:sha256.tasks.retry}
+    retry-routing-key: ${SHA256_RABBIT_RETRY_ROUTING_KEY:sha256.retry}
+    retry-delay-ms: ${SHA256_RABBIT_RETRY_DELAY_MS:5000}
+    max-retries: ${SHA256_RABBIT_MAX_RETRIES:3}
+    dlx: ${SHA256_RABBIT_DLX:sha256.dlx}
+    dlq: ${SHA256_RABBIT_DLQ:sha256.tasks.dlq}
+    dlq-routing-key: ${SHA256_RABBIT_DLQ_ROUTING_KEY:sha256.dead}
+  kafka:
+    topic: ${SHA256_KAFKA_TOPIC:sha256.tasks}
+    group-id: ${SHA256_KAFKA_GROUP_ID:sha256-workers}
+    retry:
+      attempts: ${SHA256_KAFKA_RETRY_ATTEMPTS:4}
+      delay-ms: ${SHA256_KAFKA_RETRY_DELAY_MS:5000}
+      multiplier: ${SHA256_KAFKA_RETRY_MULTIPLIER:2.0}
+      max-delay-ms: ${SHA256_KAFKA_RETRY_MAX_DELAY_MS:60000}

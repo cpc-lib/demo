@@ -389,14 +389,14 @@ spring:
   application:
     name: payment-demo
   rabbitmq:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 5672
   redis:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 6379
     password: cpc!23#@
   datasource:
-    url: jdbc:mysql://192.168.220.200:3308/payment_demo_v1?...
+    url: jdbc:mysql://192.168.1.200:3308/payment_demo_v1?...
     username: root
     password: cpc!23#@
 

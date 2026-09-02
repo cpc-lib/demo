@@ -10,9 +10,9 @@ import java.util.List;
 
 public interface OrderInfoService extends IService<OrderInfo> {
 
-    OrderInfo createOrReuseOrder(Long productId, String paymentType);
-
-    OrderInfo createOrReuseOrder(Long productId, String paymentType, Long paymentAppId, String paymentChannelCode);
+    OrderInfo createOrReuseOrder(Long productId, String paymentType,
+                                 Long paymentAppId, String paymentChannelCode,
+                                 String idempotencyKey);
 
     /**
      * 幂等保存二维码地址：只有 code_url 为空时才写入，避免并发请求互相覆盖。

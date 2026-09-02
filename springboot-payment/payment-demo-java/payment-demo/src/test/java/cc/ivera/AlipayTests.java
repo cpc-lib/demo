@@ -1,24 +1,24 @@
 package cc.ivera;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 
-@SpringBootTest(properties = "spring.rabbitmq.listener.simple.auto-startup=false")
-@Slf4j
+import java.io.IOException;
+import java.util.Properties;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class AlipayTests {
 
-    private final Environment config;
-
-    @Autowired
-    public AlipayTests(Environment config) {
-        this.config = config;
-    }
-
     @Test
-    public void testAlipayConfig() {
-        log.info(config.getProperty("alipay.appId"));
+    public void testAlipayConfig() throws IOException {
+        Properties properties = PropertiesLoaderUtils.loadProperties(
+                new ClassPathResource("alipay-sandbox.properties"));
+
+        assertThat(properties.getProperty("alipay.appId")).isNotBlank();
+        assertThat(properties.getProperty("alipay.gatewayUrl")).startsWith("https://");
+        assertThat(properties.getProperty("alipay.merchantPrivateKey")).isNotBlank();
+        assertThat(properties.getProperty("alipay.alipayPublicKey")).isNotBlank();
     }
 }

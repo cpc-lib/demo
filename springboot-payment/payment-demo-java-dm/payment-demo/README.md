@@ -69,7 +69,7 @@ bash env/scripts/dm8/stop-dm8.sh
 默认连接信息：
 
 ```text
-url=jdbc:dm://192.168.220.200:5236?schema=SYSDBA&connectTimeout=30000
+url=jdbc:dm://192.168.1.200:5236?schema=SYSDBA&connectTimeout=30000
 username=SYSDBA
 password=Cpc2026#@Dm
 ```
@@ -82,7 +82,7 @@ password=Cpc2026#@Dm
 spring:
   datasource:
     driver-class-name: dm.jdbc.driver.DmDriver
-    url: jdbc:dm://${DM_HOST:192.168.220.200}:${DM_PORT:5236}?schema=${DM_SCHEMA:SYSDBA}&connectTimeout=30000
+    url: jdbc:dm://${DM_HOST:192.168.1.200}:${DM_PORT:5236}?schema=${DM_SCHEMA:SYSDBA}&connectTimeout=30000
     username: ${DM_USERNAME:SYSDBA}
     password: ${DM_PASSWORD:Cpc2026#@Dm}
 

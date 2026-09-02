@@ -105,9 +105,9 @@ payment-demo-go/
 | 依赖 | 当前配置重点 |
 |---|---|
 | HTTP | `server.port: 8080` |
-| 达梦 | `jdbc:dm://192.168.220.200:5236?schema=PAYMENT_DEMO&connectTimeout=30000` |
-| Redis | `192.168.220.200:6379`，密码 `cpc!23#@` |
-| RabbitMQ | `amqp://guest:guest@192.168.220.200:5672/` |
+| 达梦 | `jdbc:dm://192.168.1.200:5236?schema=PAYMENT_DEMO&connectTimeout=30000` |
+| Redis | `192.168.1.200:6379`，密码 `cpc!23#@` |
+| RabbitMQ | `amqp://guest:guest@192.168.1.200:5672/` |
 | 订单延迟关单 | `payment.order.close-delay-ms: 60000` |
 
 达梦 DSN 注意点：

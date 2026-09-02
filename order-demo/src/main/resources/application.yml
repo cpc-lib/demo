@@ -6,11 +6,11 @@ spring:
     name: order-demo-basic
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.220.200:3306/order_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://192.168.1.200:3306/order_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: cpc!23#@
   redis:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 6379
     database: 0
     password: cpc!23#@

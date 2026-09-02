@@ -6,7 +6,7 @@ spring:
     name: gray-admin
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.220.200:3306/gray_release?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://192.168.1.200:3306/gray_release?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: gray
     password: gray123456
   data:
@@ -20,9 +20,9 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 192.168.220.200:8848
+        server-addr: 192.168.1.200:8848
       config:
-        server-addr: 192.168.220.200:8848
+        server-addr: 192.168.1.200:8848
         import-check:
           enabled: false
 

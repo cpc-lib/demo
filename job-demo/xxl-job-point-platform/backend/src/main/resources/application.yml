@@ -4,14 +4,14 @@ spring:
   application:
     name: point-reward-service
   datasource:
-    url: ${DB_URL:jdbc:mysql://192.168.220.200:3308/point_reward?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    url: ${DB_URL:jdbc:mysql://192.168.1.200:3308/point_reward?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:cpc!23#@}
     hikari:
       maximum-pool-size: 30
       minimum-idle: 5
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:192.168.220.200:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:192.168.1.200:9092}
     producer:
       acks: all
       key-serializer: org.apache.kafka.common.serialization.StringSerializer

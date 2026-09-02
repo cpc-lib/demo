@@ -17,7 +17,7 @@ public class NacosRulePublisher {
     private final String serverAddr;
 
     public NacosRulePublisher(ObjectMapper objectMapper,
-                              @Value("${spring.cloud.nacos.config.server-addr:192.168.220.200:8848}") String serverAddr) {
+                              @Value("${spring.cloud.nacos.config.server-addr:192.168.1.200:8848}") String serverAddr) {
         this.objectMapper = objectMapper;
         this.serverAddr = serverAddr;
     }

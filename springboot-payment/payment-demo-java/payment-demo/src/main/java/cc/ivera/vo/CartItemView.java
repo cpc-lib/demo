@@ -1,5 +1,6 @@
 package cc.ivera.vo;
 
+import cc.ivera.enums.ProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -16,4 +17,12 @@ public class CartItemView {
     private Integer quantity;
 
     private Integer subtotal;
+
+    private ProductStatus productStatus;
+
+    private Integer availableStock;
+
+    private Boolean purchasable;
+
+    private String unavailableReason;
 }

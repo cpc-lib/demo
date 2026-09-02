@@ -10,13 +10,17 @@ spring:
     time-zone: GMT+8
 
   rabbitmq:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 5672
     username: guest
     password: guest
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
 
   redis:
-    host: 192.168.220.200
+    host: 192.168.1.200
     port: 6379
     database: 0
     timeout: 3000ms
@@ -30,7 +34,7 @@ spring:
   datasource:
     #    driver-class-name: com.mysql.cj.jdbc.Driver
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://192.168.220.200:3308/payment_demo_v1?serverTimezone=GMT%2B8&characterEncoding=utf-8&useSSL=false
+    url: jdbc:mysql://192.168.1.200:3308/payment_demo_v1?serverTimezone=GMT%2B8&characterEncoding=utf-8&useSSL=false
     username: root
     password: cpc!23#@
 
@@ -54,6 +58,7 @@ payment:
     allowed-origins: ${PAYMENT_AUTH_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081}
   order:
     close-delay-ms: 60000
+    idempotency-key-ttl-seconds: 120
   refund:
     status-sync-delay-ms: 60000
   reconciliation:
@@ -61,3 +66,13 @@ payment:
     #渠道账单T+1出账：微信昨日账单次日10:00后生成，定时任务先导入账单再对账
     wx-cron: 0 30 10 * * ?
     ali-cron: 0 0 11 * * ?
+  outbox:
+    publish-interval-ms: 1000
+    batch-size: 50
+    lease-seconds: 30
+    confirm-timeout-ms: 5000
+    retry-base-ms: 1000
+    retry-max-ms: 60000
+    max-attempts: 5
+  inbox:
+    lease-seconds: 30

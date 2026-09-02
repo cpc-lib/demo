@@ -21,9 +21,14 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 class AdminPurchaseBoundaryTest {
 
@@ -40,7 +45,7 @@ class AdminPurchaseBoundaryTest {
         WxPayOrderFacade facade = mock(WxPayOrderFacade.class);
         WxPayController controller = wxController(facade, mock(OrderInfoService.class));
 
-        assertThrows(ForbiddenException.class, () -> controller.nativePay(9L, null));
+        assertThrows(ForbiddenException.class, () -> controller.nativePay(9L, null, "key-1"));
 
         verifyNoInteractions(facade);
     }
@@ -64,7 +69,8 @@ class AdminPurchaseBoundaryTest {
         WxPayV2Controller controller = wxV2Controller(facade, mock(OrderInfoService.class));
         MockHttpServletRequest request = request();
 
-        assertThrows(ForbiddenException.class, () -> controller.createNative(9L, null, request));
+        assertThrows(ForbiddenException.class,
+                () -> controller.createNative(9L, null, "key-1", request));
 
         verifyNoInteractions(facade);
     }
@@ -88,7 +94,8 @@ class AdminPurchaseBoundaryTest {
         AliPayService service = mock(AliPayService.class);
         AliPayController controller = aliController(service, mock(OrderInfoService.class));
 
-        assertThrows(ForbiddenException.class, () -> controller.tradePagePay(9L, null));
+        assertThrows(ForbiddenException.class,
+                () -> controller.tradePagePay(9L, null, "key-1"));
 
         verifyNoInteractions(service);
     }
@@ -103,6 +110,41 @@ class AdminPurchaseBoundaryTest {
         assertThrows(ForbiddenException.class, () -> controller.tradePagePayOrder("ORDER-1"));
 
         verifyNoInteractions(service, orderInfoService);
+    }
+
+    @Test
+    void userWxV3DirectPurchasePassesBackendKeyUnchanged() {
+        AuthContext.setUser(new AuthUser(7L, "alice", UserRole.USER));
+        WxPayOrderFacade facade = mock(WxPayOrderFacade.class);
+        WxPayController controller = wxController(facade, mock(OrderInfoService.class));
+        Map<String, Object> result = java.util.Collections.singletonMap("orderNo", "ORDER-1");
+        when(facade.nativePay(9L, null, "key-1")).thenReturn(result);
+
+        assertEquals(result, controller.nativePay(9L, null, "key-1").getData());
+        verify(facade).nativePay(9L, null, "key-1");
+    }
+
+    @Test
+    void userWxV2DirectPurchasePassesBackendKeyUnchanged() {
+        AuthContext.setUser(new AuthUser(7L, "alice", UserRole.USER));
+        WxPayOrderFacade facade = mock(WxPayOrderFacade.class);
+        WxPayV2Controller controller = wxV2Controller(facade, mock(OrderInfoService.class));
+        Map<String, Object> result = java.util.Collections.singletonMap("orderNo", "ORDER-1");
+        when(facade.nativePayV2(9L, "127.0.0.1", null, "key-1")).thenReturn(result);
+
+        assertEquals(result, controller.createNative(9L, null, "key-1", request()).getData());
+        verify(facade).nativePayV2(9L, "127.0.0.1", null, "key-1");
+    }
+
+    @Test
+    void userAlipayDirectPurchasePassesBackendKeyUnchanged() {
+        AuthContext.setUser(new AuthUser(7L, "alice", UserRole.USER));
+        AliPayService service = mock(AliPayService.class);
+        AliPayController controller = aliController(service, mock(OrderInfoService.class));
+        when(service.tradeCreate(9L, null, "key-1")).thenReturn("form");
+
+        assertEquals("form", controller.tradePagePay(9L, null, "key-1").getData().get("formStr"));
+        verify(service).tradeCreate(9L, null, "key-1");
     }
 
     private WxPayController wxController(WxPayOrderFacade facade, OrderInfoService orderInfoService) {
@@ -121,6 +163,7 @@ class AdminPurchaseBoundaryTest {
                 mock(WxPayConfig.class),
                 orderInfoService,
                 mock(PaymentInfoService.class),
+                mock(cc.ivera.service.InventoryService.class),
                 mock(DistributedLockTemplate.class),
                 mock(TransactionTemplate.class),
                 mock(StringRedisTemplate.class)

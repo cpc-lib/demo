@@ -43,6 +43,14 @@ class AuthInterceptorTest {
     }
 
     @Test
+    void corsPreflightDoesNotRequireBearerToken() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("OPTIONS", "/api/cart/items");
+
+        assertTrue(authInterceptor.preHandle(request, new MockHttpServletResponse(), new Object()));
+        assertNull(AuthContext.getUser());
+    }
+
+    @Test
     void validBearerTokenPopulatesAndThenClearsRequestContext() throws Exception {
         MockHttpServletRequest request = bearerRequest(UserRole.USER);
 
@@ -68,6 +76,14 @@ class AuthInterceptorTest {
 
         assertTrue(adminInterceptor.preHandle(
                 new MockHttpServletRequest(), new MockHttpServletResponse(), new Object()));
+    }
+
+    @Test
+    void corsPreflightDoesNotRequireAdminContext() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("OPTIONS", "/api/payment-config/reload");
+
+        assertTrue(adminInterceptor.preHandle(request, new MockHttpServletResponse(), new Object()));
+        assertNull(AuthContext.getUser());
     }
 
     private MockHttpServletRequest bearerRequest(UserRole role) {

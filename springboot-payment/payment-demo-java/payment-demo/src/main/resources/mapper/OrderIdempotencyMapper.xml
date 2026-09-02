@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.OrderIdempotencyMapper">
+
+    <select id="selectByKeyForUpdate" resultType="cc.ivera.entity.OrderIdempotency">
+        select *
+        from t_order_idempotency
+        where idempotency_key = #{idempotencyKey}
+        limit 1
+        for update
+    </select>
+
+    <update id="expireIssuedKeyIfNeeded">
+        update t_order_idempotency
+        set status = 'EXPIRED',
+            update_time = #{now}
+        where user_id = #{userId}
+          and idempotency_key = #{idempotencyKey}
+          and status = 'ISSUED'
+          and expires_at &lt; #{now}
+    </update>
+
+    <update id="completeIssued">
+        update t_order_idempotency
+        set request_fingerprint = #{requestFingerprint},
+            order_id = #{orderId},
+            status = 'COMPLETED',
+            completed_at = #{completedAt},
+            update_time = #{completedAt}
+        where id = #{id}
+          and status = 'ISSUED'
+          and order_id is null
+    </update>
+
+    <delete id="deleteUnusedExpiredBefore">
+        delete from t_order_idempotency
+        where status in ('ISSUED', 'EXPIRED')
+          and expires_at &lt; #{cutoff}
+    </delete>
+
+</mapper>

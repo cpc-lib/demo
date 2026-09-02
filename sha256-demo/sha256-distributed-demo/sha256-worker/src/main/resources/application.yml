@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: sha256-worker
+  main:
+    web-application-type: none
+  data:
+    redis:
+      host: ${REDIS_HOST:192.168.1.200}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:192.168.1.200}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:sha256}
+    password: ${RABBITMQ_PASSWORD:sha256-demo}
+    listener:
+      simple:
+        acknowledge-mode: auto
+        default-requeue-rejected: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    listener:
+      ack-mode: record
+
+sha256:
+  broker: ${SHA256_BROKER:rabbitmq}
+  storage-dir: ${SHA256_STORAGE_DIR:${user.home}/.sha256-demo/uploads}
+  task:
+    ttl-minutes: ${SHA256_TASK_TTL_MINUTES:30}
+    lock-ttl-minutes: ${SHA256_LOCK_TTL_MINUTES:60}
+  worker:
+    concurrency: ${SHA256_WORKER_CONCURRENCY:4}
+    progress-step-mb: ${SHA256_PROGRESS_STEP_MB:8}
+  rabbit:
+    exchange: ${SHA256_RABBIT_EXCHANGE:sha256.exchange}
+    queue: ${SHA256_RABBIT_QUEUE:sha256.tasks}
+    routing-key: ${SHA256_RABBIT_ROUTING_KEY:sha256.calculate}
+  kafka:
+    topic: ${SHA256_KAFKA_TOPIC:sha256.tasks}
+    group-id: ${SHA256_KAFKA_GROUP_ID:sha256-workers}

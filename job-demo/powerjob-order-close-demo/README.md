@@ -6,7 +6,7 @@
 - PowerJob Worker 5.1.2
 - Windows 本机开发和运行 Worker
 - MySQL、PowerJob Server 运行在 VMware 虚拟机
-- 虚拟机 IP：`192.168.220.200`
+- 虚拟机 IP：`192.168.1.200`
 
 ## 1. 幂等与并发设计
 
@@ -48,8 +48,8 @@ src/main/java/com/example/orderjob
 Windows PowerShell：
 
 ```powershell
-Test-NetConnection 192.168.220.200 -Port 7700
-Test-NetConnection 192.168.220.200 -Port 3306
+Test-NetConnection 192.168.1.200 -Port 7700
+Test-NetConnection 192.168.1.200 -Port 3306
 ```
 
 两项都必须显示 `TcpTestSucceeded : True`。
@@ -57,7 +57,7 @@ Test-NetConnection 192.168.220.200 -Port 3306
 数据库默认连接：
 
 ```text
-jdbc:mysql://192.168.220.200:3306/order_demo
+jdbc:mysql://192.168.1.200:3306/order_demo
 username=root
 password=root123456
 ```
@@ -81,7 +81,7 @@ CREATE DATABASE IF NOT EXISTS order_demo
 浏览器打开：
 
 ```text
-http://192.168.220.200:7700
+http://192.168.1.200:7700
 ```
 
 ### 5.1 创建应用
@@ -143,9 +143,9 @@ mvn clean test
 脚本会设置：
 
 ```text
-PowerJob Server = 192.168.220.200:7700
+PowerJob Server = 192.168.1.200:7700
 Worker 地址     = 192.168.220.1:27777
-MySQL           = 192.168.220.200:3306
+MySQL           = 192.168.1.200:3306
 ```
 
 注意：`powerjob.worker.server-address` 只解决 Worker 连接 Server；还必须使用 JVM 参数固定 Worker 上报地址：
@@ -227,8 +227,8 @@ PowerJob 的 STANDALONE 模式会从可用 Worker 中选择一个执行。即使
 
 ## 9. 任务仍无法调度时按顺序排查
 
-1. Windows 到虚拟机：`Test-NetConnection 192.168.220.200 -Port 7700`；
-2. Windows 到 MySQL：`Test-NetConnection 192.168.220.200 -Port 3306`；
+1. Windows 到虚拟机：`Test-NetConnection 192.168.1.200 -Port 7700`；
+2. Windows 到 MySQL：`Test-NetConnection 192.168.1.200 -Port 3306`；
 3. 虚拟机到 Windows：测试 `192.168.220.1:27777`；
 4. Worker 日志确认出现 `powerjob.network.local.address=192.168.220.1` 对应地址；
 5. 控制台应用名必须是 `order-close-worker`；

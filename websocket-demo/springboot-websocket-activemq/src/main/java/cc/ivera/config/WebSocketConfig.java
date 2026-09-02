@@ -42,7 +42,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(final MessageBrokerRegistry registry) {
-        registry.setUserDestinationPrefix("/user");
+        registry.setUserDestinationPrefix("/user/");
         registry.setApplicationDestinationPrefixes("/app");
         registry.enableStompBrokerRelay("/queue", "/topic")
                 .setRelayHost(brokerHost)

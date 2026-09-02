@@ -7,11 +7,12 @@ import cc.ivera.enums.RefundApprovalStatus;
 import cc.ivera.enums.RefundStatus;
 import cc.ivera.exception.BizException;
 import cc.ivera.lock.DistributedLockTemplate;
+import cc.ivera.mq.OutboxEventTypes;
 import cc.ivera.service.AliPayService;
+import cc.ivera.service.MessageOutboxService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.RefundInfoService;
-import cc.ivera.service.RefundStatusSyncMessageService;
 import cc.ivera.service.refund.OrderRefundStatusService;
 import cc.ivera.service.refund.RefundStatusSyncResult;
 import cc.ivera.service.wxpay.WxPayRefundFacade;
@@ -38,7 +39,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
     private final DistributedLockTemplate distributedLockTemplate;
 
-    private final RefundStatusSyncMessageService refundStatusSyncMessageService;
+    private final MessageOutboxService messageOutboxService;
 
     public RefundApplicationServiceImpl(
         RefundInfoService refundInfoService,
@@ -47,7 +48,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         AliPayService aliPayService,
         OrderRefundStatusService orderRefundStatusService,
         DistributedLockTemplate distributedLockTemplate,
-        RefundStatusSyncMessageService refundStatusSyncMessageService
+        MessageOutboxService messageOutboxService
     ) {
         this.refundInfoService = refundInfoService;
         this.orderInfoService = orderInfoService;
@@ -55,7 +56,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         this.aliPayService = aliPayService;
         this.orderRefundStatusService = orderRefundStatusService;
         this.distributedLockTemplate = distributedLockTemplate;
-        this.refundStatusSyncMessageService = refundStatusSyncMessageService;
+        this.messageOutboxService = messageOutboxService;
     }
 
     @Override
@@ -65,7 +66,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional(rollbackFor = Exception.class)
     public void approve(String refundNo, String approveRemark) {
         String lockKey = "payment:refund:approve:" + refundNo;
         distributedLockTemplate.execute(lockKey, 5000L, -1L, () -> {
@@ -76,11 +77,35 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
             if (RefundApprovalStatus.REJECTED.getType().equals(refundInfo.getApprovalStatus())) {
                 throw new BizException("退款申请单已拒绝，不能审核通过");
             }
-            if (RefundStatus.SUCCESS.getType().equals(refundInfo.getRefundStatus())) {
-                throw new BizException("该退款申请单已退款成功，请勿重复处理");
+            OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(refundInfo.getOrderNo());
+            if (orderInfo == null) {
+                throw new BizException("订单不存在");
             }
-            if (RefundStatus.PROCESSING.getType().equals(refundInfo.getRefundStatus())) {
-                throw new BizException("该退款申请单已在退款处理中，请勿重复处理");
+            validateSupportedPayType(orderInfo.getPaymentType());
+
+            refundInfoService.markApprovalPassed(refundNo, approveRemark);
+            messageOutboxService.insertOnce(
+                    OutboxEventTypes.REFUND_SUBMIT_REQUESTED + ":" + refundNo,
+                    "REFUND",
+                    refundNo,
+                    OutboxEventTypes.REFUND_SUBMIT_REQUESTED,
+                    JsonUtils.toJson(Collections.singletonMap("refundNo", refundNo))
+            );
+            return null;
+        });
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void submitApprovedRefund(String refundNo) {
+        String lockKey = "payment:refund:submit:" + refundNo;
+        distributedLockTemplate.execute(lockKey, 5000L, -1L, () -> {
+            RefundInfo refundInfo = refundInfoService.getByRefundNo(refundNo);
+            if (refundInfo == null) {
+                throw new BizException("退款申请单不存在");
+            }
+            if (!RefundApprovalStatus.APPROVED.getType().equals(refundInfo.getApprovalStatus())) {
+                throw new BizException("退款申请尚未审核通过");
             }
 
             OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(refundInfo.getOrderNo());
@@ -89,17 +114,24 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
             }
             validateSupportedPayType(orderInfo.getPaymentType());
 
-            refundInfoService.markApprovalPassed(refundNo, approveRemark);
-            claimRefundForExecution(refundNo);
-            RefundInfo latestRefundInfo = refundInfoService.getByRefundNo(refundNo);
+            if (RefundStatus.SUCCESS.getType().equals(refundInfo.getRefundStatus())
+                    || RefundStatus.CLOSED.getType().equals(refundInfo.getRefundStatus())) {
+                return null;
+            }
+            if (!RefundStatus.PROCESSING.getType().equals(refundInfo.getRefundStatus())) {
+                claimRefundForExecution(refundNo);
+                refundInfo = refundInfoService.getByRefundNo(refundNo);
+                if (refundInfo == null) {
+                    throw new BizException("退款申请单不存在");
+                }
+            }
 
             try {
-                executeRefund(orderInfo.getPaymentType(), latestRefundInfo);
-            } catch (RuntimeException e) {
-                markRefundSubmitFailed(refundNo, e);
-                throw e;
+                executeRefund(orderInfo.getPaymentType(), refundInfo);
+            } catch (RuntimeException exception) {
+                markRefundSubmitFailed(refundNo, exception);
+                throw exception;
             }
-            refundStatusSyncMessageService.sendRefundStatusSyncMessage(refundNo);
             return null;
         });
     }

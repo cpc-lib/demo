@@ -1,5 +1,7 @@
 package cc.ivera.controller;
 
+import cc.ivera.entity.ChatMessage;
+import cc.ivera.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -10,113 +12,95 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import cc.ivera.entity.ChatMessage;
-import cc.ivera.service.ChatService;
-import cc.ivera.util.JsonUtil;
-import cc.ivera.util.RedisUtils;
 
 import java.security.Principal;
+import java.util.Collections;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Controller
 public class WebsocketController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebsocketController.class);
-
-    @Value("${redis.channel.msgToAll}")
-    private String msgToAll;
+    private static final String RABBIT_EXCHANGE = "stomp";
+    private static final String RABBIT_ROUTING_KEY = "topic.mine";
 
     @Value("${redis.set.onlineUsers}")
     private String onlineUsers;
-
-    @Value("${redis.channel.userStatus}")
-    private String userStatus;
-
-    @Value("${redis.channel.msgAlone}")
-    private String msgAlone;
-
-    @Autowired
-    private ChatService chatService;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
     @Autowired
-    private RedisUtils redisUtils;
-
-
-    @ResponseBody
-    @GetMapping("/getOnlineUsers")
-    public void getOnlineUsersNum(){
-        Set<String> resultSet = redisTemplate.opsForSet().members(onlineUsers);
-        System.out.println("在线人数 :"+resultSet.size()+"\n");
-        System.out.println("在线用户："+resultSet.toString());
-
-
-    }
-    @ResponseBody
-    @GetMapping("/sendToOne")
-    public void sendToOne(@RequestParam("uid") String uid,@RequestParam("content") String content ){
-        ChatMessage chatMessage=new ChatMessage();
-        chatMessage.setType(ChatMessage.MessageType.CHAT);
-        chatMessage.setContent(content);
-        chatMessage.setTo(uid);
-        chatMessage.setSender("系统消息");
-        rabbitTemplate.convertAndSend("stomp", "topic.mine", JsonUtil.parseObjToJson(chatMessage));
-    }
-
-    @MessageMapping("/chat.sendMessage")
-    public void sendMessage(@Payload ChatMessage chatMessage) {
-        try {
-            System.out.println("---------------群发消息----------");
-            redisTemplate.convertAndSend(msgToAll, JsonUtil.parseObjToJson(chatMessage));
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
-    @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    //发送消息给所有人
-    @MessageMapping("/chat.sendMessageTest")
-    public void sendMessageAlone(@Payload ChatMessage chatMessage, Principal principal) {
-        try {
-            System.out.println("---------------单发消息----------");
-            System.out.println("模拟单对单发送消息！");
-            rabbitTemplate.convertAndSend("stomp", "topic.mine", JsonUtil.parseObjToJson(chatMessage));
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
-    //用户上线通知放到公共队列
-    @MessageMapping("/chat.addUser")
-    public void addUser(@Payload ChatMessage chatMessage) {
-        LOGGER.info("有用户加入到了websocket 消息室" + chatMessage.getSender());
-        try {
-            redisTemplate.opsForSet().add(onlineUsers, chatMessage.getSender());
-            System.out.println(chatMessage.toString());
-            rabbitTemplate.convertAndSend("stomp", "topic.mine", JsonUtil.parseObjToJson(chatMessage));
-
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
-
+    /**
+     * Return users currently registered in the chat room.
+     */
     @ResponseBody
-    @GetMapping("/sendToAll")
-    public void sendToAll(@RequestParam("content") String content ){
-        ChatMessage chatMessage=new ChatMessage();
-        chatMessage.setType(ChatMessage.MessageType.CHAT);
-        chatMessage.setContent(content);
-        chatMessage.setTo("all");
-        chatMessage.setSender("系统消息");
-        rabbitTemplate.convertAndSend("stomp", "topic.mine", JsonUtil.parseObjToJson(chatMessage));
+    @GetMapping("/getOnlineUsers")
+    public Set<String> getOnlineUsers() {
+        Set<String> users = redisTemplate.opsForSet().members(onlineUsers);
+        if (users == null || users.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new TreeSet<>(users);
     }
 
+    /**
+     * Unified chat-message entry point.
+     * to = "all"       -> group message
+     * to = "username"  -> private message
+     */
+    @MessageMapping("/chat.sendMessage")
+    public void sendMessage(@Payload ChatMessage chatMessage, Principal principal) {
+        try {
+            if (principal == null) {
+                throw new IllegalStateException("WebSocket user is not authenticated");
+            }
+            if (chatMessage == null || chatMessage.getContent() == null || chatMessage.getContent().trim().isEmpty()) {
+                return;
+            }
 
+            chatMessage.setSender(principal.getName());
+            chatMessage.setType(ChatMessage.MessageType.CHAT);
+            if (chatMessage.getTo() == null || chatMessage.getTo().trim().isEmpty()) {
+                chatMessage.setTo("all");
+            } else {
+                chatMessage.setTo(chatMessage.getTo().trim());
+            }
+
+            LOGGER.info("send chat message: sender={}, to={}", chatMessage.getSender(), chatMessage.getTo());
+            rabbitTemplate.convertAndSend(RABBIT_EXCHANGE, RABBIT_ROUTING_KEY, JsonUtil.parseObjToJson(chatMessage));
+        } catch (Exception e) {
+            LOGGER.error("Failed to send chat message", e);
+        }
+    }
+
+    /**
+     * Register a connected user and broadcast the JOIN event.
+     */
+    @MessageMapping("/chat.addUser")
+    public void addUser(@Payload ChatMessage chatMessage, Principal principal) {
+        try {
+            if (principal == null) {
+                throw new IllegalStateException("WebSocket user is not authenticated");
+            }
+
+            String username = principal.getName();
+            redisTemplate.opsForSet().add(onlineUsers, username);
+
+            ChatMessage joinMessage = new ChatMessage();
+            joinMessage.setSender(username);
+            joinMessage.setType(ChatMessage.MessageType.JOIN);
+            joinMessage.setTo("all");
+            joinMessage.setContent("");
+
+            LOGGER.info("user joined chat room: {}", username);
+            rabbitTemplate.convertAndSend(RABBIT_EXCHANGE, RABBIT_ROUTING_KEY, JsonUtil.parseObjToJson(joinMessage));
+        } catch (Exception e) {
+            LOGGER.error("Failed to register WebSocket user", e);
+        }
+    }
 }
