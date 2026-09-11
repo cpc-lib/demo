@@ -43,7 +43,10 @@ public class RefundStatusSyncRabbitConfig {
 
     @Bean(name = "refundStatusSyncReleaseQueue")
     public Queue refundStatusSyncReleaseQueue() {
-        return new Queue(REFUND_STATUS_SYNC_RELEASE_QUEUE, true);
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-dead-letter-exchange", REFUND_STATUS_SYNC_EVENT_EXCHANGE);
+        args.put("x-dead-letter-routing-key", REFUND_STATUS_SYNC_DELAY_ROUTING_KEY);
+        return new Queue(REFUND_STATUS_SYNC_RELEASE_QUEUE, true, false, false, args);
     }
 
     @Bean

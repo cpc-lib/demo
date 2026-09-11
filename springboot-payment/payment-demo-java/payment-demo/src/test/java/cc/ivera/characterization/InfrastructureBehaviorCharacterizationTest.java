@@ -10,6 +10,7 @@ import cc.ivera.mapper.PaymentInfoMapper;
 import cc.ivera.mapper.RefundInfoMapper;
 import cc.ivera.mq.OutboxEventTypes;
 import cc.ivera.service.AliPayService;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.MessageOutboxService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
@@ -27,7 +28,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -52,7 +52,7 @@ import static org.mockito.Mockito.when;
 class InfrastructureBehaviorCharacterizationTest {
 
     @Test
-    @DisplayName("现状: 微信 V2 通知 XML 解析失败时返回 FAIL XML 且不触发缓存/锁/DB")
+    @DisplayName("现状: 微信 V2 通知 XML 解析失败时返回 FAIL XML 且不触发 Inbox/锁/DB")
     void current_wxpay_v2_notify_bad_xml_returns_fail_without_touching_state() {
         WxPayOrderFacade wxPayOrderFacade = mock(WxPayOrderFacade.class);
         WxPayConfig wxPayConfig = mock(WxPayConfig.class);
@@ -60,7 +60,7 @@ class InfrastructureBehaviorCharacterizationTest {
         PaymentInfoService paymentInfoService = mock(PaymentInfoService.class);
         DistributedLockTemplate distributedLockTemplate = mock(DistributedLockTemplate.class);
         TransactionTemplate transactionTemplate = mock(TransactionTemplate.class);
-        StringRedisTemplate stringRedisTemplate = mock(StringRedisTemplate.class);
+        MessageConsumeLogService consumeLogService = mock(MessageConsumeLogService.class);
         WxPayV2Controller controller = new WxPayV2Controller(
                 wxPayOrderFacade,
                 wxPayConfig,
@@ -69,7 +69,7 @@ class InfrastructureBehaviorCharacterizationTest {
                 mock(cc.ivera.service.InventoryService.class),
                 distributedLockTemplate,
                 transactionTemplate,
-                stringRedisTemplate);
+                consumeLogService);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setContent("<xml><broken>".getBytes(StandardCharsets.UTF_8));
 
@@ -77,7 +77,7 @@ class InfrastructureBehaviorCharacterizationTest {
 
         assertThat(response).contains("FAIL");
         assertThat(response).contains("失败");
-        verifyNoInteractions(stringRedisTemplate);
+        verifyNoInteractions(consumeLogService);
         verifyNoInteractions(distributedLockTemplate);
         verifyNoInteractions(orderInfoService);
         verifyNoInteractions(paymentInfoService);

@@ -307,7 +307,6 @@ public class RefundInfoServiceImpl extends ServiceImpl<RefundInfoMapper, RefundI
             }
             boolean reserved = RefundApprovalStatus.PENDING.getType().equals(refundInfo.getApprovalStatus())
                     || (RefundApprovalStatus.APPROVED.getType().equals(refundInfo.getApprovalStatus())
-                    && !RefundStatus.FAILED.getType().equals(refundInfo.getRefundStatus())
                     && !RefundStatus.CLOSED.getType().equals(refundInfo.getRefundStatus()));
             if (reserved) {
                 total += refundInfo.getRefund();

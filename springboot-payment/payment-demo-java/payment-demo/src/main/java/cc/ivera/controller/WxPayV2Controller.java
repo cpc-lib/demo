@@ -8,10 +8,14 @@ import cc.ivera.enums.PayType;
 import cc.ivera.exception.BizException;
 import cc.ivera.exception.ConflictException;
 import cc.ivera.lock.DistributedLockTemplate;
+import cc.ivera.mq.InboxEventIds;
+import cc.ivera.mq.InboxEventTypes;
 import cc.ivera.security.AuthContext;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.InventoryService;
+import cc.ivera.service.MessageConsumeClaim;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.util.HttpUtils;
 import cc.ivera.vo.R;
@@ -19,7 +23,6 @@ import com.github.wxpay.sdk.WXPayUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +33,6 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @CrossOrigin //跨域
 @RestController
@@ -39,10 +41,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Validated
 public class WxPayV2Controller {
-
-    private static final String NOTIFY_IDEMPOTENT_KEY_PREFIX = "payment:wx:v2:notify:processed:";
-
-    private static final long NOTIFY_IDEMPOTENT_EXPIRE_HOURS = 24L;
 
     private final WxPayOrderFacade wxPayOrderFacade;
 
@@ -58,7 +56,7 @@ public class WxPayV2Controller {
 
     private final TransactionTemplate transactionTemplate;
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final MessageConsumeLogService consumeLogService;
 
     public WxPayV2Controller(
         WxPayOrderFacade wxPayOrderFacade,
@@ -68,7 +66,7 @@ public class WxPayV2Controller {
         InventoryService inventoryService,
         DistributedLockTemplate distributedLockTemplate,
         TransactionTemplate transactionTemplate,
-        StringRedisTemplate stringRedisTemplate
+        MessageConsumeLogService consumeLogService
     ) {
         this.wxPayOrderFacade = wxPayOrderFacade;
         this.wxPayConfig = wxPayConfig;
@@ -77,7 +75,7 @@ public class WxPayV2Controller {
         this.inventoryService = inventoryService;
         this.distributedLockTemplate = distributedLockTemplate;
         this.transactionTemplate = transactionTemplate;
-        this.stringRedisTemplate = stringRedisTemplate;
+        this.consumeLogService = consumeLogService;
     }
 
     /**
@@ -138,93 +136,65 @@ public class WxPayV2Controller {
             String transactionId = notifyMap.get("transaction_id");
             log.info("微信支付v2通知transactionId ===> {}", transactionId);
 
-            //幂等检查
-            if (!tryAcquireNotifyLock(transactionId)) {
-                log.info("微信支付v2通知已处理或正在处理中，直接返回成功，transactionId={}", transactionId);
+            //验签通过后才能认领通知，避免伪造通知占用合法事件。
+            if (!WXPayUtil.isSignatureValid(body, wxPayConfig.getPartnerKey())) {
+                log.error("通知验签失败");
+                return wxNotifyFail("验签失败");
+            }
+
+            //判断通信和业务是否成功
+            if (!"SUCCESS".equals(notifyMap.get("return_code")) || !"SUCCESS".equals(notifyMap.get("result_code"))) {
+                log.error("微信支付v2通知结果失败");
+                return wxNotifyFail("失败");
+            }
+
+            //获取商户订单号
+            String orderNo = notifyMap.get("out_trade_no");
+            if (orderNo == null || orderNo.trim().isEmpty()) {
+                log.error("微信支付v2通知缺少商户订单号");
+                return wxNotifyFail("订单号不能为空");
+            }
+
+            // 金额格式先做基础校验，和本地订单金额的一致性校验放到加锁事务内完成。
+            Long notifyTotalFee = parseTotalFee(notifyMap.get("total_fee"));
+            if (notifyTotalFee == null) {
+                log.error("微信支付v2通知金额格式错误");
+                return wxNotifyFail("金额校验失败");
+            }
+
+            String eventId = InboxEventIds.resolve(transactionId,
+                    InboxEventTypes.PAYMENT_NOTIFY_WX_V2 + ":" + orderNo + ":" + transactionId);
+            MessageConsumeClaim claim = consumeLogService.tryStart(
+                    eventId, "wxpay-v2-payment-notify", InboxEventTypes.PAYMENT_NOTIFY_WX_V2, orderNo);
+            if (claim.getStatus() == MessageConsumeClaim.Status.CONSUMED) {
                 return wxNotifySuccess();
+            }
+            if (claim.getStatus() == MessageConsumeClaim.Status.BUSY) {
+                return wxNotifyFail("通知正在处理，请稍后重试");
             }
 
             try {
-                //验签
-                if (!WXPayUtil.isSignatureValid(body,
-                        wxPayConfig.getPartnerKey())) {
-                    log.error("通知验签失败");
-                    releaseNotifyLock(transactionId);
-                    return wxNotifyFail("验签失败");
-                }
-
-                //判断通信和业务是否成功
-                if (!"SUCCESS".equals(notifyMap.get("return_code")) || !"SUCCESS".equals(notifyMap.get("result_code"))) {
-                    log.error("微信支付v2通知结果失败");
-                    releaseNotifyLock(transactionId);
-                    return wxNotifyFail("失败");
-                }
-
-                //获取商户订单号
-                String orderNo = notifyMap.get("out_trade_no");
-                if (orderNo == null || orderNo.trim().isEmpty()) {
-                    log.error("微信支付v2通知缺少商户订单号");
-                    releaseNotifyLock(transactionId);
-                    return wxNotifyFail("订单号不能为空");
-                }
-
-                // 金额格式先做基础校验，和本地订单金额的一致性校验放到加锁事务内完成。
-                Long notifyTotalFee = parseTotalFee(notifyMap.get("total_fee"));
-                if (notifyTotalFee == null) {
-                    log.error("微信支付v2通知金额格式错误");
-                    releaseNotifyLock(transactionId);
-                    return wxNotifyFail("金额校验失败");
-                }
-
                 String lockKey = "payment:order:transition:" + orderNo;
 
                 // 使用 Redisson 分布式锁（leaseTime=-1 开启看门狗自动续期）
                 distributedLockTemplate.execute(lockKey, 5000L, -1L, () ->
                         transactionTemplate.execute(status -> {
                             doProcessWxPayV2NotifyInTransaction(orderNo, transactionId, notifyTotalFee, notifyMap, body);
+                            consumeLogService.complete(eventId, "wxpay-v2-payment-notify", claim.getLeaseToken());
                             return null;
                         })
                 );
 
-                markNotifyProcessed(transactionId);
                 log.info("微信支付v2通知处理成功，已应答");
                 return wxNotifySuccess();
             } catch (Exception e) {
-                releaseNotifyLock(transactionId);
+                consumeLogService.fail(eventId, "wxpay-v2-payment-notify", claim.getLeaseToken(), e.getMessage(), null);
                 throw e;
             }
         } catch (Exception e) {
             log.error("处理微信支付v2通知失败", e);
             return wxNotifyFail("失败");
         }
-    }
-
-    private boolean tryAcquireNotifyLock(String transactionId) {
-        if (transactionId == null || transactionId.trim().isEmpty()) {
-            return true;
-        }
-        String key = NOTIFY_IDEMPOTENT_KEY_PREFIX + transactionId;
-        Boolean success = stringRedisTemplate.opsForValue().setIfAbsent(key, "processing", NOTIFY_IDEMPOTENT_EXPIRE_HOURS, TimeUnit.HOURS);
-        return Boolean.TRUE.equals(success);
-    }
-
-    private void releaseNotifyLock(String transactionId) {
-        if (transactionId == null || transactionId.trim().isEmpty()) {
-            return;
-        }
-        String key = NOTIFY_IDEMPOTENT_KEY_PREFIX + transactionId;
-        String currentValue = stringRedisTemplate.opsForValue().get(key);
-        if ("processing".equals(currentValue)) {
-            stringRedisTemplate.delete(key);
-        }
-    }
-
-    private void markNotifyProcessed(String transactionId) {
-        if (transactionId == null || transactionId.trim().isEmpty()) {
-            return;
-        }
-        String key = NOTIFY_IDEMPOTENT_KEY_PREFIX + transactionId;
-        stringRedisTemplate.opsForValue().set(key, "processed", NOTIFY_IDEMPOTENT_EXPIRE_HOURS, TimeUnit.HOURS);
     }
 
     private void doProcessWxPayV2NotifyInTransaction(String orderNo,

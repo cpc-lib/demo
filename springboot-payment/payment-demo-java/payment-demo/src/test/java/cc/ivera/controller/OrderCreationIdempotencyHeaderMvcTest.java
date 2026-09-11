@@ -8,13 +8,13 @@ import cc.ivera.handler.GlobalExceptionHandler;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.service.AliPayService;
 import cc.ivera.service.CheckoutService;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.wxpay.WxPayBillFacade;
 import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.service.wxpay.WxPayRefundFacade;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -73,7 +73,7 @@ class OrderCreationIdempotencyHeaderMvcTest {
                 mock(cc.ivera.service.InventoryService.class),
                 mock(DistributedLockTemplate.class),
                 mock(TransactionTemplate.class),
-                mock(StringRedisTemplate.class)
+                mock(MessageConsumeLogService.class)
         );
     }
 

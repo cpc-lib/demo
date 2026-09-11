@@ -6,6 +6,7 @@ import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.mapper.OrderInfoMapper;
 import cc.ivera.mapper.OrderItemMapper;
 import cc.ivera.mapper.ProductMapper;
+import cc.ivera.mapper.ProductSkuMapper;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
 import cc.ivera.service.OrderCloseMessageService;
@@ -37,6 +38,7 @@ class AdminOrderCreationBoundaryTest {
         AuthContext.setUser(new AuthUser(1L, "admin", UserRole.ADMIN));
         OrderInfoServiceImpl service = new OrderInfoServiceImpl(
                 productMapper,
+                mock(ProductSkuMapper.class),
                 mock(OrderCloseMessageService.class),
                 lockTemplate,
                 transactionTemplate,

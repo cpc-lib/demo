@@ -8,6 +8,7 @@ import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderIdempotency;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.entity.Product;
+import cc.ivera.entity.ProductSku;
 import cc.ivera.enums.InventoryStatus;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.ProductStatus;
@@ -19,6 +20,7 @@ import cc.ivera.mapper.CartMapper;
 import cc.ivera.mapper.OrderInfoMapper;
 import cc.ivera.mapper.OrderItemMapper;
 import cc.ivera.mapper.ProductMapper;
+import cc.ivera.mapper.ProductSkuMapper;
 import cc.ivera.service.OrderCloseMessageService;
 import cc.ivera.service.OrderIdempotencyService;
 import cc.ivera.service.InventoryService;
@@ -35,11 +37,14 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -56,6 +61,7 @@ class CartCheckoutServiceTest {
     private CartMapper cartMapper;
     private CartItemMapper cartItemMapper;
     private ProductMapper productMapper;
+    private ProductSkuMapper productSkuMapper;
     private OrderInfoMapper orderInfoMapper;
     private OrderItemMapper orderItemMapper;
     private PaymentConfigLoader paymentConfigLoader;
@@ -71,6 +77,7 @@ class CartCheckoutServiceTest {
         cartMapper = mock(CartMapper.class);
         cartItemMapper = mock(CartItemMapper.class);
         productMapper = mock(ProductMapper.class);
+        productSkuMapper = mock(ProductSkuMapper.class);
         orderInfoMapper = mock(OrderInfoMapper.class);
         orderItemMapper = mock(OrderItemMapper.class);
         paymentConfigLoader = mock(PaymentConfigLoader.class);
@@ -85,10 +92,19 @@ class CartCheckoutServiceTest {
             TransactionCallback<?> callback = invocation.getArgument(0);
             return callback.doInTransaction(mock(TransactionStatus.class));
         });
+        when(productSkuMapper.selectDefaultByProductId(anyLong())).thenAnswer(invocation ->
+                defaultSku(invocation.getArgument(0)));
+        AtomicLong itemIds = new AtomicLong(1000L);
+        when(orderItemMapper.insert(any(OrderItem.class))).thenAnswer(invocation -> {
+            OrderItem item = invocation.getArgument(0);
+            item.setId(itemIds.incrementAndGet());
+            return 1;
+        });
         checkoutService = new CheckoutServiceImpl(
                 cartMapper,
                 cartItemMapper,
                 productMapper,
+                productSkuMapper,
                 orderInfoMapper,
                 orderItemMapper,
                 paymentConfigLoader,
@@ -120,7 +136,6 @@ class CartCheckoutServiceTest {
             ((OrderInfo) invocation.getArgument(0)).setId(88L);
             return 1;
         });
-        when(orderItemMapper.insert(any(OrderItem.class))).thenReturn(1);
 
         CheckoutResult result;
         TransactionSynchronizationManager.initSynchronization();
@@ -142,6 +157,17 @@ class CartCheckoutServiceTest {
         assertEquals(OrderStatus.NOTPAY.getType(), order.getOrderStatus());
         assertEquals("微信", order.getPaymentType());
         assertEquals("WXPAY", order.getPaymentChannelCode());
+        assertEquals(9500L, order.getGoodsAmount());
+        assertEquals(0L, order.getDiscountAmount());
+        assertEquals(0L, order.getFreightAmount());
+        assertEquals(9500L, order.getPayableAmount());
+        assertEquals(0L, order.getPaidAmount());
+        assertEquals("UNPAID", order.getPayStatus());
+        assertEquals("WAIT_SHIP", order.getFulfillmentStatus());
+        assertEquals("NONE", order.getRefundStatus());
+        assertNotNull(order.getExpiresAt());
+        assertTrue(order.getExpiresAt().getTime() - System.currentTimeMillis() > 60_000L,
+                "new orders must leave enough time to create a payment attempt");
 
         ArgumentCaptor<OrderItem> itemCaptor = ArgumentCaptor.forClass(OrderItem.class);
         verify(orderItemMapper, org.mockito.Mockito.times(2)).insert(itemCaptor.capture());
@@ -150,6 +176,18 @@ class CartCheckoutServiceTest {
         assertEquals(1000, savedItems.get(0).getUnitPrice());
         assertEquals(2, savedItems.get(0).getQuantity());
         assertEquals(2000, savedItems.get(0).getSubtotal());
+        assertNotNull(savedItems.get(0).getId());
+        assertEquals(1010L, savedItems.get(0).getSkuId());
+        assertEquals("Java", savedItems.get(0).getProductNameSnapshot());
+        assertEquals("默认规格101", savedItems.get(0).getSkuNameSnapshot());
+        assertEquals("{}", savedItems.get(0).getSkuSpecSnapshot());
+        assertEquals(1000L, savedItems.get(0).getOriginalUnitAmount());
+        assertEquals(1000L, savedItems.get(0).getDealUnitAmount());
+        assertEquals(2000L, savedItems.get(0).getOriginalTotalAmount());
+        assertEquals(0L, savedItems.get(0).getDiscountAmount());
+        assertEquals(2000L, savedItems.get(0).getPayAmount());
+        assertEquals(0, savedItems.get(0).getRefundFrozenQty());
+        assertEquals(0, savedItems.get(0).getRefundedQty());
         assertEquals(InventoryStatus.RESERVED, savedItems.get(0).getInventoryStatus());
         assertEquals(0, savedItems.get(0).getRefundedQuantity());
         assertEquals(7500, savedItems.get(1).getSubtotal());
@@ -181,6 +219,7 @@ class CartCheckoutServiceTest {
         verify(cartMapper, never()).selectByUserIdForUpdate(anyLong());
         verify(orderInfoMapper, never()).insert(any(OrderInfo.class));
         verifyNoInteractions(productMapper);
+        verifyNoInteractions(productSkuMapper);
         verifyNoInteractions(paymentConfigLoader);
         verifyNoInteractions(inventoryService);
         verifyNoInteractions(closeMessageService);
@@ -201,7 +240,6 @@ class CartCheckoutServiceTest {
             ((OrderInfo) invocation.getArgument(0)).setId(88L);
             return 1;
         });
-        when(orderItemMapper.insert(any(OrderItem.class))).thenReturn(1);
         doThrow(new ConflictException("outbox failed"))
                 .when(closeMessageService).sendCloseOrderMessage(anyString(), anyString());
 
@@ -322,7 +360,7 @@ class CartCheckoutServiceTest {
     }
 
     @Test
-    void checkoutRejectsInvalidQuantityOrInsufficientAvailableStock() {
+    void checkoutRejectsInvalidQuantityBeforeCreatingOrder() {
         when(orderIdempotencyService.requireForUpdate(7L, "invalid-quantity", "fp-quantity"))
                 .thenReturn(issuedKey(5L, 7L, "invalid-quantity"));
         paymentApp("WXPAY");
@@ -335,19 +373,31 @@ class CartCheckoutServiceTest {
         assertThrows(ConflictException.class,
                 () -> checkoutService.checkout(7L, 9L, "invalid-quantity", "fp-quantity"));
 
+        verify(orderInfoMapper, never()).insert(any(OrderInfo.class));
+    }
+
+    @Test
+    void inventoryReservationIsTheFinalStockGateAndFailureDoesNotCompleteCheckout() {
         when(orderIdempotencyService.requireForUpdate(7L, "insufficient", "fp-stock"))
                 .thenReturn(issuedKey(6L, 7L, "insufficient"));
+        paymentApp("WXPAY");
+        when(cartMapper.selectByUserIdForUpdate(7L)).thenReturn(cart(20L, 7L));
         when(cartItemMapper.selectByCartId(20L)).thenReturn(Collections.singletonList(
                 item(20L, 101L, 2)
         ));
-        Product insufficient = product(101L, "Java", 1000);
-        insufficient.setAvailableStock(1);
-        when(productMapper.selectByIdForUpdate(101L)).thenReturn(insufficient);
+        when(productMapper.selectByIdForUpdate(101L)).thenReturn(product(101L, "Java", 1000));
+        when(orderInfoMapper.insert(any(OrderInfo.class))).thenAnswer(invocation -> {
+            ((OrderInfo) invocation.getArgument(0)).setId(88L);
+            return 1;
+        });
+        doThrow(new ConflictException("商品库存不足"))
+                .when(inventoryService).reserve(any(OrderInfo.class), any());
 
         assertThrows(ConflictException.class,
                 () -> checkoutService.checkout(7L, 9L, "insufficient", "fp-stock"));
 
-        verify(orderInfoMapper, never()).insert(any(OrderInfo.class));
+        verify(cartItemMapper, never()).deleteByCartId(20L);
+        verify(orderIdempotencyService, never()).complete(anyLong(), anyString(), anyLong());
     }
 
     @Test
@@ -366,7 +416,6 @@ class CartCheckoutServiceTest {
             ((OrderInfo) invocation.getArgument(0)).setId(88L);
             return 1;
         });
-        when(orderItemMapper.insert(any(OrderItem.class))).thenReturn(1);
 
         checkoutService.checkout(7L, 9L, "ascending", "fp-ascending");
 
@@ -396,8 +445,18 @@ class CartCheckoutServiceTest {
         product.setTitle(title);
         product.setPrice(price);
         product.setStatus(ProductStatus.ON_SHELF);
-        product.setAvailableStock(100);
         return product;
+    }
+
+    private ProductSku defaultSku(Long productId) {
+        ProductSku sku = new ProductSku();
+        sku.setId(productId * 10);
+        sku.setProductId(productId);
+        sku.setSkuCode("DEFAULT-" + productId);
+        sku.setSkuName("默认规格" + productId);
+        sku.setSkuSpec("{}");
+        sku.setStatus("ACTIVE");
+        return sku;
     }
 
     private void paymentApp(String channelCode) {

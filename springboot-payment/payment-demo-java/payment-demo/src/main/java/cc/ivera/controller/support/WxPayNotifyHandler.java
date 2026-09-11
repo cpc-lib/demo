@@ -12,7 +12,6 @@ import com.wechat.pay.contrib.apache.httpclient.auth.ScheduledUpdateCertificates
 import com.wechat.pay.contrib.apache.httpclient.auth.Verifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -25,16 +24,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Component
 @Slf4j
 public class WxPayNotifyHandler {
-
-    private static final String NOTIFY_IDEMPOTENT_KEY_PREFIX = "payment:wx:notify:processed:";
-
-    private static final long NOTIFY_IDEMPOTENT_EXPIRE_HOURS = 24L;
 
     private final Verifier defaultVerifier;
 
@@ -42,18 +36,14 @@ public class WxPayNotifyHandler {
 
     private final PaymentConfigLoader paymentConfigLoader;
 
-    private final StringRedisTemplate stringRedisTemplate;
-
     private final Map<String, Verifier> verifierCache = new ConcurrentHashMap<>();
 
     public WxPayNotifyHandler(Verifier verifier,
                               WxPayConfig wxPayConfig,
-                              PaymentConfigLoader paymentConfigLoader,
-                              StringRedisTemplate stringRedisTemplate) {
+                              PaymentConfigLoader paymentConfigLoader) {
         this.defaultVerifier = verifier;
         this.wxPayConfig = wxPayConfig;
         this.paymentConfigLoader = paymentConfigLoader;
-        this.stringRedisTemplate = stringRedisTemplate;
     }
 
     public String handle(HttpServletRequest request,
@@ -70,26 +60,14 @@ public class WxPayNotifyHandler {
             String requestId = (String) bodyMap.get("id");
             log.info("微信支付通知id ===> {}", requestId);
 
-            if (!tryAcquireNotifyLock(requestId)) {
-                log.info("微信通知已处理或正在处理中，直接返回成功，requestId={}", requestId);
-                return successNotifyResponse(response);
+            if (!validateRequestWithAnyVerifier(request, requestId, body)) {
+                log.error("通知验签失败");
+                return errorNotifyResponse(response, "通知验签失败");
             }
+            log.info("通知验签成功");
 
-            try {
-                if (!validateRequestWithAnyVerifier(request, requestId, body)) {
-                    log.error("通知验签失败");
-                    releaseNotifyLock(requestId);
-                    return errorNotifyResponse(response, "通知验签失败");
-                }
-                log.info("通知验签成功");
-
-                processor.accept(bodyMap);
-                markNotifyProcessed(requestId);
-                return successNotifyResponse(response);
-            } catch (Exception e) {
-                releaseNotifyLock(requestId);
-                throw e;
-            }
+            processor.accept(bodyMap);
+            return successNotifyResponse(response);
         } catch (Exception e) {
             log.error(errorMessage, e);
             return errorNotifyResponse(response, "失败");
@@ -148,34 +126,6 @@ public class WxPayNotifyHandler {
             throw new BizException(message);
         }
         return value.trim();
-    }
-
-    private boolean tryAcquireNotifyLock(String requestId) {
-        if (requestId == null || requestId.trim().isEmpty()) {
-            return true;
-        }
-        String key = NOTIFY_IDEMPOTENT_KEY_PREFIX + requestId;
-        Boolean success = stringRedisTemplate.opsForValue().setIfAbsent(key, "processing", NOTIFY_IDEMPOTENT_EXPIRE_HOURS, TimeUnit.HOURS);
-        return Boolean.TRUE.equals(success);
-    }
-
-    private void releaseNotifyLock(String requestId) {
-        if (requestId == null || requestId.trim().isEmpty()) {
-            return;
-        }
-        String key = NOTIFY_IDEMPOTENT_KEY_PREFIX + requestId;
-        String currentValue = stringRedisTemplate.opsForValue().get(key);
-        if ("processing".equals(currentValue)) {
-            stringRedisTemplate.delete(key);
-        }
-    }
-
-    private void markNotifyProcessed(String requestId) {
-        if (requestId == null || requestId.trim().isEmpty()) {
-            return;
-        }
-        String key = NOTIFY_IDEMPOTENT_KEY_PREFIX + requestId;
-        stringRedisTemplate.opsForValue().set(key, "processed", NOTIFY_IDEMPOTENT_EXPIRE_HOURS, TimeUnit.HOURS);
     }
 
     private String successNotifyResponse(HttpServletResponse response) {

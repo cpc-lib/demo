@@ -2,81 +2,98 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cc.ivera.mapper.ProductMapper">
 
+    <sql id="productWithDefaultStockColumns">
+        p.id,
+        p.title,
+        p.price,
+        p.status,
+        p.version,
+        p.create_time,
+        p.update_time,
+        ps.id AS sku_id,
+        ps.sku_name AS sku_name,
+        ps.sku_spec AS sku_spec,
+        ps.status AS sku_status,
+        ss.available_stock AS available_stock,
+        ss.locked_stock AS locked_stock,
+        COALESCE(net.net_sold, 0) AS sold_stock
+    </sql>
+
+    <sql id="defaultStockJoins">
+        LEFT JOIN t_product_sku ps ON ps.product_id = p.id
+        LEFT JOIN t_sku_stock ss ON ss.sku_id = ps.id
+        LEFT JOIN (
+            SELECT product_id,
+                   GREATEST(0, SUM(CASE
+                       WHEN operation_type = 'ORDER_COMMIT' THEN -locked_delta
+                       WHEN operation_type IN ('REFUND_RESTORE', 'REFUND_RESTOCK', 'RETURN_RESTOCK')
+                           THEN -available_delta
+                       ELSE 0
+                   END)) AS net_sold
+            FROM t_inventory_operation
+            GROUP BY product_id
+        ) net ON net.product_id = p.id
+    </sql>
+
     <select id="selectByIdForUpdate" resultType="cc.ivera.entity.Product">
-        select *
-        from t_product
-        where id = #{id}
-        limit 1
-        for update
+        SELECT id, title, price, status, version, create_time, update_time
+        FROM t_product
+        WHERE id = #{id}
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <select id="selectByIdWithDefaultStock" resultType="cc.ivera.entity.Product">
+        SELECT <include refid="productWithDefaultStockColumns"/>
+        FROM t_product p
+        <include refid="defaultStockJoins"/>
+        WHERE p.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectByIdsWithDefaultStock" resultType="cc.ivera.entity.Product">
+        SELECT <include refid="productWithDefaultStockColumns"/>
+        FROM t_product p
+        <include refid="defaultStockJoins"/>
+        WHERE p.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY p.id
+    </select>
+
+    <select id="selectAllWithDefaultStock" resultType="cc.ivera.entity.Product">
+        SELECT <include refid="productWithDefaultStockColumns"/>
+        FROM t_product p
+        <include refid="defaultStockJoins"/>
+        ORDER BY p.id
     </select>
 
     <select id="selectOnShelf" resultType="cc.ivera.entity.Product">
-        select *
-        from t_product
-        where status = 'ON_SHELF'
-        order by id
+        SELECT <include refid="productWithDefaultStockColumns"/>
+        FROM t_product p
+        <include refid="defaultStockJoins"/>
+        WHERE p.status = 'ON_SHELF'
+          AND ps.status = 'ACTIVE'
+          AND ss.sku_id IS NOT NULL
+        ORDER BY p.id
     </select>
 
     <update id="updateBasicInfo">
-        update t_product
-        set title = #{title},
+        UPDATE t_product
+        SET title = #{title},
             price = #{price},
             version = version + 1
-        where id = #{id}
-          and version = #{version}
+        WHERE id = #{id}
+          AND version = #{version}
     </update>
 
     <update id="updateStatus">
-        update t_product
-        set status = #{status},
+        UPDATE t_product
+        SET status = #{status},
             version = version + 1
-        where id = #{id}
-          and version = #{version}
-    </update>
-
-    <update id="updateAvailableStock">
-        update t_product
-        set available_stock = #{availableStock},
-            version = version + 1
-        where id = #{id}
-          and version = #{version}
-    </update>
-
-    <update id="reserveStock">
-        update t_product
-        set available_stock = available_stock - #{quantity},
-            locked_stock = locked_stock + #{quantity},
-            version = version + 1
-        where id = #{id}
-          and status = 'ON_SHELF'
-          and available_stock >= #{quantity}
-    </update>
-
-    <update id="commitReservedStock">
-        update t_product
-        set locked_stock = locked_stock - #{quantity},
-            sold_stock = sold_stock + #{quantity},
-            version = version + 1
-        where id = #{id}
-          and locked_stock >= #{quantity}
-    </update>
-
-    <update id="releaseReservedStock">
-        update t_product
-        set available_stock = available_stock + #{quantity},
-            locked_stock = locked_stock - #{quantity},
-            version = version + 1
-        where id = #{id}
-          and locked_stock >= #{quantity}
-    </update>
-
-    <update id="restoreSoldStock">
-        update t_product
-        set available_stock = available_stock + #{quantity},
-            sold_stock = sold_stock - #{quantity},
-            version = version + 1
-        where id = #{id}
-          and sold_stock >= #{quantity}
+        WHERE id = #{id}
+          AND version = #{version}
     </update>
 
 </mapper>

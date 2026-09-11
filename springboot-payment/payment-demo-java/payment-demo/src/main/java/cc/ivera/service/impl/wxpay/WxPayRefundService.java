@@ -11,6 +11,10 @@ import cc.ivera.enums.wxpay.WxNotifyType;
 import cc.ivera.enums.wxpay.WxRefundStatus;
 import cc.ivera.exception.BizException;
 import cc.ivera.lock.DistributedLockTemplate;
+import cc.ivera.mq.InboxEventIds;
+import cc.ivera.mq.InboxEventTypes;
+import cc.ivera.service.MessageConsumeClaim;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundInfoService;
 import cc.ivera.service.refund.RefundStatusSyncResult;
@@ -47,6 +51,8 @@ public class WxPayRefundService implements WxPayRefundFacade {
 
     private final TransactionTemplate transactionTemplate;
 
+    private final MessageConsumeLogService consumeLogService;
+
     public WxPayRefundService(
         WxPayConfig wxPayConfig,
         PaymentConfigLoader paymentConfigLoader,
@@ -55,7 +61,8 @@ public class WxPayRefundService implements WxPayRefundFacade {
         WxPayHttpClient wxPayHttpClient,
         WxPayNotificationDecoder wxPayNotificationDecoder,
         DistributedLockTemplate distributedLockTemplate,
-        TransactionTemplate transactionTemplate
+        TransactionTemplate transactionTemplate,
+        MessageConsumeLogService consumeLogService
     ) {
         this.wxPayConfig = wxPayConfig;
         this.paymentConfigLoader = paymentConfigLoader;
@@ -65,6 +72,7 @@ public class WxPayRefundService implements WxPayRefundFacade {
         this.wxPayNotificationDecoder = wxPayNotificationDecoder;
         this.distributedLockTemplate = distributedLockTemplate;
         this.transactionTemplate = transactionTemplate;
+        this.consumeLogService = consumeLogService;
     }
 
     @Override
@@ -211,15 +219,45 @@ public class WxPayRefundService implements WxPayRefundFacade {
         }
 
         String notifyId = getString(bodyMap, "id");
+        String eventId = InboxEventIds.resolve(
+                notifyId,
+                InboxEventTypes.REFUND_NOTIFY_WX_V3 + ":" + refundNo + ":"
+                        + getString(plainTextMap, "refund_id") + ":" + getString(plainTextMap, "refund_status")
+        );
+        MessageConsumeClaim claim = consumeLogService.tryStart(
+                eventId,
+                "wxpay-refund-notify",
+                InboxEventTypes.REFUND_NOTIFY_WX_V3,
+                refundNo
+        );
+        if (claim.getStatus() == MessageConsumeClaim.Status.CONSUMED) {
+            log.info("微信退款通知已完成，幂等忽略，eventId={}, refundNo={}", eventId, refundNo);
+            return;
+        }
+        if (claim.getStatus() == MessageConsumeClaim.Status.BUSY) {
+            throw new cc.ivera.exception.ConflictException("微信退款通知正在处理，请稍后重试");
+        }
         String lockKey = "payment:wx:notify:refund:" + refundNo;
 
-        // 使用 Redisson 分布式锁，leaseTime=-1 开启看门狗自动续期
-        distributedLockTemplate.execute(lockKey, 5000L, -1L, () ->
-                transactionTemplate.execute(status -> {
-                    doProcessRefundNotifyInTransaction(plainTextMap, plainText, notifyId);
-                    return null;
-                })
-        );
+        try {
+            // 使用 Redisson 分布式锁，leaseTime=-1 开启看门狗自动续期
+            distributedLockTemplate.execute(lockKey, 5000L, -1L, () ->
+                    transactionTemplate.execute(status -> {
+                        doProcessRefundNotifyInTransaction(plainTextMap, plainText, notifyId);
+                        consumeLogService.complete(eventId, "wxpay-refund-notify", claim.getLeaseToken());
+                        return null;
+                    })
+            );
+        } catch (RuntimeException exception) {
+            consumeLogService.fail(
+                    eventId,
+                    "wxpay-refund-notify",
+                    claim.getLeaseToken(),
+                    exception.getMessage(),
+                    null
+            );
+            throw exception;
+        }
     }
 
     private void doProcessRefundNotifyInTransaction(Map<String, Object> plainTextMap, String plainText, String notifyId) {
@@ -227,6 +265,9 @@ public class WxPayRefundService implements WxPayRefundFacade {
         RefundStatusSyncResult syncResult = buildRefundStatusSyncResult(plainTextMap, channelStatus, plainText);
 
         log.info("微信退款通知加锁处理开始，refundNo={}, notifyId={}", syncResult.getRefundNo(), notifyId);
+        if (refundInfoService.getByRefundNo(syncResult.getRefundNo()) == null) {
+            throw new BizException("微信退款通知对应的本地退款单不存在，请稍后重试");
+        }
         boolean updated = refundInfoService.syncRefundStatus(syncResult);
         logRefundSyncIgnoredIfNeeded(updated, syncResult);
         log.info("微信退款通知处理完成，refundNo={}, notifyId={}", syncResult.getRefundNo(), notifyId);

@@ -55,8 +55,9 @@ public class CartServiceImpl implements CartService {
 
         List<Long> productIds = cartItems.stream()
                 .map(CartItem::getProductId)
+                .distinct()
                 .collect(Collectors.toList());
-        List<Product> products = productMapper.selectBatchIds(productIds);
+        List<Product> products = productMapper.selectByIdsWithDefaultStock(productIds);
         Map<Long, Product> productMap = new HashMap<>();
         for (Product product : products) {
             productMap.put(product.getId(), product);
@@ -99,7 +100,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void addItem(Long userId, Long productId, Integer quantity) {
         validateQuantity(quantity);
-        Product product = productMapper.selectById(productId);
+        Product product = productMapper.selectByIdWithDefaultStock(productId);
         if (product == null) {
             throw new NotFoundException("商品不存在");
         }
@@ -135,7 +136,7 @@ public class CartServiceImpl implements CartService {
         if (item == null) {
             throw new BizException("购物车中不存在该课程");
         }
-        Product product = productMapper.selectById(productId);
+        Product product = productMapper.selectByIdWithDefaultStock(productId);
         if (product == null) {
             throw new NotFoundException("商品不存在");
         }
@@ -185,6 +186,9 @@ public class CartServiceImpl implements CartService {
         if ("OFF_SHELF".equals(reason)) {
             throw new ConflictException("商品已下架");
         }
+        if ("SKU_UNAVAILABLE".equals(reason)) {
+            throw new ConflictException("商品默认SKU不可用");
+        }
         if ("SOLD_OUT".equals(reason)) {
             throw new ConflictException("商品已售罄");
         }
@@ -196,6 +200,9 @@ public class CartServiceImpl implements CartService {
     private String unavailableReason(Product product, int quantity) {
         if (!ProductStatus.ON_SHELF.equals(product.getStatus())) {
             return "OFF_SHELF";
+        }
+        if (product.getSkuId() == null || !"ACTIVE".equals(product.getSkuStatus())) {
+            return "SKU_UNAVAILABLE";
         }
         if (product.getAvailableStock() == null || product.getAvailableStock() <= 0) {
             return "SOLD_OUT";

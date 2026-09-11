@@ -12,5 +12,7 @@ public class RefundStatusSyncMessage implements Serializable {
     private String eventId;
 
     private String refundNo;
+
+    private Integer attempt;
 }
 

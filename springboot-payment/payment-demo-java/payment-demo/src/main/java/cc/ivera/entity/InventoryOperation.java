@@ -11,6 +11,12 @@ public class InventoryOperation extends BaseEntity {
 
     private Long productId;
 
+    private Long skuId;
+
+    private Long orderItemId;
+
+    private String receiptRequestId;
+
     private String operationType;
 
     private String orderNo;

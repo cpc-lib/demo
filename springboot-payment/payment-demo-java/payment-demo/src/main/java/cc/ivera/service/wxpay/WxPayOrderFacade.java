@@ -1,6 +1,7 @@
 package cc.ivera.service.wxpay;
 
 import cc.ivera.entity.OrderInfo;
+import cc.ivera.entity.PaymentOrder;
 
 import java.util.Map;
 
@@ -9,6 +10,12 @@ public interface WxPayOrderFacade {
     Map<String, Object> nativePay(Long productId, Long paymentAppId, String idempotencyKey);
 
     Map<String, Object> nativePayOrder(String orderNo);
+
+    Map<String, Object> createPayment(
+            PaymentOrder paymentOrder,
+            OrderInfo orderInfo,
+            String remoteAddr
+    );
 
     void processOrder(Map<String, Object> bodyMap);
 

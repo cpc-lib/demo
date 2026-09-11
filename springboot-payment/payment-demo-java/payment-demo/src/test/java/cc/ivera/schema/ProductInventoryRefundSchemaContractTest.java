@@ -78,7 +78,7 @@ class ProductInventoryRefundSchemaContractTest {
     }
 
     @Test
-    void runtimeConfigurationUses120SecondBackendOrderKeyTtl() throws Exception {
+    void runtimeConfigurationKeepsOrderWindowLongerThanAttemptSafetyMargin() throws Exception {
         String applicationYaml = new String(
                 Files.readAllBytes(Paths.get("src", "main", "resources", "application.yml")),
                 StandardCharsets.UTF_8
@@ -86,7 +86,7 @@ class ProductInventoryRefundSchemaContractTest {
 
         assertTrue(applicationYaml.contains(
                 "  order:\n"
-                        + "    close-delay-ms: 60000\n"
+                        + "    close-delay-ms: 300000\n"
                         + "    idempotency-key-ttl-seconds: 120\n"
         ));
     }

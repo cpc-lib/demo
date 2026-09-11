@@ -9,6 +9,8 @@ public interface InventoryService {
 
     void reserve(OrderInfo order, List<OrderItem> items);
 
+    boolean preflightAndCommit(String orderNo);
+
     boolean commitPayment(String orderNo);
 
     boolean releaseReservation(String orderNo);

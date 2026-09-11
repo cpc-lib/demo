@@ -11,6 +11,12 @@ public interface ProductMapper extends BaseMapper<Product> {
 
     Product selectByIdForUpdate(@Param("id") Long id);
 
+    Product selectByIdWithDefaultStock(@Param("id") Long id);
+
+    List<Product> selectByIdsWithDefaultStock(@Param("ids") List<Long> ids);
+
+    List<Product> selectAllWithDefaultStock();
+
     List<Product> selectOnShelf();
 
     int updateBasicInfo(
@@ -26,29 +32,4 @@ public interface ProductMapper extends BaseMapper<Product> {
             @Param("version") Integer version
     );
 
-    int updateAvailableStock(
-            @Param("id") Long id,
-            @Param("availableStock") Integer availableStock,
-            @Param("version") Integer version
-    );
-
-    int reserveStock(
-            @Param("id") Long id,
-            @Param("quantity") Integer quantity
-    );
-
-    int commitReservedStock(
-            @Param("id") Long id,
-            @Param("quantity") Integer quantity
-    );
-
-    int releaseReservedStock(
-            @Param("id") Long id,
-            @Param("quantity") Integer quantity
-    );
-
-    int restoreSoldStock(
-            @Param("id") Long id,
-            @Param("quantity") Integer quantity
-    );
 }

@@ -7,6 +7,10 @@ import lombok.Data;
 @TableName("t_payment_info")
 public class PaymentInfo extends BaseEntity {
 
+    private String paymentNo;//本地支付单号，历史记录可为空
+
+    private Long paymentAppId;//实际支付应用ID，历史记录可为空
+
     private String orderNo;//商品订单编号
 
     private String transactionId;//支付系统交易编号

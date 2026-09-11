@@ -10,6 +10,7 @@ import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
 import cc.ivera.service.AliPayService;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.wxpay.WxPayBillFacade;
@@ -17,7 +18,6 @@ import cc.ivera.service.wxpay.WxPayOrderFacade;
 import cc.ivera.service.wxpay.WxPayRefundFacade;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -166,7 +166,7 @@ class AdminPurchaseBoundaryTest {
                 mock(cc.ivera.service.InventoryService.class),
                 mock(DistributedLockTemplate.class),
                 mock(TransactionTemplate.class),
-                mock(StringRedisTemplate.class)
+                mock(MessageConsumeLogService.class)
         );
     }
 

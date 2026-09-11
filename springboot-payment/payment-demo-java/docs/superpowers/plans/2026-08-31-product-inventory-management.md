@@ -1,10 +1,12 @@
 # 商品库存管理与按明细退款 Implementation Plan
 
+> 历史执行记录：2026-09-04 起，新增实现以 [统一模型实施计划](2026-09-04-order-payment-refund-inventory.md) 为准。本文件勾选项保留原阶段结果；未完成的旧支付/退款/库存任务不能直接继续。SKU、独立预占、支付尝试、类型化回库和补偿键规则已经升级。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 在不超卖的前提下完成商品上下架、库存流水、订单预占/实扣/释放、后端签发 120 秒订单幂等键，以及按订单明细数量退款并在渠道确认成功后回补库存；React 与 Vue 保持同一契约。
+**Goal:** 在不超卖的前提下完成商品上下架、库存流水、订单预占/实扣/释放、后端签发 120 秒订单幂等键、按订单明细数量退款和渠道成功后的库存回补；若支付成功后的整单库存提交预检失败，则自动发起幂等的整单退款；React 与 Vue 保持同一契约。
 
-**Architecture:** MySQL 是商品、库存、订单、退款和消息状态的唯一事实源。商品行、订单行、退款申请行分别在短事务中加锁，库存变化通过唯一 `business_key` 记录流水；订单创建使用后端预签发并绑定 USER 的幂等记录，`COMPLETED` 映射长期返回原订单。需要访问支付渠道的关单和退款动作由同库 Outbox 记录驱动 RabbitMQ，消费者用 Inbox 唯一键和业务键防重复；支付通知、主动查单和退款通知复用统一的本地状态转换服务。
+**Architecture:** MySQL 是商品、库存、订单、退款和消息状态的唯一事实源。商品行、订单行、退款申请行分别在短事务中加锁，库存变化通过唯一 `business_key` 记录流水；订单创建使用后端预签发并绑定 USER 的幂等记录，`COMPLETED` 映射长期返回原订单。需要访问支付渠道的关单和退款动作由同库 Outbox 记录驱动 RabbitMQ，消费者用 Inbox 唯一键和业务键防重复；支付通知与主动查单复用统一支付完成服务，在任何 `locked_stock -> sold_stock` 更新前预检整单，库存不足时同事务持久化系统已审批的全额退款。退款通知、主动查单和状态同步复用统一退款完成服务，只有渠道确认成功才执行对应的库存回补或预占安全释放。
 
 **Tech Stack:** Spring Boot MVC 2.3.7、MyBatis-Plus 3.3.1、MySQL/InnoDB、Spring `TransactionTemplate`、Redisson、RabbitMQ、JUnit 5/Mockito；React 18 + Vite + Ant Design；Vue 2 + Vue CLI + Element UI。
 
@@ -468,7 +470,7 @@
 
   `restoreRefund` is added in Task 8 together with trusted refund-item rows; Task 5 must not expose an empty restore contract.
 
-  Each method locks order items and products in ascending product ID order, checks the expected `inventory_status`, and updates the three buckets plus an `InventoryOperation` in the same transaction. Use conditional SQL for the reserve (`status=ON_SHELF AND available_stock >= quantity`) and unique operation business keys as the final idempotency guard. Payment success first wins `NOTPAY -> SUCCESS`, then calls `commitPayment`; close first wins `NOTPAY -> CLOSED/CANCEL`, then calls `releaseReservation`. A repeated transition returns without changing buckets or inserting a second operation.
+  Each method locks order items and products in ascending product ID order, checks the expected `inventory_status`, and updates the three buckets plus an `InventoryOperation` in the same transaction. Use conditional SQL for the reserve (`status=ON_SHELF AND available_stock >= quantity`) and unique operation business keys as the final idempotency guard. At this stage payment success first wins `NOTPAY -> SUCCESS`, then calls `commitPayment`; close first wins `NOTPAY -> CLOSED/CANCEL`, then calls `releaseReservation`. A repeated transition returns without changing buckets or inserting a second operation. Task 9 deliberately replaces the payment ordering with a whole-order preflight before the status update so the automatic-refund branch cannot partially commit stock.
 
 - [x] **Step 4: Wire all three payment success and close paths**
 
@@ -683,10 +685,138 @@
 
   Expected: approval has no inventory side effect, only channel-confirmed success restores the exact selected quantity, and duplicate success paths remain no-ops.
 
-### Task 9: Align React USER flows with server-issued keys, stock flags, and itemized refunds
+### Task 9: Automatically refund the whole order when paid inventory cannot be committed
 
 **Files:**
 
+- Create: `payment-demo/src/main/java/cc/ivera/enums/RefundSource.java`
+- Create: `payment-demo/src/main/java/cc/ivera/service/inventory/PaymentInventoryResult.java`
+- Create: `payment-demo/src/main/java/cc/ivera/service/payment/PaymentCompletionResult.java`
+- Create: `payment-demo/src/main/java/cc/ivera/service/payment/PaymentCompletionService.java`
+- Create: `payment-demo/src/main/java/cc/ivera/service/payment/AutomaticRefundService.java`
+- Create: `payment-demo/src/main/java/cc/ivera/service/payment/impl/PaymentCompletionServiceImpl.java`
+- Create: `payment-demo/src/main/java/cc/ivera/service/payment/impl/AutomaticRefundServiceImpl.java`
+- Modify: `payment-demo/sql/payment-demo.sql`
+- Modify: `payment-demo/src/main/java/cc/ivera/enums/InventoryStatus.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/entity/RefundInfo.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/mapper/RefundInfoMapper.java`
+- Modify: `payment-demo/src/main/resources/mapper/RefundInfoMapper.xml`
+- Modify: `payment-demo/src/main/java/cc/ivera/mapper/OrderItemMapper.java`
+- Create: `payment-demo/src/main/resources/mapper/OrderItemMapper.xml`
+- Modify: `payment-demo/src/main/java/cc/ivera/service/InventoryService.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/service/impl/InventoryServiceImpl.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/service/impl/RefundInfoServiceImpl.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/service/impl/RefundApplicationServiceImpl.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/service/refund/OrderRefundStatusService.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/controller/WxPayV2Controller.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/service/impl/wxpay/WxPayOrderService.java`
+- Modify: `payment-demo/src/main/java/cc/ivera/service/impl/AliPayServiceImpl.java`
+- Create: `payment-demo/src/test/java/cc/ivera/service/payment/PaymentStockShortageAutoRefundTest.java`
+- Create: `payment-demo/src/test/java/cc/ivera/service/payment/PaymentLateSuccessAutoRefundTest.java`
+- Create: `payment-demo/src/test/java/cc/ivera/service/payment/AutomaticRefundInventoryResolutionTest.java`
+- Create: `payment-demo/src/test/java/cc/ivera/service/payment/PaymentCompletionEntryPointTest.java`
+- Modify: `payment-demo/src/test/java/cc/ivera/schema/ProductInventoryRefundSchemaContractTest.java`
+- Modify: `payment-demo/src/test/java/cc/ivera/service/impl/ItemizedRefundServiceTest.java`
+
+- [ ] **Step 1: Write failing payment-shortage and late-payment tests**
+
+  Cover a multi-product order where one product has `locked_stock < requiredQuantity`: no product receives an `ORDER_COMMIT` update; every `RESERVED` item for the deficient product becomes `ANOMALY_PENDING`; other products remain `RESERVED`; one `PAYMENT_STOCK_SHORTAGE` refund is created for the exact order total and all purchased quantities; one `REFUND_SUBMIT_REQUESTED:{refundNo}` Outbox is written. Repeat with two order-item rows for the same deficient product and assert both transition together. Cover `CLOSED/CANCEL` orders whose items are all `RELEASED`: a late verified payment creates the same automatic refund without changing inventory. Product/item absence, a `NOTPAY` item not in `RESERVED`, or a closed order with a non-`RELEASED` item must fail and create no refund.
+
+  ```java
+  @Test
+  void oneDeficientProductCreatesOneFullAutomaticRefundWithoutPartialCommit() {
+      when(inventoryService.commitOrMarkShortage(lockedOrder))
+              .thenReturn(PaymentInventoryResult.STOCK_SHORTAGE);
+
+      PaymentCompletionResult result = service.completePaidOrder("ORDER-1");
+
+      assertEquals(PaymentCompletionResult.AUTO_REFUNDING, result);
+      verify(automaticRefundService).createOrGet(lockedOrder);
+      verify(orderInfoService).updateStatusByOrderNoIfStatus(
+              "ORDER-1", OrderStatus.NOTPAY, OrderStatus.REFUND_PROCESSING);
+  }
+  ```
+
+- [ ] **Step 2: Run the focused tests and verify RED**
+
+  ```powershell
+  Set-Location payment-demo
+  mvn '-Dtest=PaymentStockShortageAutoRefundTest,PaymentLateSuccessAutoRefundTest,AutomaticRefundInventoryResolutionTest,PaymentCompletionEntryPointTest,ProductInventoryRefundSchemaContractTest' test
+  ```
+
+  Expected: compilation or assertions fail because `RefundSource`, `ANOMALY_PENDING`, the unified payment completion service, automatic refund creation, and automatic-refund inventory resolution do not exist.
+
+- [ ] **Step 3: Add the persisted source and deterministic automatic-refund identity**
+
+  Add `refund_source varchar(32) NOT NULL DEFAULT 'USER'` to `t_refund_info`, backfill historical rows as `USER`, and map `RefundInfo.refundSource`. Define `RefundSource.USER` and `RefundSource.PAYMENT_STOCK_SHORTAGE`. Add `InventoryStatus.ANOMALY_PENDING` and `InventoryStatus.ANOMALY`; both values fit the existing `varchar(16)` column.
+
+  `AutomaticRefundService.createOrGet(OrderInfo order)` must derive the request ID exactly as follows and keep it under 64 characters:
+
+  ```java
+  String seed = "PAYMENT_STOCK_SHORTAGE:" + order.getOrderNo();
+  String requestId = "AUTO_STOCK_REFUND:" + UUID.nameUUIDFromBytes(
+          seed.getBytes(StandardCharsets.UTF_8));
+  ```
+
+  Lock the order and its items, insert one refund with `approvalStatus=APPROVED`, `refundStatus=CREATED`, `refundSource=PAYMENT_STOCK_SHORTAGE`, `refund=order.totalFee`, and one refund item for every complete order-item quantity. Insert `REFUND_SUBMIT_REQUESTED:{refundNo}` in the same transaction. On `(order_no, application_request_id)` conflict, load and compare the full amount and normalized item snapshots; return the existing refund only when they match.
+
+- [ ] **Step 4: Preflight the entire inventory and centralize payment completion**
+
+  Replace the update-order-first flow with:
+
+  ```java
+  public interface PaymentCompletionService {
+      PaymentCompletionResult completePaidOrder(String orderNo);
+  }
+
+  public interface AutomaticRefundService {
+      RefundInfo createOrGet(OrderInfo lockedOrder);
+  }
+
+  public enum PaymentInventoryResult {
+      COMMITTED,
+      STOCK_SHORTAGE
+  }
+
+  public enum PaymentCompletionResult {
+      NORMAL_SUCCESS,
+      AUTO_REFUNDING,
+      ALREADY_PROCESSED
+  }
+  ```
+
+  `InventoryService.commitOrMarkShortage(OrderInfo lockedOrder)` locks all order items and product rows in product-ID order. Missing rows and illegal item states raise `ConflictException`. Before any stock update, aggregate every product quantity. If every product has sufficient locked stock, perform all `locked -> sold`, `RESERVED -> SOLD`, and `ORDER_COMMIT` writes. If any product is short, perform no stock-bucket or `ORDER_COMMIT` update; change every item belonging to each deficient product from `RESERVED` to `ANOMALY_PENDING`, leave other products `RESERVED`, and return `STOCK_SHORTAGE`.
+
+  Mark both services with `@Transactional(propagation = Propagation.MANDATORY, rollbackFor = Exception.class)` so payment info, inventory, automatic refund, Outbox, and payment Inbox cannot accidentally split across transactions. `PaymentCompletionService.completePaidOrder` locks the order. `SUCCESS/PARTIAL_REFUND/REFUND_PROCESSING/REFUND_ABNORMAL/REFUND_SUCCESS` return `ALREADY_PROCESSED`. `NOTPAY` uses `commitOrMarkShortage`: committed inventory changes the order to `SUCCESS` and returns `NORMAL_SUCCESS`; shortage changes it to `REFUND_PROCESSING`, creates the automatic refund, and returns `AUTO_REFUNDING`. `CLOSED/CANCEL` requires every item to be `RELEASED`, then changes to `REFUND_PROCESSING`, creates the automatic refund without touching inventory, and returns `AUTO_REFUNDING`.
+
+  Update WeChat V2, WeChat V3, Alipay notification, and both active-query success paths to invoke this service after existing signature/merchant/order/amount checks. Persist the channel payment record and complete the payment Inbox inside the same transaction. Return success to the channel only after the transaction commits; persistence failure returns the channel failure response. Remove the old sequence that changed the order to `SUCCESS` before `inventoryService.commitPayment`.
+
+- [ ] **Step 5: Resolve automatic-refund inventory only after channel success**
+
+  Extend the Task 8 refund-success gate to dispatch by `refundSource`. For `USER`, retain `sold_stock -> available_stock` and `REFUND_RESTORE`. For `PAYMENT_STOCK_SHORTAGE`, obtain `payment:order:transition:{orderNo}`, lock the order first, then refund/items/order-items and products in deterministic order:
+
+  - `ANOMALY_PENDING` always becomes `ANOMALY`, writes a zero-delta `PAYMENT_STOCK_ANOMALY:{orderNo}:{productId}`, and never releases current aggregate locked stock.
+  - A product whose automatic-refund items all remain `RESERVED` is released only when the current aggregate lock covers the full group; write `PAYMENT_REFUND_RELEASE:{refundNo}:{orderItemId}` and change the items to `RELEASED`. If the second check is short, change the whole group to `ANOMALY` and write the anomaly operation instead.
+  - Existing `RELEASED` items from close/cancel remain `RELEASED` and receive no second stock operation.
+
+  Every automatic-refund item increments `refunded_quantity` exactly once after channel success, and the order becomes `REFUND_SUCCESS` even when inventory is anomalous. Duplicate success events are no-ops through refund status conditions, Inbox, item counters, and inventory business keys. `RefundApplicationServiceImpl.createApplication` must reject USER requests when a refund with source `PAYMENT_STOCK_SHORTAGE` already exists for the order, while ordinary partial-refund `REFUND_PROCESSING` remains eligible under Task 7 quantity rules.
+
+- [ ] **Step 6: Run focused tests and inspect all payment entry points**
+
+  ```powershell
+  Set-Location payment-demo
+  mvn '-Dtest=PaymentStockShortageAutoRefundTest,PaymentLateSuccessAutoRefundTest,AutomaticRefundInventoryResolutionTest,PaymentCompletionEntryPointTest,PaymentInventoryTransitionTest,OrderTransitionConcurrencyTest,RefundInventoryRestoreTest,RefundStatusSyncServiceTest,ItemizedRefundServiceTest,ProductInventoryRefundSchemaContractTest' test
+  rg -n "updateStatusByOrderNoIfStatus.*SUCCESS|commitPayment\(" src/main/java/cc/ivera/controller/WxPayV2Controller.java src/main/java/cc/ivera/service/impl/wxpay/WxPayOrderService.java src/main/java/cc/ivera/service/impl/AliPayServiceImpl.java
+  ```
+
+  Expected: all focused tests pass; no payment adapter independently changes `NOTPAY -> SUCCESS` or calls the obsolete commit-after-status method; repeated notification/query paths create one financial record, one automatic refund, and one refund-submit Outbox.
+
+### Task 10: Align React USER flows with server-issued keys, stock flags, and itemized refunds
+
+**Files:**
+
+- Delete: `payment-demo-react/src/components/AppFooter.jsx`
+- Modify: `payment-demo-react/src/App.jsx`
 - Modify: `payment-demo-react/src/api/orderInfo.js`
 - Modify: `payment-demo-react/src/api/refundInfo.js`
 - Modify: `payment-demo-react/src/api/product.js`
@@ -731,7 +861,7 @@
 
   In `Cart.jsx`, call `issueIdempotencyKey()` immediately before the order POST, take `idempotencyKey` from the response, and send it in both header and transition body. Hold the key in the current checkout attempt. On timeout/network failure retry with that same key even if the local 120-second clock elapsed; only a server response explicitly saying the unused key expired may trigger a new key. Never generate an order key with `crypto.randomUUID()`.
 
-  In `Home.jsx`, disable add-to-cart when `saleable=false` and display `unavailableReason`; in `Cart.jsx`, render the four backend flags and disable checkout if any line is not purchasable. Refresh cart/product data after a 409.
+  In `Home.jsx`, disable add-to-cart when `saleable=false` and display `unavailableReason`; in `Cart.jsx`, render the four backend flags and disable checkout if any line is not purchasable. Refresh cart/product data after a 409. During payment polling, treat `REFUND_PROCESSING` immediately after a confirmed channel payment as “支付成功，库存异常，正在全额退款” rather than ordinary payment success; in the order list, use the refund record's `refundSource=PAYMENT_STOCK_SHORTAGE` to render the same message and disable USER refund application.
 
 - [ ] **Step 4: Implement itemized USER refund selection**
 
@@ -748,7 +878,7 @@
   }
   ```
 
-  Remove `refundAmountYuan`, payment-channel refund calls, and any amount input. Refresh order/refund records after success and show the server-calculated amount.
+  Remove `refundAmountYuan`, payment-channel refund calls, and any amount input. Refresh order/refund records after success and show the server-calculated amount. Automatic refunds are read-only in this selector and cannot be resubmitted by USER.
 
 - [ ] **Step 5: Build and static-review React**
 
@@ -756,12 +886,12 @@
   Push-Location payment-demo-react
   npm run build
   Pop-Location
-  rg -n "createRequestId|refundAmount|/api/wx-pay/refunds|/api/ali-pay/trade/refund" payment-demo-react/src
+  rg -n "createRequestId|refundAmount|/api/wx-pay/refunds|/api/ali-pay/trade/refund|关于我们|联系我们|帮助中心|资源下载|版权所有" payment-demo-react/src
   ```
 
-  Expected: build exits 0; remaining `createRequestId` uses are only non-order request IDs such as stock/refund adjustment where explicitly allowed, and no old amount refund endpoint remains.
+  Delete the unused `AppFooter` import/render and component so the entire links/copyright footer is absent. Expected: build exits 0; remaining `createRequestId` uses are only non-order request IDs such as stock/refund adjustment where explicitly allowed, no old amount refund endpoint remains, and the footer scan returns no matches.
 
-### Task 10: Add the React ADMIN product and refund operations
+### Task 11: Add the React ADMIN product and refund operations
 
 **Files:**
 
@@ -798,7 +928,7 @@
 
 - [ ] **Step 4: Show itemized refund state to ADMIN**
 
-  Extend `Refunds.jsx` and the ADMIN branch of `Orders.jsx` to show refund item lines (title, quantity, amount), calculated total, approval status, channel refund status, and “查询状态/订单退款对账”. Approval buttons call only the approval endpoint; there is no manual inventory-restock action.
+  Extend `Refunds.jsx` and the ADMIN branch of `Orders.jsx` to show refund item lines (title, quantity, amount), calculated total, `refundSource`, approval status, channel refund status, and “查询状态/订单退款对账”. Approval buttons call only the approval endpoint; rows with `refundSource=PAYMENT_STOCK_SHORTAGE` display “支付库存异常自动退款” and never render approval/rejection actions. There is no manual inventory-restock action.
 
 - [ ] **Step 5: Build and inspect route/API parity**
 
@@ -811,10 +941,12 @@
 
   Expected: ADMIN sees product/refund operations, USER sees only shopping/refund selection, and no ADMIN component calls cart/checkout/payment/refund-apply endpoints.
 
-### Task 11: Align Vue with the same API and state machine
+### Task 12: Align Vue with the same API and state machine
 
 **Files:**
 
+- Delete: `payment-demo-vue/src/components/AppFooter.vue`
+- Modify: `payment-demo-vue/src/App.vue`
 - Create: `payment-demo-vue/src/api/adminProduct.js`
 - Create: `payment-demo-vue/src/views/Products.vue`
 - Create: `payment-demo-vue/src/components/RefundItemSelector.vue`
@@ -849,11 +981,11 @@
 
 - [ ] **Step 2: Implement USER catalog/cart/checkout parity**
 
-  Match React behavior exactly: `saleable=false` disables add; cart rows show status/available stock/reason; checkout requests the backend key at the final click and reuses it for retries; a server-expired unused key is the only condition that permits issuing a new key. Keep cart removal available for stale off-shelf lines and never make cart operations reserve inventory.
+  Match React behavior exactly: `saleable=false` disables add; cart rows show status/available stock/reason; checkout requests the backend key at the final click and reuses it for retries; a server-expired unused key is the only condition that permits issuing a new key. Keep cart removal available for stale off-shelf lines and never make cart operations reserve inventory. Payment polling and order rows render “支付成功，库存异常，正在全额退款” for the automatic-refund path and disable a second USER refund application.
 
 - [ ] **Step 3: Implement Vue itemized refund selector**
 
-  Replace the amount input in `Orders.vue` with `RefundItemSelector.vue` using `refundableQuantity`. Submit one stable `requestId` with order number, reason, and selected item quantities. Display the server-calculated refund amount and itemized records in the existing refund-record dialog. Update `Refunds.vue` to show item lines and channel status for ADMIN.
+  Replace the amount input in `Orders.vue` with `RefundItemSelector.vue` using `refundableQuantity`. Submit one stable `requestId` with order number, reason, and selected item quantities. Display the server-calculated refund amount and itemized records in the existing refund-record dialog. Update `Refunds.vue` to show item lines, `refundSource`, and channel status for ADMIN; automatic-refund rows do not render approval/rejection actions.
 
 - [ ] **Step 4: Create the Vue Products page and route**
 
@@ -866,18 +998,19 @@
   npm run lint
   npm run build
   Pop-Location
-  rg -n "createRequestId|refundAmount|/api/wx-pay/refunds|/api/ali-pay/trade/refund" payment-demo-vue/src
+  rg -n "createRequestId|refundAmount|/api/wx-pay/refunds|/api/ali-pay/trade/refund|关于我们|联系我们|帮助中心|资源下载|版权所有" payment-demo-vue/src
   ```
 
-  Expected: lint/build exit 0 and no old amount-refund call remains.
+  Delete the unused `AppFooter` import/render and component. Expected: lint/build exit 0, no old amount-refund call remains, and the footer scan returns no matches.
 
-### Task 12: Add real-MySQL race tests and complete verification
+### Task 13: Add real-MySQL race tests and complete verification
 
 **Files:**
 
 - Create: `payment-demo/src/test/java/cc/ivera/integration/ProductInventoryConcurrencyIT.java`
 - Create: `payment-demo/src/test/java/cc/ivera/integration/OrderIdempotencyConcurrencyIT.java`
 - Create: `payment-demo/src/test/java/cc/ivera/integration/RefundQuantityConcurrencyIT.java`
+- Create: `payment-demo/src/test/java/cc/ivera/integration/PaymentStockShortageAutoRefundIT.java`
 - Modify: `payment-demo/src/test/java/cc/ivera/characterization/CorsPreflightCharacterizationTest.java`
 - Modify: `spec/README.md`
 - Modify: `payment-demo/README.md`
@@ -886,7 +1019,7 @@
 
 - [ ] **Step 1: Write the integration tests before enabling them**
 
-  Use an isolated MySQL schema and deterministic cleanup of product/order/refund/inventory/outbox/inbox rows. Test: 10 stock units versus 50 concurrent checkouts; 20 identical requests with the same user/key; payment notification versus close; duplicate Rabbit delivery; 20 concurrent partial refund requests; and CORS `OPTIONS /api/cart/items` returning HTTP 200 with the configured origin/method/header response.
+  Use an isolated MySQL schema and deterministic cleanup of product/order/refund/inventory/outbox/inbox rows. Test: 10 stock units versus 50 concurrent checkouts; 20 identical requests with the same user/key; payment notification versus close; duplicate Rabbit delivery; 20 concurrent partial refund requests; a multi-item paid order whose one product lock is deliberately reduced before payment completion and therefore creates exactly one full automatic refund without any `ORDER_COMMIT`; repeated payment callbacks/queries against that shortage; and CORS `OPTIONS /api/cart/items` returning HTTP 200 with the configured origin/method/header response.
 
   ```java
   @Test
@@ -903,7 +1036,7 @@
 
   ```powershell
   Set-Location payment-demo
-  mvn '-Dtest=ProductInventoryRefundSchemaContractTest,ProductAdminServiceTest,AdminProductControllerTest,CartServiceImplTest,CartCheckoutServiceTest,OrderIdempotencyServiceTest,InventoryServiceTest,ItemizedRefundServiceTest,RefundInventoryRestoreTest,MessageOutboxServiceTest,MessageIdempotencyTest,AdminPurchaseBoundaryTest,AdminOrderCreationBoundaryTest,RefundOwnershipTest,PublicApiCharacterizationTest,CorsPreflightCharacterizationTest' test
+  mvn '-Dtest=ProductInventoryRefundSchemaContractTest,ProductAdminServiceTest,AdminProductControllerTest,CartServiceImplTest,CartCheckoutServiceTest,OrderIdempotencyServiceTest,InventoryServiceTest,ItemizedRefundServiceTest,RefundInventoryRestoreTest,PaymentStockShortageAutoRefundTest,PaymentLateSuccessAutoRefundTest,AutomaticRefundInventoryResolutionTest,PaymentCompletionEntryPointTest,MessageOutboxServiceTest,MessageIdempotencyTest,AdminPurchaseBoundaryTest,AdminOrderCreationBoundaryTest,RefundOwnershipTest,PublicApiCharacterizationTest,CorsPreflightCharacterizationTest' test
   ```
 
   Expected: all database-independent tests pass. If MySQL/RabbitMQ is unavailable, keep the integration tests separately reported as environment-blocked; never convert them into ignored tests.
@@ -911,7 +1044,7 @@
 - [ ] **Step 3: Run the real-MySQL integration tests**
 
   ```powershell
-  mvn '-Dtest=ProductInventoryConcurrencyIT,OrderIdempotencyConcurrencyIT,RefundQuantityConcurrencyIT' test
+  mvn '-Dtest=ProductInventoryConcurrencyIT,OrderIdempotencyConcurrencyIT,RefundQuantityConcurrencyIT,PaymentStockShortageAutoRefundIT' test
   ```
 
   Expected: exact stock and quantity invariants from the spec, one order per key, one inventory operation per business key, and no negative bucket.
@@ -940,6 +1073,9 @@
   3. USER checkout first obtains a backend key, sends it in the header, and a repeated request returns the same order.
   4. USER refund selects item quantities; ADMIN approval only schedules channel refund; inventory changes only after channel success/query confirmation.
   5. ADMIN `/products`, `/refunds`, payment status query, refund query/reconcile, and outbox retry are available; React and Vue field labels/actions match.
+  6. A paid multi-item order with one deliberately deficient locked-stock group creates one full `PAYMENT_STOCK_SHORTAGE` refund, commits no `ORDER_COMMIT` for any product, and returns payment callback success only after the refund/Outbox transaction commits.
+  7. Automatic-refund success releases only provable `RESERVED` groups, changes `ANOMALY_PENDING` groups to `ANOMALY` without increasing available stock, and leaves previously `RELEASED` close/cancel items unchanged.
+  8. Neither frontend renders the removed links/copyright footer, and automatic refunds never show USER application or ADMIN approval actions.
 
   Update `payment-demo/README.md` and `docs/RABBITMQ_OPERATIONS.md` with the 120-second key configuration, outbox/inbox retry procedure, and itemized refund payload. Move SPEC-010 to `spec/implemented`, add implementation anchors and final test counts to `spec/README.md`, and append the planned→implemented transition only after all checks pass.
 
@@ -948,7 +1084,7 @@
   ```powershell
   git diff --check
   git status --short --branch
-  rg -n "refundAmount|/api/wx-pay/refunds|/api/ali-pay/trade/refund|createRequestId\(\).*checkout|total_stock" payment-demo payment-demo-react/src payment-demo-vue/src spec
+  rg -n "refundAmount|/api/wx-pay/refunds|/api/ali-pay/trade/refund|createRequestId\(\).*checkout|total_stock|关于我们|联系我们|帮助中心|资源下载|版权所有" payment-demo payment-demo-react/src payment-demo-vue/src spec
   ```
 
   Confirm stale amount-refund contracts are absent, completed idempotency records are not expired by the 120-second cleanup, all changed files map to SPEC-010, and unrelated existing worktree edits are preserved.
@@ -959,8 +1095,8 @@
 
 ```powershell
 Set-Location D:\code\demo\springboot-payment\payment-demo-java\payment-demo
-mvn '-Dtest=ProductInventoryRefundSchemaContractTest,ProductAdminServiceTest,AdminProductControllerTest,CartServiceImplTest,CartCheckoutServiceTest,OrderIdempotencyServiceTest,InventoryServiceTest,ItemizedRefundServiceTest,RefundInventoryRestoreTest,MessageOutboxServiceTest,MessageIdempotencyTest,AdminPurchaseBoundaryTest,AdminOrderCreationBoundaryTest,RefundOwnershipTest,PublicApiCharacterizationTest,CorsPreflightCharacterizationTest' test
-mvn '-Dtest=ProductInventoryConcurrencyIT,OrderIdempotencyConcurrencyIT,RefundQuantityConcurrencyIT' test
+mvn '-Dtest=ProductInventoryRefundSchemaContractTest,ProductAdminServiceTest,AdminProductControllerTest,CartServiceImplTest,CartCheckoutServiceTest,OrderIdempotencyServiceTest,InventoryServiceTest,ItemizedRefundServiceTest,RefundInventoryRestoreTest,PaymentStockShortageAutoRefundTest,PaymentLateSuccessAutoRefundTest,AutomaticRefundInventoryResolutionTest,PaymentCompletionEntryPointTest,MessageOutboxServiceTest,MessageIdempotencyTest,AdminPurchaseBoundaryTest,AdminOrderCreationBoundaryTest,RefundOwnershipTest,PublicApiCharacterizationTest,CorsPreflightCharacterizationTest' test
+mvn '-Dtest=ProductInventoryConcurrencyIT,OrderIdempotencyConcurrencyIT,RefundQuantityConcurrencyIT,PaymentStockShortageAutoRefundIT' test
 mvn clean package
 
 Set-Location ..\payment-demo-react

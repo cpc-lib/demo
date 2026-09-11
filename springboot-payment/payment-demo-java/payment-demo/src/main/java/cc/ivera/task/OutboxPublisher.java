@@ -2,11 +2,13 @@ package cc.ivera.task;
 
 import cc.ivera.config.OrderCloseRabbitConfig;
 import cc.ivera.config.RefundStatusSyncRabbitConfig;
+import cc.ivera.config.RefundSubmitRabbitConfig;
 import cc.ivera.entity.MessageOutbox;
 import cc.ivera.mapper.MessageOutboxMapper;
 import cc.ivera.mq.OrderCloseMessage;
 import cc.ivera.mq.OutboxEventTypes;
 import cc.ivera.mq.RefundStatusSyncMessage;
+import cc.ivera.mq.RefundSubmitMessage;
 import cc.ivera.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
@@ -129,13 +131,45 @@ public class OutboxPublisher {
             RefundStatusSyncMessage message = new RefundStatusSyncMessage();
             message.setEventId(required(event.getEventId(), "退款状态同步事件ID不能为空"));
             message.setRefundNo(required(value(payload, "refundNo"), "退款单号不能为空"));
+            message.setAttempt(nonNegativeInteger(payload, "attempt", 0));
             return new RoutedMessage(
                     RefundStatusSyncRabbitConfig.REFUND_STATUS_SYNC_EVENT_EXCHANGE,
                     RefundStatusSyncRabbitConfig.REFUND_STATUS_SYNC_DELAY_ROUTING_KEY,
                     message
             );
         }
+        if (OutboxEventTypes.REFUND_SUBMIT_REQUESTED.equals(event.getEventType())) {
+            RefundSubmitMessage message = new RefundSubmitMessage();
+            message.setEventId(required(event.getEventId(), "退款提交事件ID不能为空"));
+            message.setRefundNo(required(value(payload, "refundNo"), "退款单号不能为空"));
+            return new RoutedMessage(
+                    RefundSubmitRabbitConfig.REFUND_SUBMIT_EVENT_EXCHANGE,
+                    RefundSubmitRabbitConfig.REFUND_SUBMIT_ROUTING_KEY,
+                    message
+            );
+        }
         throw new IllegalArgumentException("不支持的Outbox事件类型: " + event.getEventType());
+    }
+
+    private int nonNegativeInteger(Map<String, Object> payload, String key, int defaultValue) {
+        Object raw = payload == null ? null : payload.get(key);
+        if (raw == null) {
+            return defaultValue;
+        }
+        int value;
+        if (raw instanceof Number) {
+            value = ((Number) raw).intValue();
+        } else {
+            try {
+                value = Integer.parseInt(raw.toString());
+            } catch (NumberFormatException exception) {
+                throw new IllegalArgumentException(key + "必须是整数", exception);
+            }
+        }
+        if (value < 0) {
+            throw new IllegalArgumentException(key + "不能为负数");
+        }
+        return value;
     }
 
     private Date nextRetryTime(MessageOutbox event) {

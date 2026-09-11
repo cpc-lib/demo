@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Param;
 
 public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
+    OrderInfo selectByOrderNo(@Param("orderNo") String orderNo);
+
     /**
      * 按订单号查询并加行级排他锁。
      */

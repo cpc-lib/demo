@@ -8,6 +8,7 @@ import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderIdempotency;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.entity.Product;
+import cc.ivera.entity.ProductSku;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.InventoryStatus;
 import cc.ivera.enums.PayType;
@@ -20,6 +21,7 @@ import cc.ivera.mapper.CartMapper;
 import cc.ivera.mapper.OrderInfoMapper;
 import cc.ivera.mapper.OrderItemMapper;
 import cc.ivera.mapper.ProductMapper;
+import cc.ivera.mapper.ProductSkuMapper;
 import cc.ivera.service.CheckoutService;
 import cc.ivera.service.InventoryService;
 import cc.ivera.service.OrderCloseMessageService;
@@ -32,6 +34,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,11 +47,15 @@ public class CheckoutServiceImpl implements CheckoutService {
 
     private static final long CHECKOUT_LOCK_LEASE_MS = -1L;
 
+    private static final long ORDER_EXPIRY_MILLIS = 300_000L;
+
     private final CartMapper cartMapper;
 
     private final CartItemMapper cartItemMapper;
 
     private final ProductMapper productMapper;
+
+    private final ProductSkuMapper productSkuMapper;
 
     private final OrderInfoMapper orderInfoMapper;
 
@@ -70,6 +77,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             CartMapper cartMapper,
             CartItemMapper cartItemMapper,
             ProductMapper productMapper,
+            ProductSkuMapper productSkuMapper,
             OrderInfoMapper orderInfoMapper,
             OrderItemMapper orderItemMapper,
             PaymentConfigLoader paymentConfigLoader,
@@ -82,6 +90,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         this.cartMapper = cartMapper;
         this.cartItemMapper = cartItemMapper;
         this.productMapper = productMapper;
+        this.productSkuMapper = productSkuMapper;
         this.orderInfoMapper = orderInfoMapper;
         this.orderItemMapper = orderItemMapper;
         this.paymentConfigLoader = paymentConfigLoader;
@@ -173,12 +182,27 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .sorted()
                 .collect(Collectors.toList());
         Map<Long, Product> productMap = new HashMap<>();
+        Map<Long, ProductSku> skuMap = new HashMap<>();
         for (Long productId : productIds) {
             Product product = productMapper.selectByIdForUpdate(productId);
             if (product == null) {
                 throw new ConflictException("购物车中存在已删除商品，请刷新后重试");
             }
+            if (product.getStatus() != ProductStatus.ON_SHELF) {
+                throw new ConflictException("购物车中存在已下架商品，请刷新后重试");
+            }
+            if (product.getPrice() == null || product.getPrice() < 0) {
+                throw new BizException("课程价格无效");
+            }
+            ProductSku sku = productSkuMapper.selectDefaultByProductId(productId);
+            if (sku == null
+                    || sku.getId() == null
+                    || !Objects.equals(productId, sku.getProductId())
+                    || !"ACTIVE".equals(sku.getStatus())) {
+                throw new ConflictException("购物车中存在默认SKU不可用商品，请刷新后重试");
+            }
             productMap.put(product.getId(), product);
+            skuMap.put(product.getId(), sku);
         }
 
         String channelCode = appConfig.getChannelCode();
@@ -186,16 +210,6 @@ public class CheckoutServiceImpl implements CheckoutService {
         long total = 0L;
         for (CartItem cartItem : cartItems) {
             Product product = productMap.get(cartItem.getProductId());
-            if (product.getStatus() != ProductStatus.ON_SHELF) {
-                throw new ConflictException("购物车中存在已下架商品，请刷新后重试");
-            }
-            if (product.getAvailableStock() == null
-                    || product.getAvailableStock() < cartItem.getQuantity()) {
-                throw new ConflictException("购物车中存在库存不足商品，请调整数量后重试");
-            }
-            if (product.getPrice() == null || product.getPrice() < 0) {
-                throw new BizException("课程价格无效");
-            }
             long subtotal = Math.multiplyExact((long) product.getPrice(), cartItem.getQuantity());
             total = Math.addExact(total, subtotal);
         }
@@ -212,7 +226,20 @@ public class CheckoutServiceImpl implements CheckoutService {
         order.setUserId(userId);
         order.setProductId(null);
         order.setTotalFee((int) total);
+        order.setGoodsAmount(total);
+        order.setDiscountAmount(0L);
+        order.setFreightAmount(0L);
+        order.setPayableAmount(total);
+        order.setPaidAmount(0L);
+        order.setRefundFrozenAmount(0L);
+        order.setRefundedAmount(0L);
+        order.setFreightRefundFrozenAmount(0L);
+        order.setFreightRefundedAmount(0L);
         order.setOrderStatus(OrderStatus.NOTPAY.getType());
+        order.setPayStatus("UNPAID");
+        order.setFulfillmentStatus("WAIT_SHIP");
+        order.setRefundStatus("NONE");
+        order.setExpiresAt(new Date(System.currentTimeMillis() + ORDER_EXPIRY_MILLIS));
         order.setPaymentType(paymentType);
         order.setPaymentAppId(appConfig.getAppId());
         order.setPaymentChannelCode(channelCode);
@@ -226,16 +253,35 @@ public class CheckoutServiceImpl implements CheckoutService {
         List<OrderItem> orderItems = new ArrayList<>();
         for (CartItem cartItem : cartItems) {
             Product product = productMap.get(cartItem.getProductId());
+            ProductSku sku = skuMap.get(cartItem.getProductId());
+            long subtotal = Math.multiplyExact((long) product.getPrice(), cartItem.getQuantity());
             OrderItem orderItem = new OrderItem();
             orderItem.setOrderId(order.getId());
             orderItem.setProductId(product.getId());
+            orderItem.setSkuId(sku.getId());
             orderItem.setProductTitle(product.getTitle());
             orderItem.setUnitPrice(product.getPrice());
             orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setSubtotal(product.getPrice() * cartItem.getQuantity());
+            orderItem.setSubtotal(Math.toIntExact(subtotal));
+            orderItem.setProductNameSnapshot(product.getTitle());
+            orderItem.setSkuNameSnapshot(sku.getSkuName());
+            orderItem.setSkuSpecSnapshot(sku.getSkuSpec());
+            orderItem.setOriginalUnitAmount(product.getPrice().longValue());
+            orderItem.setDealUnitAmount(product.getPrice().longValue());
+            orderItem.setOriginalTotalAmount(subtotal);
+            orderItem.setDiscountAmount(0L);
+            orderItem.setPayAmount(subtotal);
+            orderItem.setRefundFrozenQty(0);
+            orderItem.setRefundedQty(0);
+            orderItem.setRefundFrozenAmount(0L);
+            orderItem.setRefundedAmount(0L);
+            orderItem.setShippedQty(0);
+            orderItem.setCancelConfirmedQty(0);
+            orderItem.setReceivedQty(0);
+            orderItem.setRestockedQty(0);
             orderItem.setInventoryStatus(InventoryStatus.RESERVED);
             orderItem.setRefundedQuantity(0);
-            if (orderItemMapper.insert(orderItem) != 1) {
+            if (orderItemMapper.insert(orderItem) != 1 || orderItem.getId() == null) {
                 throw new BizException("订单明细创建失败");
             }
             orderItems.add(orderItem);

@@ -6,10 +6,15 @@ import cc.ivera.enums.PayType;
 import cc.ivera.enums.RefundApprovalStatus;
 import cc.ivera.enums.RefundStatus;
 import cc.ivera.exception.BizException;
+import cc.ivera.exception.ConflictException;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.mq.OutboxEventTypes;
+import cc.ivera.mq.InboxEventIds;
+import cc.ivera.mq.InboxEventTypes;
 import cc.ivera.service.AliPayService;
 import cc.ivera.service.MessageOutboxService;
+import cc.ivera.service.MessageConsumeLogService;
+import cc.ivera.service.MessageConsumeClaim;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.RefundApplicationService;
 import cc.ivera.service.RefundInfoService;
@@ -21,6 +26,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 
@@ -41,6 +47,10 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
     private final MessageOutboxService messageOutboxService;
 
+    private final MessageConsumeLogService consumeLogService;
+
+    private final TransactionTemplate transactionTemplate;
+
     public RefundApplicationServiceImpl(
         RefundInfoService refundInfoService,
         OrderInfoService orderInfoService,
@@ -48,7 +58,9 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         AliPayService aliPayService,
         OrderRefundStatusService orderRefundStatusService,
         DistributedLockTemplate distributedLockTemplate,
-        MessageOutboxService messageOutboxService
+        MessageOutboxService messageOutboxService,
+        MessageConsumeLogService consumeLogService,
+        TransactionTemplate transactionTemplate
     ) {
         this.refundInfoService = refundInfoService;
         this.orderInfoService = orderInfoService;
@@ -57,6 +69,8 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         this.orderRefundStatusService = orderRefundStatusService;
         this.distributedLockTemplate = distributedLockTemplate;
         this.messageOutboxService = messageOutboxService;
+        this.consumeLogService = consumeLogService;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Override
@@ -195,7 +209,6 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
 
             Set<String> channelRefundNos = reconcileWxOrderRefundsIfNeeded(orderInfo);
             syncLocalRefundsForOrder(orderInfo, channelRefundNos);
-            orderRefundStatusService.refreshOrderRefundStatus(orderNo);
             return refundInfoService.listByOrderNo(orderNo);
         });
     }
@@ -262,8 +275,7 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
         List<RefundStatusSyncResult> syncResults = wxPayRefundFacade.queryOrderRefundsForSync(orderInfo.getOrderNo());
         for (RefundStatusSyncResult syncResult : syncResults) {
             validateChannelOrderResult(orderInfo, syncResult);
-            refundInfoService.repairRefundFromChannel(syncResult);
-            refundInfoService.syncRefundStatus(syncResult);
+            applyRefundQueryResult(orderInfo.getPaymentType(), syncResult);
             if (syncResult.getRefundNo() != null) {
                 channelRefundNos.add(syncResult.getRefundNo());
             }
@@ -287,8 +299,40 @@ public class RefundApplicationServiceImpl implements RefundApplicationService {
     private void syncRefundByChannel(String paymentType, RefundInfo refundInfo) {
         RefundStatusSyncResult syncResult = queryRefundStatusFromChannel(paymentType, refundInfo.getRefundNo());
         validateChannelResult(refundInfo, syncResult);
-        refundInfoService.repairRefundFromChannel(syncResult);
-        refundInfoService.syncRefundStatus(syncResult);
+        applyRefundQueryResult(paymentType, syncResult);
+    }
+
+    private void applyRefundQueryResult(String paymentType, RefundStatusSyncResult syncResult) {
+        if (syncResult.getRefundNo() == null || syncResult.getRefundNo().trim().isEmpty()
+                || syncResult.getOrderNo() == null || syncResult.getOrderNo().trim().isEmpty()) {
+            throw new BizException("渠道退款查询结果缺少订单号或退款单号");
+        }
+        boolean wxPay = PayType.WXPAY.getType().equals(paymentType);
+        String eventType = wxPay ? InboxEventTypes.REFUND_QUERY_WX : InboxEventTypes.REFUND_QUERY_ALIPAY;
+        String consumerName = wxPay ? "wxpay-refund-query" : "alipay-refund-query";
+        String eventId = InboxEventIds.resolve(null, eventType + ":" + syncResult.getRefundNo()
+                + ":" + syncResult.getRefundId() + ":" + syncResult.getChannelStatus());
+        MessageConsumeClaim claim = consumeLogService.tryStart(
+                eventId, consumerName, eventType, syncResult.getRefundNo());
+        if (claim.getStatus() == MessageConsumeClaim.Status.CONSUMED) {
+            return;
+        }
+        if (claim.getStatus() == MessageConsumeClaim.Status.BUSY) {
+            throw new ConflictException("退款查单正在处理，请稍后重试");
+        }
+        try {
+            distributedLockTemplate.execute("payment:order:transition:" + syncResult.getOrderNo(), 5000L, -1L, () ->
+                    transactionTemplate.execute(status -> {
+                        refundInfoService.repairRefundFromChannel(syncResult);
+                        refundInfoService.syncRefundStatus(syncResult);
+                        consumeLogService.complete(eventId, consumerName, claim.getLeaseToken());
+                        return null;
+                    })
+            );
+        } catch (RuntimeException exception) {
+            consumeLogService.fail(eventId, consumerName, claim.getLeaseToken(), exception.getMessage(), null);
+            throw exception;
+        }
     }
 
     private boolean shouldSyncLocalRefund(RefundInfo refundInfo) {

@@ -12,6 +12,7 @@ import cc.ivera.exception.BizException;
 import cc.ivera.exception.ConflictException;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.service.InventoryService;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.RefundInfoService;
@@ -23,7 +24,6 @@ import com.alipay.api.AlipayClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -222,7 +222,7 @@ class PaymentInventoryTransitionTest {
                 inventoryService,
                 mock(DistributedLockTemplate.class),
                 mock(TransactionTemplate.class),
-                mock(StringRedisTemplate.class)
+                mock(MessageConsumeLogService.class)
         );
         OrderInfo order = unpaidOrder("ORDER-WX2", PayType.WXPAY);
         order.setTotalFee(1000);
@@ -266,7 +266,7 @@ class PaymentInventoryTransitionTest {
                 inventoryService,
                 mock(DistributedLockTemplate.class),
                 mock(TransactionTemplate.class),
-                mock(StringRedisTemplate.class)
+                mock(MessageConsumeLogService.class)
         );
         OrderInfo order = unpaidOrder("ORDER-WRONG-CHANNEL", PayType.ALIPAY);
         when(orderInfoService.getOrderByOrderNoForUpdate("ORDER-WRONG-CHANNEL")).thenReturn(order);
@@ -305,7 +305,8 @@ class PaymentInventoryTransitionTest {
                 mock(WxPayHttpClient.class),
                 mock(WxPayNotificationDecoder.class),
                 mock(DistributedLockTemplate.class),
-                mock(TransactionTemplate.class)
+                mock(TransactionTemplate.class),
+                mock(MessageConsumeLogService.class)
         );
     }
 
@@ -319,7 +320,8 @@ class PaymentInventoryTransitionTest {
                 inventoryService,
                 mock(RefundInfoService.class),
                 mock(DistributedLockTemplate.class),
-                mock(TransactionTemplate.class)
+                mock(TransactionTemplate.class),
+                mock(MessageConsumeLogService.class)
         );
     }
 

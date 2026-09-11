@@ -65,7 +65,9 @@ class RefundSubmissionServiceTest {
                 mock(AliPayService.class),
                 mock(OrderRefundStatusService.class),
                 lockTemplate,
-                mock(MessageOutboxService.class)
+                mock(MessageOutboxService.class),
+                mock(cc.ivera.service.MessageConsumeLogService.class),
+                mock(org.springframework.transaction.support.TransactionTemplate.class)
         );
     }
 

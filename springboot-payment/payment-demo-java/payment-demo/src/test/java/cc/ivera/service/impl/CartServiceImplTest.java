@@ -46,7 +46,7 @@ class CartServiceImplTest {
 
     @Test
     void addNewCoursePersistsRequestedQuantity() {
-        when(productMapper.selectById(101L)).thenReturn(product(101L, "Java", 19900));
+        when(productMapper.selectByIdWithDefaultStock(101L)).thenReturn(product(101L, "Java", 19900));
         when(cartItemMapper.selectByCartAndProduct(30L, 101L)).thenReturn(null);
         when(cartItemMapper.countByCartId(30L)).thenReturn(0);
 
@@ -61,7 +61,7 @@ class CartServiceImplTest {
 
     @Test
     void addingExistingCourseAggregatesQuantity() {
-        when(productMapper.selectById(101L)).thenReturn(product(101L, "Java", 19900));
+        when(productMapper.selectByIdWithDefaultStock(101L)).thenReturn(product(101L, "Java", 19900));
         CartItem existing = item(8L, 30L, 101L, 2);
         when(cartItemMapper.selectByCartAndProduct(30L, 101L)).thenReturn(existing);
 
@@ -73,7 +73,7 @@ class CartServiceImplTest {
 
     @Test
     void aggregateAboveNinetyNineIsRejected() {
-        when(productMapper.selectById(101L)).thenReturn(product(101L, "Java", 19900));
+        when(productMapper.selectByIdWithDefaultStock(101L)).thenReturn(product(101L, "Java", 19900));
         when(cartItemMapper.selectByCartAndProduct(30L, 101L))
                 .thenReturn(item(8L, 30L, 101L, 98));
 
@@ -84,7 +84,7 @@ class CartServiceImplTest {
 
     @Test
     void twentyCourseLimitRejectsAnotherDistinctCourse() {
-        when(productMapper.selectById(202L)).thenReturn(product(202L, "Vue", 9900));
+        when(productMapper.selectByIdWithDefaultStock(202L)).thenReturn(product(202L, "Vue", 9900));
         when(cartItemMapper.selectByCartAndProduct(30L, 202L)).thenReturn(null);
         when(cartItemMapper.countByCartId(30L)).thenReturn(20);
 
@@ -97,17 +97,17 @@ class CartServiceImplTest {
     void missingCourseAndInvalidQuantityAreRejected() {
         assertThrows(BizException.class, () -> cartService.addItem(4L, 101L, 0));
         assertThrows(BizException.class, () -> cartService.addItem(4L, 101L, 100));
-        when(productMapper.selectById(404L)).thenReturn(null);
+        when(productMapper.selectByIdWithDefaultStock(404L)).thenReturn(null);
         assertThrows(NotFoundException.class, () -> cartService.addItem(4L, 404L, 1));
     }
 
     @Test
     void unavailableProductsCannotBeAddedOrIncreasedBeyondAvailableStock() {
-        when(productMapper.selectById(201L))
+        when(productMapper.selectByIdWithDefaultStock(201L))
                 .thenReturn(product(201L, "下架商品", 1000, ProductStatus.OFF_SHELF, 10));
-        when(productMapper.selectById(202L))
+        when(productMapper.selectByIdWithDefaultStock(202L))
                 .thenReturn(product(202L, "售罄商品", 1000, ProductStatus.ON_SHELF, 0));
-        when(productMapper.selectById(203L))
+        when(productMapper.selectByIdWithDefaultStock(203L))
                 .thenReturn(product(203L, "库存不足", 1000, ProductStatus.ON_SHELF, 2));
 
         assertThrows(ConflictException.class, () -> cartService.addItem(4L, 201L, 1));
@@ -130,7 +130,7 @@ class CartServiceImplTest {
                 item(2L, 30L, 202L, 1),
                 item(3L, 30L, 203L, 3)
         ));
-        when(productMapper.selectBatchIds(any())).thenReturn(Arrays.asList(
+        when(productMapper.selectByIdsWithDefaultStock(any())).thenReturn(Arrays.asList(
                 product(201L, "下架商品", 1000, ProductStatus.OFF_SHELF, 10),
                 product(202L, "售罄商品", 1000, ProductStatus.ON_SHELF, 0),
                 product(203L, "库存不足", 1000, ProductStatus.ON_SHELF, 2)
@@ -152,7 +152,7 @@ class CartServiceImplTest {
         when(cartMapper.selectByUserId(4L)).thenReturn(cart(30L, 4L));
         when(cartItemMapper.selectByCartId(30L))
                 .thenReturn(Collections.singletonList(item(1L, 30L, 101L, 2)));
-        when(productMapper.selectBatchIds(any())).thenReturn(Collections.singletonList(
+        when(productMapper.selectByIdsWithDefaultStock(any())).thenReturn(Collections.singletonList(
                 product(101L, "Java", 1000, ProductStatus.ON_SHELF, 2)
         ));
 
@@ -163,21 +163,20 @@ class CartServiceImplTest {
         cartService.removeItem(4L, 101L);
 
         verify(cartItemMapper).deleteByCartAndProduct(30L, 101L);
-        verify(productMapper, never()).selectById(101L);
+        verify(productMapper, never()).selectByIdWithDefaultStock(101L);
     }
 
     @Test
     void quantityUpdateChecksCurrentStockWithoutReservingIt() {
         CartItem existing = item(8L, 30L, 101L, 2);
         when(cartItemMapper.selectByCartAndProduct(30L, 101L)).thenReturn(existing);
-        when(productMapper.selectById(101L))
+        when(productMapper.selectByIdWithDefaultStock(101L))
                 .thenReturn(product(101L, "Java", 1000, ProductStatus.ON_SHELF, 5));
 
         cartService.updateItem(4L, 101L, 4);
 
         assertEquals(4, existing.getQuantity());
         verify(cartItemMapper).updateById(existing);
-        verify(productMapper, never()).updateAvailableStock(any(), any(), any());
     }
 
     @Test
@@ -187,7 +186,7 @@ class CartServiceImplTest {
                 item(1L, 30L, 101L, 2),
                 item(2L, 30L, 202L, 3)
         ));
-        when(productMapper.selectBatchIds(any())).thenReturn(Arrays.asList(
+        when(productMapper.selectByIdsWithDefaultStock(any())).thenReturn(Arrays.asList(
                 product(101L, "Java", 1000),
                 product(202L, "Vue", 2500)
         ));
@@ -218,7 +217,7 @@ class CartServiceImplTest {
                 item(1L, 30L, 101L, 2),
                 item(2L, 30L, 202L, 2)
         ));
-        when(productMapper.selectBatchIds(any())).thenReturn(Arrays.asList(
+        when(productMapper.selectByIdsWithDefaultStock(any())).thenReturn(Arrays.asList(
                 product(101L, "Java", Integer.MAX_VALUE),
                 product(202L, "Vue", Integer.MAX_VALUE)
         ));
@@ -258,6 +257,8 @@ class CartServiceImplTest {
         product.setTitle(title);
         product.setPrice(price);
         product.setStatus(status);
+        product.setSkuId(id * 10);
+        product.setSkuStatus("ACTIVE");
         product.setAvailableStock(availableStock);
         return product;
     }

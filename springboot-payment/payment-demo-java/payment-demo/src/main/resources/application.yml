@@ -57,7 +57,7 @@ payment:
     secure-cookie: false
     allowed-origins: ${PAYMENT_AUTH_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081}
   order:
-    close-delay-ms: 60000
+    close-delay-ms: 300000
     idempotency-key-ttl-seconds: 120
   refund:
     status-sync-delay-ms: 60000

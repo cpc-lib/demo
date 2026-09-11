@@ -10,6 +10,8 @@ import cc.ivera.enums.PayType;
 import cc.ivera.exception.BizException;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.service.InventoryService;
+import cc.ivera.service.MessageConsumeClaim;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.RefundInfoService;
@@ -47,6 +49,7 @@ class OrderCloseInventoryTransitionTest {
     private DistributedLockTemplate lockTemplate;
     private TransactionTemplate transactionTemplate;
     private PaymentConfigLoader paymentConfigLoader;
+    private MessageConsumeLogService consumeLogService;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
@@ -57,6 +60,9 @@ class OrderCloseInventoryTransitionTest {
         lockTemplate = mock(DistributedLockTemplate.class);
         transactionTemplate = mock(TransactionTemplate.class);
         paymentConfigLoader = mock(PaymentConfigLoader.class);
+        consumeLogService = mock(MessageConsumeLogService.class);
+        when(consumeLogService.tryStart(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(MessageConsumeClaim.claimed("lease-test"));
         when(lockTemplate.execute(anyString(), anyLong(), anyLong(), any(Supplier.class)))
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(3)).get());
         when(transactionTemplate.execute(any(TransactionCallback.class))).thenAnswer(invocation -> {
@@ -206,7 +212,8 @@ class OrderCloseInventoryTransitionTest {
                 inventoryService,
                 mock(RefundInfoService.class),
                 lockTemplate,
-                transactionTemplate
+                transactionTemplate,
+                consumeLogService
         );
     }
 
@@ -225,7 +232,8 @@ class OrderCloseInventoryTransitionTest {
                 mock(WxPayHttpClient.class),
                 mock(WxPayNotificationDecoder.class),
                 lockTemplate,
-                transactionTemplate
+                transactionTemplate,
+                consumeLogService
         );
     }
 

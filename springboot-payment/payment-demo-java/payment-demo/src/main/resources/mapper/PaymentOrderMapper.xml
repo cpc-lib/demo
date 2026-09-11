@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.PaymentOrderMapper">
+
+    <select id="selectByPaymentNo" resultType="cc.ivera.entity.PaymentOrder">
+        select *
+        from t_payment_order
+        where payment_no = #{paymentNo}
+        limit 1
+    </select>
+
+    <select id="selectByPaymentNoForUpdate" resultType="cc.ivera.entity.PaymentOrder">
+        select *
+        from t_payment_order
+        where payment_no = #{paymentNo}
+        limit 1
+        for update
+    </select>
+
+    <select id="selectByOrderNoAndRequestIdForUpdate" resultType="cc.ivera.entity.PaymentOrder">
+        select *
+        from t_payment_order
+        where order_no = #{orderNo}
+          and request_id = #{requestId}
+        limit 1
+        for update
+    </select>
+
+    <select id="selectUncertainByOrderNoForUpdate" resultType="cc.ivera.entity.PaymentOrder">
+        select *
+        from t_payment_order
+        where order_no = #{orderNo}
+          and status in ('CREATING', 'UNKNOWN')
+        order by id
+        limit 1
+        for update
+    </select>
+
+    <select id="selectReusablePendingForUpdate" resultType="cc.ivera.entity.PaymentOrder">
+        select *
+        from t_payment_order
+        where order_no = #{orderNo}
+          and payment_app_id = #{paymentAppId}
+          and protocol = #{protocol}
+          and status = 'PENDING'
+          and (expires_at is null or expires_at &gt; current_timestamp)
+        order by id desc
+        limit 1
+        for update
+    </select>
+
+    <select id="selectByPaymentAppIdAndMerchantOrderNo" resultType="cc.ivera.entity.PaymentOrder">
+        select *
+        from t_payment_order
+        where payment_app_id = #{paymentAppId}
+          and channel_merchant_order_no = #{channelMerchantOrderNo}
+        limit 1
+    </select>
+
+    <select id="selectByPaymentAppIdAndChannelTransactionId" resultType="cc.ivera.entity.PaymentOrder">
+        select *
+        from t_payment_order
+        where payment_app_id = #{paymentAppId}
+          and channel_transaction_id = #{channelTransactionId}
+        limit 1
+    </select>
+
+    <select id="selectByOrderNo" resultType="cc.ivera.entity.PaymentOrder">
+        select *
+        from t_payment_order
+        where order_no = #{orderNo}
+        order by id desc
+    </select>
+
+    <update id="updateStatus">
+        update t_payment_order
+        set status = #{targetStatus},
+            update_time = current_timestamp
+        where payment_no = #{paymentNo}
+          and status = #{currentStatus}
+    </update>
+
+    <update id="updateCreationResult">
+        update t_payment_order
+        set status = #{targetStatus},
+            payment_params = case
+                when #{paymentParams} is null then payment_params
+                else #{paymentParams}
+            end,
+            update_time = current_timestamp
+        where payment_no = #{paymentNo}
+          and status = #{currentStatus}
+    </update>
+
+</mapper>

@@ -4,6 +4,7 @@ import cc.ivera.entity.OrderIdempotency;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.entity.Product;
+import cc.ivera.entity.ProductSku;
 import cc.ivera.enums.InventoryStatus;
 import cc.ivera.enums.ProductStatus;
 import cc.ivera.enums.UserRole;
@@ -13,6 +14,7 @@ import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.mapper.OrderInfoMapper;
 import cc.ivera.mapper.OrderItemMapper;
 import cc.ivera.mapper.ProductMapper;
+import cc.ivera.mapper.ProductSkuMapper;
 import cc.ivera.security.AuthContext;
 import cc.ivera.security.AuthUser;
 import cc.ivera.service.OrderCloseMessageService;
@@ -35,6 +37,7 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -48,6 +51,7 @@ import static org.mockito.Mockito.when;
 class LegacyOrderOwnershipTest {
 
     private ProductMapper productMapper;
+    private ProductSkuMapper productSkuMapper;
     private OrderInfoMapper orderInfoMapper;
     private OrderItemMapper orderItemMapper;
     private OrderIdempotencyService idempotencyService;
@@ -61,6 +65,7 @@ class LegacyOrderOwnershipTest {
     void setUp() {
         AuthContext.setUser(new AuthUser(55L, "alice", UserRole.USER));
         productMapper = mock(ProductMapper.class);
+        productSkuMapper = mock(ProductSkuMapper.class);
         orderInfoMapper = mock(OrderInfoMapper.class);
         orderItemMapper = mock(OrderItemMapper.class);
         idempotencyService = mock(OrderIdempotencyService.class);
@@ -74,8 +79,14 @@ class LegacyOrderOwnershipTest {
             TransactionCallback<?> callback = invocation.getArgument(0);
             return callback.doInTransaction(mock(TransactionStatus.class));
         });
+        when(productSkuMapper.selectDefaultByProductId(101L)).thenReturn(defaultSku());
+        when(orderItemMapper.insert(any(OrderItem.class))).thenAnswer(invocation -> {
+            ((OrderItem) invocation.getArgument(0)).setId(1001L);
+            return 1;
+        });
         service = new OrderInfoServiceImpl(
                 productMapper,
+                productSkuMapper,
                 closeMessageService,
                 lockTemplate,
                 transactionTemplate,
@@ -101,7 +112,6 @@ class LegacyOrderOwnershipTest {
             ((OrderInfo) invocation.getArgument(0)).setId(88L);
             return 1;
         });
-        when(orderItemMapper.insert(any(OrderItem.class))).thenReturn(1);
 
         OrderInfo result;
         TransactionSynchronizationManager.initSynchronization();
@@ -116,10 +126,20 @@ class LegacyOrderOwnershipTest {
         verify(orderInfoMapper).insert(orderCaptor.capture());
         assertEquals(55L, orderCaptor.getValue().getUserId());
         assertEquals("key-1", orderCaptor.getValue().getCheckoutRequestId());
+        assertEquals(1000L, orderCaptor.getValue().getGoodsAmount());
+        assertEquals(1000L, orderCaptor.getValue().getPayableAmount());
+        assertEquals("UNPAID", orderCaptor.getValue().getPayStatus());
+        assertTrue(orderCaptor.getValue().getExpiresAt().getTime()
+                        - System.currentTimeMillis() > 60_000L,
+                "new orders must leave enough time to create a payment attempt");
         ArgumentCaptor<OrderItem> itemCaptor = ArgumentCaptor.forClass(OrderItem.class);
         verify(orderItemMapper).insert(itemCaptor.capture());
         assertEquals(88L, itemCaptor.getValue().getOrderId());
         assertEquals(101L, itemCaptor.getValue().getProductId());
+        assertEquals(1010L, itemCaptor.getValue().getSkuId());
+        assertEquals("Java", itemCaptor.getValue().getProductNameSnapshot());
+        assertEquals("默认规格", itemCaptor.getValue().getSkuNameSnapshot());
+        assertEquals(1000L, itemCaptor.getValue().getPayAmount());
         assertEquals(1, itemCaptor.getValue().getQuantity());
         assertEquals(1000, itemCaptor.getValue().getSubtotal());
         assertEquals(InventoryStatus.RESERVED, itemCaptor.getValue().getInventoryStatus());
@@ -155,6 +175,7 @@ class LegacyOrderOwnershipTest {
 
         assertEquals("ORDER-88", result.getOrderNo());
         verifyNoInteractions(productMapper);
+        verifyNoInteractions(productSkuMapper);
         verifyNoInteractions(inventoryService);
         verifyNoInteractions(closeMessageService);
         verify(idempotencyService, never()).complete(anyLong(), anyString(), anyLong());
@@ -184,7 +205,6 @@ class LegacyOrderOwnershipTest {
             ((OrderInfo) invocation.getArgument(0)).setId(88L);
             return 1;
         });
-        when(orderItemMapper.insert(any(OrderItem.class))).thenReturn(1);
         doThrow(new ConflictException("outbox failed"))
                 .when(closeMessageService).sendCloseOrderMessage(anyString(), anyString());
 
@@ -228,7 +248,17 @@ class LegacyOrderOwnershipTest {
         product.setTitle("Java");
         product.setPrice(1000);
         product.setStatus(ProductStatus.ON_SHELF);
-        product.setAvailableStock(3);
         return product;
+    }
+
+    private ProductSku defaultSku() {
+        ProductSku sku = new ProductSku();
+        sku.setId(1010L);
+        sku.setProductId(101L);
+        sku.setSkuCode("DEFAULT-101");
+        sku.setSkuName("默认规格");
+        sku.setSkuSpec("{}");
+        sku.setStatus("ACTIVE");
+        return sku;
     }
 }

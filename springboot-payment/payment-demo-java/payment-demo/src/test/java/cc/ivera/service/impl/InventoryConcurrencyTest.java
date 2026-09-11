@@ -1,17 +1,23 @@
 package cc.ivera.service.impl;
 
 import cc.ivera.entity.InventoryOperation;
+import cc.ivera.entity.InventoryReservation;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.entity.Product;
+import cc.ivera.entity.ProductSku;
+import cc.ivera.entity.SkuStock;
 import cc.ivera.enums.InventoryStatus;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.ProductStatus;
 import cc.ivera.exception.ConflictException;
 import cc.ivera.mapper.InventoryOperationMapper;
+import cc.ivera.mapper.InventoryReservationMapper;
 import cc.ivera.mapper.OrderInfoMapper;
 import cc.ivera.mapper.OrderItemMapper;
 import cc.ivera.mapper.ProductMapper;
+import cc.ivera.mapper.ProductSkuMapper;
+import cc.ivera.mapper.SkuStockMapper;
 import cc.ivera.service.InventoryService;
 import org.junit.jupiter.api.Test;
 
@@ -43,16 +49,25 @@ class InventoryConcurrencyTest {
         OrderInfoMapper orderInfoMapper = mock(OrderInfoMapper.class);
         OrderItemMapper orderItemMapper = mock(OrderItemMapper.class);
         ProductMapper productMapper = mock(ProductMapper.class);
+        ProductSkuMapper productSkuMapper = mock(ProductSkuMapper.class);
+        SkuStockMapper skuStockMapper = mock(SkuStockMapper.class);
+        InventoryReservationMapper reservationMapper = mock(InventoryReservationMapper.class);
         InventoryOperationMapper operationMapper = mock(InventoryOperationMapper.class);
         InventoryService inventoryService = new InventoryServiceImpl(
                 orderInfoMapper,
                 orderItemMapper,
                 productMapper,
+                productSkuMapper,
+                skuStockMapper,
+                reservationMapper,
                 operationMapper
         );
         AtomicInteger available = new AtomicInteger(10);
         when(productMapper.selectByIdForUpdate(7L)).thenAnswer(invocation -> productWithTenAvailable());
-        when(productMapper.reserveStock(7L, 1)).thenAnswer(invocation -> reserveOne(available));
+        when(productSkuMapper.selectById(70L)).thenReturn(activeSku());
+        when(skuStockMapper.selectBySkuIdForUpdate(70L)).thenReturn(stockWithTenAvailable());
+        when(skuStockMapper.reserveStock(70L, 1)).thenAnswer(invocation -> reserveOne(available));
+        when(reservationMapper.insert(any(InventoryReservation.class))).thenReturn(1);
         when(operationMapper.insert(any(InventoryOperation.class))).thenReturn(1);
 
         int attempts = 50;
@@ -85,7 +100,7 @@ class InventoryConcurrencyTest {
 
             assertEquals(10, successes);
             assertEquals(0, available.get());
-            verify(productMapper, times(attempts)).reserveStock(7L, 1);
+            verify(skuStockMapper, times(attempts)).reserveStock(70L, 1);
             verify(operationMapper, times(10)).insert(any(InventoryOperation.class));
         } finally {
             pool.shutdownNow();
@@ -118,6 +133,7 @@ class InventoryConcurrencyTest {
         item.setId(index + 1);
         item.setOrderId(index + 1);
         item.setProductId(7L);
+        item.setSkuId(70L);
         item.setQuantity(1);
         item.setInventoryStatus(InventoryStatus.RESERVED);
         item.setRefundedQuantity(0);
@@ -132,5 +148,22 @@ class InventoryConcurrencyTest {
         product.setLockedStock(0);
         product.setSoldStock(0);
         return product;
+    }
+
+    private ProductSku activeSku() {
+        ProductSku sku = new ProductSku();
+        sku.setId(70L);
+        sku.setProductId(7L);
+        sku.setStatus("ACTIVE");
+        return sku;
+    }
+
+    private SkuStock stockWithTenAvailable() {
+        SkuStock stock = new SkuStock();
+        stock.setSkuId(70L);
+        stock.setAvailableStock(10);
+        stock.setLockedStock(0);
+        stock.setVersion(0L);
+        return stock;
     }
 }

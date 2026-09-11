@@ -1,0 +1,13 @@
+package cc.ivera.enums;
+
+public enum RefundType {
+    CANCEL_BEFORE_SHIP,
+    RETURN_AND_REFUND,
+    REFUND_ONLY,
+    PRICE_ADJUSTMENT,
+    FREIGHT,
+    DUPLICATE_PAYMENT,
+    LATE_PAYMENT,
+    PAYMENT_STOCK_SHORTAGE
+}
+

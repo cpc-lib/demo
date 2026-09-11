@@ -4,6 +4,7 @@ import cc.ivera.entity.OrderIdempotency;
 import cc.ivera.entity.OrderInfo;
 import cc.ivera.entity.OrderItem;
 import cc.ivera.entity.Product;
+import cc.ivera.entity.ProductSku;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.InventoryStatus;
 import cc.ivera.enums.ProductStatus;
@@ -15,6 +16,7 @@ import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.mapper.OrderInfoMapper;
 import cc.ivera.mapper.OrderItemMapper;
 import cc.ivera.mapper.ProductMapper;
+import cc.ivera.mapper.ProductSkuMapper;
 import cc.ivera.service.OrderCloseMessageService;
 import cc.ivera.service.InventoryService;
 import cc.ivera.service.OrderInfoService;
@@ -31,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,8 +43,11 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
     private static final long ORDER_CREATE_LOCK_WAIT_MS = 3000L;
     private static final long ORDER_CREATE_LOCK_LEASE_MS = -1L;
+    private static final long ORDER_EXPIRY_MILLIS = 300_000L;
 
     private final ProductMapper productMapper;
+
+    private final ProductSkuMapper productSkuMapper;
 
     private final OrderCloseMessageService orderCloseMessageService;
 
@@ -57,6 +63,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
     public OrderInfoServiceImpl(
         ProductMapper productMapper,
+        ProductSkuMapper productSkuMapper,
         OrderCloseMessageService orderCloseMessageService,
         DistributedLockTemplate distributedLockTemplate,
         TransactionTemplate transactionTemplate,
@@ -65,6 +72,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         InventoryService inventoryService
     ) {
         this.productMapper = productMapper;
+        this.productSkuMapper = productSkuMapper;
         this.orderCloseMessageService = orderCloseMessageService;
         this.distributedLockTemplate = distributedLockTemplate;
         this.transactionTemplate = transactionTemplate;
@@ -142,11 +150,15 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         if (product.getStatus() != ProductStatus.ON_SHELF) {
             throw new ConflictException("商品已下架");
         }
-        if (product.getAvailableStock() == null || product.getAvailableStock() < 1) {
-            throw new ConflictException("商品库存不足");
-        }
         if (product.getPrice() == null || product.getPrice() < 0) {
             throw new BizException("商品价格无效");
+        }
+        ProductSku sku = productSkuMapper.selectDefaultByProductId(productId);
+        if (sku == null
+                || sku.getId() == null
+                || !Objects.equals(productId, sku.getProductId())
+                || !"ACTIVE".equals(sku.getStatus())) {
+            throw new ConflictException("商品默认SKU不存在或不可用");
         }
 
         OrderInfo orderInfo = new OrderInfo();
@@ -155,7 +167,20 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         orderInfo.setProductId(productId);
         orderInfo.setUserId(userId);
         orderInfo.setTotalFee(product.getPrice());
+        orderInfo.setGoodsAmount(product.getPrice().longValue());
+        orderInfo.setDiscountAmount(0L);
+        orderInfo.setFreightAmount(0L);
+        orderInfo.setPayableAmount(product.getPrice().longValue());
+        orderInfo.setPaidAmount(0L);
+        orderInfo.setRefundFrozenAmount(0L);
+        orderInfo.setRefundedAmount(0L);
+        orderInfo.setFreightRefundFrozenAmount(0L);
+        orderInfo.setFreightRefundedAmount(0L);
         orderInfo.setOrderStatus(OrderStatus.NOTPAY.getType());
+        orderInfo.setPayStatus("UNPAID");
+        orderInfo.setFulfillmentStatus("WAIT_SHIP");
+        orderInfo.setRefundStatus("NONE");
+        orderInfo.setExpiresAt(new Date(System.currentTimeMillis() + ORDER_EXPIRY_MILLIS));
         orderInfo.setPaymentType(paymentType);
         orderInfo.setPaymentAppId(paymentAppId);
         orderInfo.setPaymentChannelCode(paymentChannelCode);
@@ -169,13 +194,30 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         OrderItem orderItem = new OrderItem();
         orderItem.setOrderId(orderInfo.getId());
         orderItem.setProductId(product.getId());
+        orderItem.setSkuId(sku.getId());
         orderItem.setProductTitle(product.getTitle());
         orderItem.setUnitPrice(product.getPrice());
         orderItem.setQuantity(1);
         orderItem.setSubtotal(product.getPrice());
+        orderItem.setProductNameSnapshot(product.getTitle());
+        orderItem.setSkuNameSnapshot(sku.getSkuName());
+        orderItem.setSkuSpecSnapshot(sku.getSkuSpec());
+        orderItem.setOriginalUnitAmount(product.getPrice().longValue());
+        orderItem.setDealUnitAmount(product.getPrice().longValue());
+        orderItem.setOriginalTotalAmount(product.getPrice().longValue());
+        orderItem.setDiscountAmount(0L);
+        orderItem.setPayAmount(product.getPrice().longValue());
+        orderItem.setRefundFrozenQty(0);
+        orderItem.setRefundedQty(0);
+        orderItem.setRefundFrozenAmount(0L);
+        orderItem.setRefundedAmount(0L);
+        orderItem.setShippedQty(0);
+        orderItem.setCancelConfirmedQty(0);
+        orderItem.setReceivedQty(0);
+        orderItem.setRestockedQty(0);
         orderItem.setInventoryStatus(InventoryStatus.RESERVED);
         orderItem.setRefundedQuantity(0);
-        if (orderItemMapper.insert(orderItem) != 1) {
+        if (orderItemMapper.insert(orderItem) != 1 || orderItem.getId() == null) {
             throw new BizException("订单明细创建失败");
         }
 

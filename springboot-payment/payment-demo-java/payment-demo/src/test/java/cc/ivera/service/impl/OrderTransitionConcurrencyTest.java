@@ -8,6 +8,8 @@ import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.PayType;
 import cc.ivera.lock.DistributedLockTemplate;
 import cc.ivera.service.InventoryService;
+import cc.ivera.service.MessageConsumeClaim;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.impl.wxpay.WxPayHttpClient;
@@ -34,6 +36,7 @@ import java.util.function.Supplier;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -94,6 +97,9 @@ class OrderTransitionConcurrencyTest {
             TransactionCallback<?> callback = invocation.getArgument(0);
             return callback.doInTransaction(mock(TransactionStatus.class));
         });
+        MessageConsumeLogService consumeLogService = mock(MessageConsumeLogService.class);
+        when(consumeLogService.tryStart(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(MessageConsumeClaim.claimed("lease-test"));
         WxPayOrderService service = spy(new WxPayOrderService(
                 mock(WxPayConfig.class),
                 loader,
@@ -103,7 +109,8 @@ class OrderTransitionConcurrencyTest {
                 mock(WxPayHttpClient.class),
                 decoder,
                 lock,
-                transactionTemplate
+                transactionTemplate,
+                consumeLogService
         ));
         doReturn(wxResult(orderNo, "CLOSED")).when(service).queryOrder(orderNo);
 

@@ -116,7 +116,9 @@ class RefundApplicationRabbitSyncTest {
                     aliPayService,
                     orderRefundStatusService,
                     distributedLockTemplate,
-                    messageOutboxService);
+                    messageOutboxService,
+                    mock(cc.ivera.service.MessageConsumeLogService.class),
+                    mock(org.springframework.transaction.support.TransactionTemplate.class));
         }
     }
 }

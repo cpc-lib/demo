@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.SkuStockMapper">
+
+    <select id="selectBySkuIdForUpdate" resultType="cc.ivera.entity.SkuStock">
+        select *
+        from t_sku_stock
+        where sku_id = #{skuId}
+        limit 1
+        for update
+    </select>
+
+    <update id="reserveStock">
+        update t_sku_stock
+        set available_stock = available_stock - #{quantity},
+            locked_stock = locked_stock + #{quantity},
+            version = version + 1
+        where sku_id = #{skuId}
+          and available_stock >= #{quantity}
+    </update>
+
+    <update id="commitLockedStock">
+        update t_sku_stock
+        set locked_stock = locked_stock - #{quantity},
+            version = version + 1
+        where sku_id = #{skuId}
+          and locked_stock >= #{quantity}
+    </update>
+
+    <update id="releaseLockedStock">
+        update t_sku_stock
+        set available_stock = available_stock + #{quantity},
+            locked_stock = locked_stock - #{quantity},
+            version = version + 1
+        where sku_id = #{skuId}
+          and locked_stock >= #{quantity}
+    </update>
+
+    <update id="updateAvailableStock">
+        update t_sku_stock
+        set available_stock = #{availableStock},
+            version = version + 1
+        where sku_id = #{skuId}
+          and version = #{version}
+          and #{availableStock} &gt;= 0
+    </update>
+
+</mapper>
+

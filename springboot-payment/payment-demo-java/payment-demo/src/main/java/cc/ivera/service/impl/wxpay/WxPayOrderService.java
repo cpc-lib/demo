@@ -4,6 +4,7 @@ import cc.ivera.config.PaymentAppConfig;
 import cc.ivera.config.PaymentConfigLoader;
 import cc.ivera.config.WxPayConfig;
 import cc.ivera.entity.OrderInfo;
+import cc.ivera.entity.PaymentOrder;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.PayType;
 import cc.ivera.enums.wxpay.WxApiType;
@@ -12,6 +13,10 @@ import cc.ivera.enums.wxpay.WxTradeState;
 import cc.ivera.exception.BizException;
 import cc.ivera.exception.ConflictException;
 import cc.ivera.lock.DistributedLockTemplate;
+import cc.ivera.mq.InboxEventIds;
+import cc.ivera.mq.InboxEventTypes;
+import cc.ivera.service.MessageConsumeClaim;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.InventoryService;
@@ -55,6 +60,8 @@ public class WxPayOrderService implements WxPayOrderFacade {
     private final DistributedLockTemplate distributedLockTemplate;
     private final TransactionTemplate transactionTemplate;
 
+    private final MessageConsumeLogService consumeLogService;
+
     public WxPayOrderService(WxPayConfig wxPayConfig,
                              PaymentConfigLoader paymentConfigLoader,
                              OrderInfoService orderInfoService,
@@ -63,7 +70,8 @@ public class WxPayOrderService implements WxPayOrderFacade {
                              WxPayHttpClient wxPayHttpClient,
                              WxPayNotificationDecoder wxPayNotificationDecoder,
                              DistributedLockTemplate distributedLockTemplate,
-                             TransactionTemplate transactionTemplate) {
+                             TransactionTemplate transactionTemplate,
+                             MessageConsumeLogService consumeLogService) {
         this.wxPayConfig = wxPayConfig;
         this.paymentConfigLoader = paymentConfigLoader;
         this.orderInfoService = orderInfoService;
@@ -73,6 +81,7 @@ public class WxPayOrderService implements WxPayOrderFacade {
         this.wxPayNotificationDecoder = wxPayNotificationDecoder;
         this.distributedLockTemplate = distributedLockTemplate;
         this.transactionTemplate = transactionTemplate;
+        this.consumeLogService = consumeLogService;
     }
 
     @Override
@@ -103,6 +112,38 @@ public class WxPayOrderService implements WxPayOrderFacade {
         );
     }
 
+    @Override
+    public Map<String, Object> createPayment(
+            PaymentOrder paymentOrder,
+            OrderInfo orderInfo,
+            String remoteAddr
+    ) {
+        validatePaymentAttempt(paymentOrder, orderInfo);
+        PaymentAppConfig payConfig = resolveWxPayConfig(paymentOrder.getPaymentAppId());
+        if ("V3".equals(paymentOrder.getProtocol())) {
+            return requestNativePay(
+                    orderInfo,
+                    payConfig,
+                    paymentOrder.getChannelMerchantOrderNo(),
+                    paymentOrder.getRequestAmount(),
+                    paymentOrder.getPaymentNo(),
+                    false
+            );
+        }
+        if ("V2".equals(paymentOrder.getProtocol())) {
+            return requestNativePayV2(
+                    orderInfo,
+                    remoteAddr,
+                    payConfig,
+                    paymentOrder.getChannelMerchantOrderNo(),
+                    paymentOrder.getRequestAmount(),
+                    paymentOrder.getPaymentNo(),
+                    false
+            );
+        }
+        throw new ConflictException("微信支付协议不受支持：" + paymentOrder.getProtocol());
+    }
+
     private Map<String, Object> doNativePay(
             Long productId,
             Long paymentAppId,
@@ -123,7 +164,25 @@ public class WxPayOrderService implements WxPayOrderFacade {
     }
 
     private Map<String, Object> requestNativePay(OrderInfo orderInfo, PaymentAppConfig payConfig) {
-        if (StringUtils.hasText(orderInfo.getCodeUrl())) {
+        return requestNativePay(
+                orderInfo,
+                payConfig,
+                orderInfo.getOrderNo(),
+                orderInfo.getTotalFee().longValue(),
+                null,
+                true
+        );
+    }
+
+    private Map<String, Object> requestNativePay(
+            OrderInfo orderInfo,
+            PaymentAppConfig payConfig,
+            String channelMerchantOrderNo,
+            Long requestAmount,
+            String paymentNo,
+            boolean updateLegacyProjection
+    ) {
+        if (updateLegacyProjection && StringUtils.hasText(orderInfo.getCodeUrl())) {
             log.info("订单已存在，复用二维码，orderNo={}", orderInfo.getOrderNo());
             return buildNativePayResult(orderInfo.getOrderNo(), orderInfo.getCodeUrl());
         }
@@ -132,11 +191,11 @@ public class WxPayOrderService implements WxPayOrderFacade {
         paramsMap.put("appid", required(payConfig.getAppid(), "微信appid未配置"));
         paramsMap.put("mchid", required(payConfig.getMchId(), "微信商户号未配置"));
         paramsMap.put("description", orderInfo.getTitle());
-        paramsMap.put("out_trade_no", orderInfo.getOrderNo());
+        paramsMap.put("out_trade_no", channelMerchantOrderNo);
         paramsMap.put("notify_url", buildNotifyUrl(payConfig, WxNotifyType.NATIVE_NOTIFY));
 
         Map<String, Object> amountMap = new HashMap<>();
-        amountMap.put("total", orderInfo.getTotalFee());
+        amountMap.put("total", requestAmount);
         amountMap.put("currency", "CNY");
         paramsMap.put("amount", amountMap);
 
@@ -151,8 +210,14 @@ public class WxPayOrderService implements WxPayOrderFacade {
             if (!StringUtils.hasText(codeUrl)) {
                 throw new BizException("微信Native下单响应缺少code_url");
             }
-            orderInfoService.saveCodeUrl(orderInfo.getOrderNo(), codeUrl);
-            return buildNativePayResult(orderInfo.getOrderNo(), codeUrl);
+            if (updateLegacyProjection) {
+                orderInfoService.saveCodeUrl(orderInfo.getOrderNo(), codeUrl);
+            }
+            Map<String, Object> result = buildNativePayResult(orderInfo.getOrderNo(), codeUrl);
+            if (StringUtils.hasText(paymentNo)) {
+                result.put("paymentNo", paymentNo);
+            }
+            return result;
         } catch (IOException e) {
             throw new BizException("Native下单失败", e);
         }
@@ -176,12 +241,43 @@ public class WxPayOrderService implements WxPayOrderFacade {
         }
 
         String notifyId = getString(bodyMap, "id");
-        distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, PAY_NOTIFY_LOCK_WAIT_MS, -1L, () ->
-                transactionTemplate.execute(status -> {
-                    doProcessOrderNotifyInTransaction(orderNo, plainTextMap, plainText, notifyId);
-                    return null;
-                })
+        String eventId = InboxEventIds.resolve(
+                notifyId,
+                InboxEventTypes.PAYMENT_NOTIFY_WX_V3 + ":" + orderNo + ":"
+                        + getString(plainTextMap, "transaction_id")
         );
+        MessageConsumeClaim claim = consumeLogService.tryStart(
+                eventId,
+                "wxpay-payment-notify",
+                InboxEventTypes.PAYMENT_NOTIFY_WX_V3,
+                orderNo
+        );
+        if (claim.getStatus() == MessageConsumeClaim.Status.CONSUMED) {
+            log.info("微信支付通知已完成，幂等忽略，eventId={}, orderNo={}", eventId, orderNo);
+            return;
+        }
+        if (claim.getStatus() == MessageConsumeClaim.Status.BUSY) {
+            throw new ConflictException("微信支付通知正在处理，请稍后重试");
+        }
+
+        try {
+            distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, PAY_NOTIFY_LOCK_WAIT_MS, -1L, () ->
+                    transactionTemplate.execute(status -> {
+                        doProcessOrderNotifyInTransaction(orderNo, plainTextMap, plainText, notifyId);
+                        consumeLogService.complete(eventId, "wxpay-payment-notify", claim.getLeaseToken());
+                        return null;
+                    })
+            );
+        } catch (RuntimeException exception) {
+            consumeLogService.fail(
+                    eventId,
+                    "wxpay-payment-notify",
+                    claim.getLeaseToken(),
+                    exception.getMessage(),
+                    null
+            );
+            throw exception;
+        }
     }
 
     private void doProcessOrderNotifyInTransaction(String orderNo,
@@ -313,12 +409,29 @@ public class WxPayOrderService implements WxPayOrderFacade {
             String result,
             String tradeState
     ) {
-        distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, 5000L, -1L, () ->
-                transactionTemplate.execute(status -> {
-                    doSyncOrderStatusFromWxQuery(orderNo, resultMap, result, tradeState);
-                    return null;
-                })
-        );
+        String eventId = InboxEventIds.resolve(null, InboxEventTypes.PAYMENT_QUERY_WX + ":" + orderNo
+                + ":" + getString(resultMap, "transaction_id") + ":" + tradeState);
+        String consumerName = "wxpay-payment-query";
+        MessageConsumeClaim claim = consumeLogService.tryStart(
+                eventId, consumerName, InboxEventTypes.PAYMENT_QUERY_WX, orderNo);
+        if (claim.getStatus() == MessageConsumeClaim.Status.CONSUMED) {
+            return;
+        }
+        if (claim.getStatus() == MessageConsumeClaim.Status.BUSY) {
+            throw new ConflictException("微信支付查单正在处理，请稍后重试");
+        }
+        try {
+            distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, 5000L, -1L, () ->
+                    transactionTemplate.execute(status -> {
+                        doSyncOrderStatusFromWxQuery(orderNo, resultMap, result, tradeState);
+                        consumeLogService.complete(eventId, consumerName, claim.getLeaseToken());
+                        return null;
+                    })
+            );
+        } catch (RuntimeException exception) {
+            consumeLogService.fail(eventId, consumerName, claim.getLeaseToken(), exception.getMessage(), null);
+            throw exception;
+        }
     }
 
     private void doSyncOrderStatusFromWxQuery(String orderNo,
@@ -402,7 +515,27 @@ public class WxPayOrderService implements WxPayOrderFacade {
             String remoteAddr,
             PaymentAppConfig payConfig
     ) {
-        if (StringUtils.hasText(orderInfo.getCodeUrl())) {
+        return requestNativePayV2(
+                orderInfo,
+                remoteAddr,
+                payConfig,
+                orderInfo.getOrderNo(),
+                orderInfo.getTotalFee().longValue(),
+                null,
+                true
+        );
+    }
+
+    private Map<String, Object> requestNativePayV2(
+            OrderInfo orderInfo,
+            String remoteAddr,
+            PaymentAppConfig payConfig,
+            String channelMerchantOrderNo,
+            Long requestAmount,
+            String paymentNo,
+            boolean updateLegacyProjection
+    ) {
+        if (updateLegacyProjection && StringUtils.hasText(orderInfo.getCodeUrl())) {
             return buildNativePayResult(orderInfo.getOrderNo(), orderInfo.getCodeUrl());
         }
 
@@ -412,8 +545,8 @@ public class WxPayOrderService implements WxPayOrderFacade {
         params.put("mch_id", required(payConfig.getMchId(), "微信商户号未配置"));
         params.put("nonce_str", WXPayUtil.generateNonceStr());
         params.put("body", orderInfo.getTitle());
-        params.put("out_trade_no", orderInfo.getOrderNo());
-        params.put("total_fee", String.valueOf(orderInfo.getTotalFee()));
+        params.put("out_trade_no", channelMerchantOrderNo);
+        params.put("total_fee", String.valueOf(requestAmount));
         params.put("spbill_create_ip", StringUtils.hasText(remoteAddr) ? remoteAddr : "127.0.0.1");
         params.put("notify_url", buildNotifyUrl(payConfig, WxNotifyType.NATIVE_NOTIFY_V2));
         params.put("trade_type", "NATIVE");
@@ -432,8 +565,14 @@ public class WxPayOrderService implements WxPayOrderFacade {
             if (!StringUtils.hasText(codeUrl)) {
                 throw new BizException("微信支付V2统一下单响应缺少code_url");
             }
-            orderInfoService.saveCodeUrl(orderInfo.getOrderNo(), codeUrl);
-            return buildNativePayResult(orderInfo.getOrderNo(), codeUrl);
+            if (updateLegacyProjection) {
+                orderInfoService.saveCodeUrl(orderInfo.getOrderNo(), codeUrl);
+            }
+            Map<String, Object> result = buildNativePayResult(orderInfo.getOrderNo(), codeUrl);
+            if (StringUtils.hasText(paymentNo)) {
+                result.put("paymentNo", paymentNo);
+            }
+            return result;
         } catch (BizException e) {
             throw e;
         } catch (Exception e) {
@@ -629,6 +768,28 @@ public class WxPayOrderService implements WxPayOrderFacade {
             throw new BizException("支付应用不是微信支付渠道");
         }
         return config;
+    }
+
+    private void validatePaymentAttempt(PaymentOrder paymentOrder, OrderInfo orderInfo) {
+        if (paymentOrder == null || orderInfo == null) {
+            throw new ConflictException("支付单或业务订单不能为空");
+        }
+        if (!PaymentConfigLoader.CHANNEL_WXPAY.equals(paymentOrder.getChannel())) {
+            throw new ConflictException("支付单不是微信渠道");
+        }
+        if (!java.util.Objects.equals(paymentOrder.getOrderNo(), orderInfo.getOrderNo())) {
+            throw new ConflictException("支付单与业务订单不匹配");
+        }
+        Long orderAmount = orderInfo.getPayableAmount() == null
+                ? (orderInfo.getTotalFee() == null ? null : orderInfo.getTotalFee().longValue())
+                : orderInfo.getPayableAmount();
+        if (!java.util.Objects.equals(paymentOrder.getRequestAmount(), orderAmount)) {
+            throw new ConflictException("支付单金额与业务订单不匹配");
+        }
+        if (!StringUtils.hasText(paymentOrder.getPaymentNo())
+                || !paymentOrder.getPaymentNo().equals(paymentOrder.getChannelMerchantOrderNo())) {
+            throw new ConflictException("新支付单的渠道商户单号必须等于paymentNo");
+        }
     }
 
     private OrderInfo requirePayableWxOrder(String orderNo) {

@@ -1,37 +1,43 @@
 package cc.ivera.service.impl;
 
-import cc.ivera.config.RefundStatusSyncRabbitConfig;
-import cc.ivera.mq.RefundStatusSyncMessage;
+import cc.ivera.mq.OutboxEventTypes;
+import cc.ivera.service.MessageOutboxService;
 import cc.ivera.service.RefundStatusSyncMessageService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import cc.ivera.util.JsonUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @Service
-@Slf4j
 public class RefundStatusSyncMessageServiceImpl implements RefundStatusSyncMessageService {
 
-    private final RabbitTemplate rabbitTemplate;
+    private final MessageOutboxService messageOutboxService;
 
-    public RefundStatusSyncMessageServiceImpl(RabbitTemplate rabbitTemplate) {
-        this.rabbitTemplate = rabbitTemplate;
+    public RefundStatusSyncMessageServiceImpl(MessageOutboxService messageOutboxService) {
+        this.messageOutboxService = messageOutboxService;
     }
 
     @Override
-    public void sendRefundStatusSyncMessage(String refundNo) {
+    public void sendRefundStatusSyncMessage(String refundNo, int attempt) {
         if (!StringUtils.hasText(refundNo)) {
             throw new IllegalArgumentException("refundNo must not be blank");
         }
+        if (attempt < 0) {
+            throw new IllegalArgumentException("attempt must not be negative");
+        }
 
-        RefundStatusSyncMessage message = new RefundStatusSyncMessage();
-        message.setRefundNo(refundNo);
-
-        rabbitTemplate.convertAndSend(
-                RefundStatusSyncRabbitConfig.REFUND_STATUS_SYNC_EVENT_EXCHANGE,
-                RefundStatusSyncRabbitConfig.REFUND_STATUS_SYNC_DELAY_ROUTING_KEY,
-                message);
-        log.info("Refund status sync message sent, refundNo={}", refundNo);
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("refundNo", refundNo);
+        payload.put("attempt", attempt);
+        messageOutboxService.insertOnce(
+                OutboxEventTypes.REFUND_STATUS_SYNC_REQUESTED + ":" + refundNo + ":" + attempt,
+                "REFUND",
+                refundNo,
+                OutboxEventTypes.REFUND_STATUS_SYNC_REQUESTED,
+                JsonUtils.toJson(payload)
+        );
     }
 }
 

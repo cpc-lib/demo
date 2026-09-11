@@ -4,6 +4,7 @@ import cc.ivera.config.AlipayProperties;
 import cc.ivera.config.PaymentAppConfig;
 import cc.ivera.config.PaymentConfigLoader;
 import cc.ivera.entity.OrderInfo;
+import cc.ivera.entity.PaymentOrder;
 import cc.ivera.entity.RefundInfo;
 import cc.ivera.enums.OrderStatus;
 import cc.ivera.enums.PayType;
@@ -12,8 +13,12 @@ import cc.ivera.enums.alipay.AliPayTradeState;
 import cc.ivera.exception.BizException;
 import cc.ivera.exception.ConflictException;
 import cc.ivera.lock.DistributedLockTemplate;
+import cc.ivera.mq.InboxEventIds;
+import cc.ivera.mq.InboxEventTypes;
 import cc.ivera.service.AliPayService;
 import cc.ivera.service.InventoryService;
+import cc.ivera.service.MessageConsumeClaim;
+import cc.ivera.service.MessageConsumeLogService;
 import cc.ivera.service.OrderInfoService;
 import cc.ivera.service.PaymentInfoService;
 import cc.ivera.service.RefundInfoService;
@@ -34,6 +39,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -63,6 +69,8 @@ public class AliPayServiceImpl implements AliPayService {
 
     private final TransactionTemplate transactionTemplate;
 
+    private final MessageConsumeLogService consumeLogService;
+
     public AliPayServiceImpl(
         OrderInfoService orderInfoService,
         AlipayClient alipayClient,
@@ -72,7 +80,8 @@ public class AliPayServiceImpl implements AliPayService {
         InventoryService inventoryService,
         RefundInfoService refundInfoService,
         DistributedLockTemplate distributedLockTemplate,
-        TransactionTemplate transactionTemplate
+        TransactionTemplate transactionTemplate,
+        MessageConsumeLogService consumeLogService
     ) {
         this.orderInfoService = orderInfoService;
         this.alipayClient = alipayClient;
@@ -83,6 +92,7 @@ public class AliPayServiceImpl implements AliPayService {
         this.refundInfoService = refundInfoService;
         this.distributedLockTemplate = distributedLockTemplate;
         this.transactionTemplate = transactionTemplate;
+        this.consumeLogService = consumeLogService;
     }
 
     @Override
@@ -109,6 +119,18 @@ public class AliPayServiceImpl implements AliPayService {
         );
     }
 
+    @Override
+    public String createPayment(PaymentOrder paymentOrder, OrderInfo orderInfo) {
+        validatePaymentAttempt(paymentOrder, orderInfo);
+        PaymentAppConfig payConfig = resolveAliPayConfig(paymentOrder.getPaymentAppId());
+        return requestTradePage(
+                orderInfo,
+                payConfig,
+                paymentOrder.getChannelMerchantOrderNo(),
+                paymentOrder.getRequestAmount()
+        );
+    }
+
     private String doTradeCreate(Long productId, Long paymentAppId, String idempotencyKey) {
         log.info("生成支付宝订单");
         PaymentAppConfig payConfig = resolveAliPayConfig(paymentAppId);
@@ -123,14 +145,28 @@ public class AliPayServiceImpl implements AliPayService {
     }
 
     private String requestTradePage(OrderInfo orderInfo, PaymentAppConfig payConfig) {
+        return requestTradePage(
+                orderInfo,
+                payConfig,
+                orderInfo.getOrderNo(),
+                orderInfo.getTotalFee().longValue()
+        );
+    }
+
+    private String requestTradePage(
+            OrderInfo orderInfo,
+            PaymentAppConfig payConfig,
+            String channelMerchantOrderNo,
+            Long requestAmount
+    ) {
         try {
             AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
             request.setNotifyUrl(required(payConfig.getAlipayNotifyUrl(), "支付宝notifyUrl未配置"));
             request.setReturnUrl(required(payConfig.getReturnUrl(), "支付宝returnUrl未配置"));
 
             Map<String, Object> bizContent = new HashMap<>();
-            bizContent.put("out_trade_no", orderInfo.getOrderNo());
-            bizContent.put("total_amount", MoneyUtils.centsToYuan(orderInfo.getTotalFee()));
+            bizContent.put("out_trade_no", channelMerchantOrderNo);
+            bizContent.put("total_amount", MoneyUtils.centsToYuan(requestAmount));
             bizContent.put("subject", orderInfo.getTitle());
             bizContent.put("product_code", "FAST_INSTANT_TRADE_PAY");
             request.setBizContent(JsonUtils.toJson(bizContent));
@@ -159,14 +195,44 @@ public class AliPayServiceImpl implements AliPayService {
         }
 
         String notifyId = params.get("notify_id");
+        String eventId = InboxEventIds.resolve(
+                null,
+                InboxEventTypes.PAYMENT_NOTIFY_ALIPAY + ":" + orderNo + ":" + params.get("trade_no")
+                        + ":" + params.get("trade_status")
+        );
+        MessageConsumeClaim claim = consumeLogService.tryStart(
+                eventId,
+                "alipay-payment-notify",
+                InboxEventTypes.PAYMENT_NOTIFY_ALIPAY,
+                orderNo
+        );
+        if (claim.getStatus() == MessageConsumeClaim.Status.CONSUMED) {
+            log.info("支付宝支付通知已完成，幂等忽略，eventId={}, orderNo={}", eventId, orderNo);
+            return;
+        }
+        if (claim.getStatus() == MessageConsumeClaim.Status.BUSY) {
+            throw new ConflictException("支付宝支付通知正在处理，请稍后重试");
+        }
         String lockKey = "payment:order:transition:" + orderNo;
 
-        distributedLockTemplate.execute(lockKey, 5000L, 30000L, () ->
-                transactionTemplate.execute(status -> {
-                    doProcessAliPayNotifyInTransaction(params, orderNo, notifyId);
-                    return null;
-                })
-        );
+        try {
+            distributedLockTemplate.execute(lockKey, 5000L, 30000L, () ->
+                    transactionTemplate.execute(status -> {
+                        doProcessAliPayNotifyInTransaction(params, orderNo, notifyId);
+                        consumeLogService.complete(eventId, "alipay-payment-notify", claim.getLeaseToken());
+                        return null;
+                    })
+            );
+        } catch (RuntimeException exception) {
+            consumeLogService.fail(
+                    eventId,
+                    "alipay-payment-notify",
+                    claim.getLeaseToken(),
+                    exception.getMessage(),
+                    null
+            );
+            throw exception;
+        }
     }
 
     private void doProcessAliPayNotifyInTransaction(Map<String, String> params, String orderNo, String notifyId) {
@@ -325,32 +391,50 @@ public class AliPayServiceImpl implements AliPayService {
             String tradeStatus,
             Map<String, Object> channelOrder
     ) {
-        distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, 5000L, -1L, () ->
-                transactionTemplate.execute(status -> {
-                    OrderInfo lockedOrder = orderInfoService.getOrderByOrderNoForUpdate(orderNo);
-                    if (lockedOrder == null) {
-                        throw new BizException("支付宝查单对应订单不存在，orderNo=" + orderNo);
-                    }
-                    if (!OrderStatus.NOTPAY.getType().equals(lockedOrder.getOrderStatus())) {
+        String eventId = InboxEventIds.resolve(null, InboxEventTypes.PAYMENT_QUERY_ALIPAY + ":" + orderNo
+                + ":" + channelOrder.get("trade_no") + ":" + tradeStatus);
+        String consumerName = "alipay-payment-query";
+        MessageConsumeClaim claim = consumeLogService.tryStart(
+                eventId, consumerName, InboxEventTypes.PAYMENT_QUERY_ALIPAY, orderNo);
+        if (claim.getStatus() == MessageConsumeClaim.Status.CONSUMED) {
+            return;
+        }
+        if (claim.getStatus() == MessageConsumeClaim.Status.BUSY) {
+            throw new ConflictException("支付宝查单正在处理，请稍后重试");
+        }
+        try {
+            distributedLockTemplate.execute(ORDER_TRANSITION_LOCK_PREFIX + orderNo, 5000L, -1L, () ->
+                    transactionTemplate.execute(status -> {
+                        doSyncAliOrderStatus(orderNo, tradeStatus, channelOrder);
+                        consumeLogService.complete(eventId, consumerName, claim.getLeaseToken());
                         return null;
-                    }
-                    validateAliPayOrderQuery(lockedOrder, channelOrder);
-                    if (isAliPaySuccess(tradeStatus)) {
-                        boolean updated = orderInfoService.updateStatusByOrderNoIfStatus(
-                                orderNo,
-                                OrderStatus.NOTPAY,
-                                OrderStatus.SUCCESS
-                        );
-                        if (updated) {
-                            requirePaymentInventoryCommitted(orderNo);
-                            paymentInfoService.createPaymentInfoForAliPay(channelOrder);
-                        }
-                        return null;
-                    }
-                    transitionToClosedInTransaction(orderNo, OrderStatus.CLOSED, lockedOrder);
-                    return null;
-                })
-        );
+                    })
+            );
+        } catch (RuntimeException exception) {
+            consumeLogService.fail(eventId, consumerName, claim.getLeaseToken(), exception.getMessage(), null);
+            throw exception;
+        }
+    }
+
+    private void doSyncAliOrderStatus(String orderNo, String tradeStatus, Map<String, Object> channelOrder) {
+        OrderInfo lockedOrder = orderInfoService.getOrderByOrderNoForUpdate(orderNo);
+        if (lockedOrder == null) {
+            throw new BizException("支付宝查单对应订单不存在，orderNo=" + orderNo);
+        }
+        if (!OrderStatus.NOTPAY.getType().equals(lockedOrder.getOrderStatus())) {
+            return;
+        }
+        validateAliPayOrderQuery(lockedOrder, channelOrder);
+        if (isAliPaySuccess(tradeStatus)) {
+            boolean updated = orderInfoService.updateStatusByOrderNoIfStatus(
+                    orderNo, OrderStatus.NOTPAY, OrderStatus.SUCCESS);
+            if (updated) {
+                requirePaymentInventoryCommitted(orderNo);
+                paymentInfoService.createPaymentInfoForAliPay(channelOrder);
+            }
+            return;
+        }
+        transitionToClosedInTransaction(orderNo, OrderStatus.CLOSED, lockedOrder);
     }
 
     @Override
@@ -573,6 +657,29 @@ public class AliPayServiceImpl implements AliPayService {
         return config;
     }
 
+    private void validatePaymentAttempt(PaymentOrder paymentOrder, OrderInfo orderInfo) {
+        if (paymentOrder == null || orderInfo == null) {
+            throw new ConflictException("支付单或业务订单不能为空");
+        }
+        if (!PaymentConfigLoader.CHANNEL_ALIPAY.equals(paymentOrder.getChannel())
+                || !"ALIPAY".equals(paymentOrder.getProtocol())) {
+            throw new ConflictException("支付单不是支付宝协议");
+        }
+        if (!Objects.equals(paymentOrder.getOrderNo(), orderInfo.getOrderNo())) {
+            throw new ConflictException("支付单与业务订单不匹配");
+        }
+        Long orderAmount = orderInfo.getPayableAmount() == null
+                ? (orderInfo.getTotalFee() == null ? null : orderInfo.getTotalFee().longValue())
+                : orderInfo.getPayableAmount();
+        if (!Objects.equals(paymentOrder.getRequestAmount(), orderAmount)) {
+            throw new ConflictException("支付单金额与业务订单不匹配");
+        }
+        if (!StringUtils.hasText(paymentOrder.getPaymentNo())
+                || !paymentOrder.getPaymentNo().equals(paymentOrder.getChannelMerchantOrderNo())) {
+            throw new ConflictException("新支付单的渠道商户单号必须等于paymentNo");
+        }
+    }
+
     private OrderInfo requirePayableAliOrder(String orderNo) {
         OrderInfo orderInfo = orderInfoService.getOrderByOrderNo(orderNo);
         if (orderInfo == null) {
@@ -607,7 +714,7 @@ public class AliPayServiceImpl implements AliPayService {
         return config;
     }
 
-    private AlipayClient buildAlipayClient(PaymentAppConfig payConfig) throws AlipayApiException {
+    AlipayClient buildAlipayClient(PaymentAppConfig payConfig) throws AlipayApiException {
         AlipayConfig alipayConfig = new AlipayConfig();
         alipayConfig.setServerUrl(required(payConfig.getGatewayUrl(), "支付宝gatewayUrl未配置"));
         alipayConfig.setAppId(required(payConfig.getAlipayAppId(), "支付宝appId未配置"));

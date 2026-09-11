@@ -134,7 +134,7 @@
 |---------|------|--------|------|---------|
 | SPEC-002 | V2通知处理器提取重构 | 中 | SPEC-001测试全绿 | v0.0.2 |
 | SPEC-003 | 配置热更新机制 | 低 | 无 | v0.1.0 |
-| SPEC-010 | [商品库存管理与按明细退款兼容变更](planned/PRODUCT_INVENTORY_MANAGEMENT_COMPAT_SPEC.md) | 高 | SPEC-008、SPEC-009 | v0.5.0 |
+| SPEC-010 | [订单、支付、退款与库存统一模型兼容变更](planned/PRODUCT_INVENTORY_MANAGEMENT_COMPAT_SPEC.md) | 高 | SPEC-008、SPEC-009 | v0.6.0 |
 
 ### SPEC-008 详情
 
@@ -212,15 +212,19 @@
 
 ### SPEC-010 详情
 
-**标题**: 商品库存管理与按明细退款兼容变更
+**标题**: 订单、支付、退款与库存统一模型兼容变更
 
 **状态**: planned
 
-**分类**: type: compatibility（删除旧按金额退款契约，并扩展商品、订单、退款和消息数据模型）
+**分类**: type: compatibility（独立支付尝试、库存预占、履约与类型化退款，删除旧按金额退款契约）
 
-**描述**: ADMIN 管理商品、上下架和库存；订单结算预占库存、支付成功实扣、取消或确认关闭释放；后端预签发一次性 `Idempotency-Key`，防止重复点击、Nginx 重试和多实例并发生成重复订单；退款改为按订单明细与数量申请，渠道成功后回补库存。核心状态使用同库短事务保证一致，跨渠道操作通过 Outbox/Inbox 与 RabbitMQ 解耦并控制幂等，React/Vue 同步实现。
+**描述**: ADMIN 商品运营和禁购边界保留；后端签发 120 秒订单幂等键；一张业务订单支持多笔支付尝试但只允许一笔有效成交，库存归独立预占记录。退款按类型冻结金额/数量，取消履约或验收证据决定实物回库；重复/迟到付款只退资金，支付库存不足整单补偿只安全释放预占。Outbox/Inbox、支付单对账、存量核对和 React/Vue 同步实施。
 
 **设计文档**: `planned/PRODUCT_INVENTORY_MANAGEMENT_COMPAT_SPEC.md`
+
+**统一详细设计**: `docs/superpowers/specs/2026-09-04-order-payment-refund-inventory-design.md`
+
+**当前实施入口**: `docs/superpowers/plans/2026-09-04-order-payment-refund-inventory.md`；原 v0.5.0 计划仅保留历史阶段记录，新模型仍 planned。
 
 **基线测试**: 后端 135 项测试全绿；实现后补充库存并发、消息重投、按明细退款和双前端验收。
 
@@ -267,6 +271,7 @@
 | 2026-08-31 | SPEC-009 | planned | implemented | 完成 ADMIN 购买边界、双前端退款审批与支付/退款状态核对；后端全量135个测试及前端构建通过 |
 | 2026-08-31 | SPEC-010 | - | planned | 新增商品管理、库存状态机、按明细退款和 Outbox/Inbox 幂等设计 |
 | 2026-08-31 | SPEC-004 | planned | deprecated | 退款并发安全范围统一并入 SPEC-010，避免同根因重复实现 |
+| 2026-09-04 | SPEC-010 | planned | planned | 合并用户完整业务方案，计划升级 v0.6.0；引入独立支付/预占、类型化退款回库，保留 120 秒键与库存不足整单补偿 |
 
 ---
 

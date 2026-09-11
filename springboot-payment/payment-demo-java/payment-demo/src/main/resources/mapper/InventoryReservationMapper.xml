@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.ivera.mapper.InventoryReservationMapper">
+
+    <select id="selectByOrderItemIdForUpdate" resultType="cc.ivera.entity.InventoryReservation">
+        select *
+        from t_inventory_reservation
+        where order_item_id = #{orderItemId}
+        limit 1
+        for update
+    </select>
+
+    <select id="selectByOrderNoForUpdate" resultType="cc.ivera.entity.InventoryReservation">
+        select *
+        from t_inventory_reservation
+        where order_no = #{orderNo}
+        order by sku_id, id
+        for update
+    </select>
+
+    <update id="updateStatus">
+        update t_inventory_reservation
+        set status = #{targetStatus},
+            committed_at = case when #{targetStatus} = 'COMMITTED' then current_timestamp else committed_at end,
+            released_at = case when #{targetStatus} = 'RELEASED' then current_timestamp else released_at end,
+            update_time = current_timestamp
+        where id = #{id}
+          and status = #{currentStatus}
+    </update>
+
+</mapper>
+

@@ -34,7 +34,7 @@ public class OrderCloseRabbitConfig {
 
     //延时处理机制
     @Bean(name = "orderCloseDelayQueue")
-    public Queue orderCloseDelayQueue(@Value("${payment.order.close-delay-ms:60000}") long closeDelayMs) {
+    public Queue orderCloseDelayQueue(@Value("${payment.order.close-delay-ms:300000}") long closeDelayMs) {
         Map<String, Object> args = new HashMap<>();
         args.put("x-dead-letter-exchange", ORDER_CLOSE_DEAD_LETTER_EXCHANGE);
         args.put("x-dead-letter-routing-key", ORDER_CLOSE_RELEASE_ROUTING_KEY);
