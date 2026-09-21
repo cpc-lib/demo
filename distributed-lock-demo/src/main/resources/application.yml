@@ -5,9 +5,9 @@ spring:
   application:
     name: distributed-lock-demo
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://192.168.1.200:3308/distributed_lock_demo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8&useAffectedRows=true}
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3308/distributed_lock_demo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8&useAffectedRows=true}
     username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:cpc!23#@}
+    password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
@@ -17,11 +17,11 @@ spring:
 app:
   lock:
     redisson:
-      address: ${REDIS_ADDRESS:redis://192.168.1.200:6379}
-      password: ${REDIS_PASSWORD:cpc!23#@}
+      address: ${REDIS_ADDRESS:redis://127.0.0.1:6379}
+      password: ${REDIS_PASSWORD:}
       watchdog-timeout-ms: 30000
     zookeeper:
-      connect-string: ${ZOOKEEPER_CONNECT:192.168.1.200:2181}
+      connect-string: ${ZOOKEEPER_CONNECT:127.0.0.1:2181}
       session-timeout-ms: 30000
       connection-timeout-ms: 10000
     mysql:

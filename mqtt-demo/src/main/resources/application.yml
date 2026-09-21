@@ -2,8 +2,8 @@ server:
   port: 8080
 
 mqtt:
-  url: tcp://192.168.1.200:1883
+  url: ${MQTT_URL:tcp://127.0.0.1:1883}
   username: admin
-  password: public
+  password: ${MQTT_PASSWORD:}
   client-id: springboot-mqtt-client
   topic: demo/topic

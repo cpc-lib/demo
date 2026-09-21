@@ -28,7 +28,8 @@ public class IndexTest {
     void setUp() {
         // Create the low-level client
         this.restClient = RestClient.builder(
-                new HttpHost("192.168.1.200", 9200)).build();
+                new HttpHost(System.getenv().getOrDefault("ELASTICSEARCH_HOST", "127.0.0.1"),
+                        Integer.parseInt(System.getenv().getOrDefault("ELASTICSEARCH_PORT", "9200")))).build();
 
         // Create the transport with a Jackson mapper
         ElasticsearchTransport transport = new RestClientTransport(

@@ -8,7 +8,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/db?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=UTC
     username: root
-    password: root
+    password: ${MYSQL_PASSWORD:}
 
 mybatis:
   #引入读取多个xml配置文件
@@ -65,6 +65,3 @@ mybatis:
 #  return keyHolder.getKey().intValue();
 #}
 #原理如下:https://www.it610.com/article/1283377358014791680.htm
-
-
-

@@ -49,7 +49,7 @@ public class ZkApi1 {
         logger.info("【执行初始化测试方法getData返回值.........】={}",value);
         // 触发删除节点，通知对应的监听器，执行删除事件回调
         deleteNode(path);
-        createNode("/db-config","10.17.18.101:5432");
+        createNode("/db-config","127.0.0.1:5432");
     }
 
 

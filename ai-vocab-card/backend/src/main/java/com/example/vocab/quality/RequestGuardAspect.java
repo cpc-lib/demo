@@ -8,6 +8,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -23,13 +24,16 @@ public class RequestGuardAspect {
     private final StringRedisTemplate redisTemplate;
     private final QualityProperties properties;
 
+    @Value("${vocab.request-guard.window-minutes:2}")
+    private int windowMinutes;
+
     @Around("@annotation(rateLimited)")
     public Object rateLimit(ProceedingJoinPoint pjp, RateLimited rateLimited) throws Throwable {
         if (!Boolean.TRUE.equals(properties.getRateLimitEnabled())) return pjp.proceed();
         long limit = rateLimited.permitsPerMinute() > 0 ? rateLimited.permitsPerMinute() : properties.getRateLimitPerMinute();
         String key = "rl:" + CurrentUser.id() + ":" + rateLimited.key() + ":" + (System.currentTimeMillis() / 60000);
         Long count = redisTemplate.opsForValue().increment(key);
-        if (Objects.equals(count, 1L)) redisTemplate.expire(key, Duration.ofMinutes(2));
+        if (Objects.equals(count, 1L)) redisTemplate.expire(key, Duration.ofMinutes(windowMinutes));
         if (count != null && count > limit) throw new IllegalStateException("Too many requests, please retry later");
         return pjp.proceed();
     }

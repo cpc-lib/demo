@@ -3,9 +3,9 @@ server:
 sharding:
   jdbc: 
     driverClassName: com.mysql.jdbc.Driver
-    url: jdbc:mysql://101.32.189.58:3306/sharding_master?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/sharding_master?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
     username: root
-    password: root
+    password: ${MYSQL_PASSWORD:}
     filters: stat
     maxActive: 100
     initialSize: 1
@@ -24,10 +24,10 @@ sharding:
     logAbandoned: false
     connectionInitSqls: 
     
-    url0: jdbc:mysql://101.32.189.58:3306/sharding_master?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
+    url0: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/sharding_master?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
     username0: root
     password0: root
     
-    url1: jdbc:mysql://101.32.189.58:3306/sharding_salve?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
+    url1: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/sharding_salve?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
     username1: root
     password1: root

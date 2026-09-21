@@ -25,16 +25,16 @@ ruoyi:
 spring:
   ai:
     tongyi:
-      ai-api-key: sk-b9b104b6c0224290992b80eb4ada1002
+      ai-api-key: ${DASHSCOPE_API_KEY:}
     openai:
       base-url: https://api.openai.com/
-      api-key: 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
+      api-key: ${OPENAI_API_KEY:}
       embedding:
         options:
           model: text-davinci-003
       chat:
         #指定某一个API配置(覆盖全局配置)
-        api-key: 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
+        api-key: ${OPENAI_API_KEY:}
         base-url: https://api.openai.com/
         options:
           model: gpt-3.5-turbo # 模型配置
@@ -51,8 +51,8 @@ spring:
       static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/
   redis:
     port: 6379
-    host: 192.168.1.200
-    password: cpc!23#@
+    host: ${REDIS_HOST:127.0.0.1}
+    password: ${REDIS_PASSWORD:}
     database: 3
   datasource:
     #设置数据库连接池的类型
@@ -65,9 +65,9 @@ spring:
     #      auto-commit: true
     #      max-lifetime: 120000
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.1.200:3308/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3308}/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
     username: root
-    password: wZKicHYoEgIMIVAU
+    password: ${MYSQL_PASSWORD:}
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
       initialSize: 5
@@ -97,7 +97,7 @@ spring:
         url-pattern: /druid/*
         # 控制台管理用户名和密码
         login-username: ruoyi
-        login-password: 123456
+        login-password: ${DRUID_CONSOLE_PASSWORD:}
       filter:
         stat:
           enabled: true
@@ -127,12 +127,12 @@ leetcode:
   sms:
     url: http://106.ihuyi.com/webservice/sms.php?method=Submit
     account: C80305290
-    password: e6e474c1e7b4f88889f3fd67b474bd68
+    password: ${SMS_PASSWORD:}
 upload:
-  dir: D:\\download
+  dir: ${FILE_DIR:./download}
 
 tess4j:
-  datapath: D:\develop\Tesseract-OCR\tessdata
+  datapath: ${TESSERACT_TESSDATA:}
 
 mybatis-plus:
   #开启日志
@@ -150,7 +150,7 @@ ip2region:
 
 #高德地图key
 amap:
-  key: 659f057c4e1b3c72ae58027363b3afb9
+  key: ${AMAP_KEY:}
 
 #163邮箱(535错误)
 #qq邮箱(推荐使用qq)
@@ -159,5 +159,5 @@ email:
     host: smtp.qq.com
     email: 2607439502@qq.com
     name: Arhi
-    password: hqovxyrpwanreabb
+    password: ${MAIL_PASSWORD:}
     port: 25

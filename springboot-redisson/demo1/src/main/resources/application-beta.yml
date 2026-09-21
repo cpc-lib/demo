@@ -5,9 +5,9 @@ spring:
     sentinel:
       master: mymaster
       nodes:
-        - 101.32.189.58:27001
-        - 101.32.189.58:27002
-        - 101.32.189.58:27003
+        - ${REDIS_HOST:127.0.0.1}:27001
+        - ${REDIS_HOST:127.0.0.1}:27002
+        - ${REDIS_HOST:127.0.0.1}:27003
       password:
     lettuce:
       pool:

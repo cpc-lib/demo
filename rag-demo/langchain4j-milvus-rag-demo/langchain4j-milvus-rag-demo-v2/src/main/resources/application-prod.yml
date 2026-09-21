@@ -1,13 +1,13 @@
 rag:
   llm:
     base-url: ${RAG_LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
-    api-key: ${RAG_LLM_API_KEY:sk-b8f000fc24f34b67ba142e4f35372327}
+    api-key: ${RAG_LLM_API_KEY:}
     model: ${RAG_LLM_MODEL:qwen-plus}
     temperature: 0.2
 
   embedding:
     base-url: ${RAG_EMBED_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
-    api-key: ${RAG_EMBED_API_KEY:sk-b8f000fc24f34b67ba142e4f35372327}
+    api-key: ${RAG_EMBED_API_KEY:}
     model: ${RAG_EMBED_MODEL:text-embedding-v4}
     dimension: ${RAG_EMBED_DIMENSION:1024}
 
@@ -15,7 +15,7 @@ rag:
     username: ${MILVUS_USERNAME:}
     password: ${MILVUS_PASSWORD:}
     default-alias: ${MILVUS_DEFAULT_ALIAS:default}
-    host: ${MILVUS_HOST:192.168.1.200}
+    host: ${MILVUS_HOST:127.0.0.1}
     port: ${MILVUS_PORT:19530}
     collection: ${MILVUS_COLLECTION:demo_kb}
     top-k: ${MILVUS_TOP_K:6}
@@ -39,7 +39,7 @@ rag:
   web-search:
     enabled: true
     provider: tavily
-    tavily-api-key: ${TAVILY_API_KEY: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}
+    tavily-api-key: ${TAVILY_API_KEY:}
     max-results: 10
     search-depth: advanced
     timeout-seconds: 20
@@ -54,7 +54,7 @@ rag:
   image:
     enabled: true
     base-url: ${RAG_IMAGE_BASE_URL:${RAG_LLM_BASE_URL:https://dashscope.aliyuncs.com/api/v1}}
-    api-key: ${RAG_IMAGE_API_KEY:${RAG_LLM_API_KEY:sk-b8f000fc24f34b67ba142e4f35372327}}
+    api-key: ${RAG_IMAGE_API_KEY:${RAG_LLM_API_KEY:}}
     model: ${RAG_IMAGE_MODEL:wanx-v1}
     size: ${RAG_IMAGE_SIZE:1024x1024}
     quality: ${RAG_IMAGE_QUALITY:standard}
@@ -64,13 +64,13 @@ rag:
 spring:
   data:
     redis:
-      host: ${REDIS_HOST:192.168.1.200}
+      host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
       database: ${REDIS_DATABASE:0}
       timeout: 5s
-      password: ${REDIS_PASSWORD:cpc!23#@}
+      password: ${REDIS_PASSWORD:}
   datasource:
-    url: jdbc:mysql://192.168.1.200:3308/db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3308}/db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: root
-    password: cpc!23#@
+    password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver

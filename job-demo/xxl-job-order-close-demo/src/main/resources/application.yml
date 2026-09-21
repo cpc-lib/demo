@@ -5,9 +5,9 @@ spring:
   application:
     name: xxl-job-order-close-demo
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://192.168.1.200:3306/order_demo_v2?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/order_demo_v2?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root123456}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       minimum-idle: 2
@@ -35,7 +35,7 @@ xxl:
       address: ${XXL_JOB_EXECUTOR_ADDRESS:}
       ip: ${XXL_JOB_EXECUTOR_IP:}
       port: ${XXL_JOB_EXECUTOR_PORT:9999}
-      accessToken: ${XXL_JOB_ACCESS_TOKEN:default_token}
+      accessToken: ${XXL_JOB_ACCESS_TOKEN:}
       logpath: ${XXL_JOB_EXECUTOR_LOG_PATH:./logs/xxl-job}
       logretentiondays: ${XXL_JOB_EXECUTOR_LOG_RETENTION_DAYS:30}
       excludedpackage: ${XXL_JOB_EXECUTOR_EXCLUDED_PACKAGE:org.springframework,spring}

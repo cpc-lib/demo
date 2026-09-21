@@ -3,9 +3,9 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://93.177.76.161:3306/minio-upload?serverTimezone=Asia/Shanghai&userUnicode=true&useSSL=false&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/minio-upload?serverTimezone=Asia/Shanghai&userUnicode=true&useSSL=false&allowPublicKeyRetrieval=true&useSSL=false
     username: root
-    password: hjm029796
+    password: ${MYSQL_PASSWORD:}
   redis:
     # Redis服务器地址
     host: 127.0.0.1
@@ -43,9 +43,9 @@ mybatis-plus:
 #  breakpoint-time: 1 #断点续传有效时间，在redis存储任务的时间 单位（天）
 
 minio:
-  endpoint: http://93.177.76.161:9001
-  accesskey: admin
-  secretkey: hjm029796
+  endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9001}
+  accesskey: ${MINIO_ACCESS_KEY:}
+  secretkey: ${MINIO_SECRET_KEY:}
   expiry: 1  #分片对象过期时间 单位（天）
   breakpoint-time: 1 #断点续传有效时间，在redis存储任务的时间 单位（天）
 

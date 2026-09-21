@@ -4,9 +4,9 @@ spring:
   application:
     name: itemservice
   datasource:
-    url: jdbc:mysql://192.168.83.129:3306/heima?useSSL=false
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/heima?useSSL=false
     username: root
-    password: root
+    password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.jdbc.Driver
 mybatis-plus:
   type-aliases-package: com.heima.item.pojo
@@ -17,7 +17,7 @@ mybatis-plus:
       update-strategy: not_null
       id-type: auto
 redis:
-  host: 192.168.83.129
+  host: ${REDIS_HOST:127.0.0.1}
 logging:
   level:
     com.heima: debug

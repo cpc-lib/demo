@@ -17,8 +17,8 @@ fdfs:
     width: 150
     height: 150
   #TrackerList参数,支持多个
-  tracker-list: 114.132.210.77:22122
-  web-server-url: http://114.132.210.77:8888/
+  tracker-list: ${FDFS_TRACKER_LIST:127.0.0.1:22122}
+  web-server-url: ${FDFS_WEB_SERVER_URL:http://127.0.0.1:8888/}
 # fastDFS
 # fdfs.so-timeout=1501
 # fdfs.connect-timeout=601

@@ -5,13 +5,13 @@ spring:
     web-application-type: none
   data:
     redis:
-      host: ${REDIS_HOST:192.168.1.200}
+      host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
   rabbitmq:
-    host: ${RABBITMQ_HOST:192.168.1.200}
+    host: ${RABBITMQ_HOST:127.0.0.1}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:sha256}
-    password: ${RABBITMQ_PASSWORD:sha256-demo}
+    password: ${RABBITMQ_PASSWORD:}
     listener:
       simple:
         acknowledge-mode: auto

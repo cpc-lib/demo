@@ -23,7 +23,7 @@ public abstract class MQTTConfig {
 
     protected String username = "admin";
 
-    protected String password = "admin";
+    protected String password = "";
 
     protected String TCP = "tcp://";
 

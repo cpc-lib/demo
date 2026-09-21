@@ -7,9 +7,9 @@ spring:
     name: article-delay-publish
 
   datasource:
-    url: jdbc:mysql://192.168.1.200:3308/article_delay?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3308}/article_delay?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
     username: root
-    password: cpc!23#@
+    password: ${MYSQL_PASSWORD:}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -30,13 +30,13 @@ spring:
 
   data:
     redis:
-      host: 192.168.1.200
+      host: ${REDIS_HOST:127.0.0.1}
       port: 6379
       timeout: 2s
-      password: cpc!23#@
+      password: ${REDIS_PASSWORD:}
 
   kafka:
-    bootstrap-servers: 192.168.1.200:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
     producer:
       acks: all
       key-serializer: org.apache.kafka.common.serialization.StringSerializer

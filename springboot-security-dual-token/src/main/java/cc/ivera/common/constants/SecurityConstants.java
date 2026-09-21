@@ -16,9 +16,17 @@ public class SecurityConstants {
 
 
     /**
-     * JWT签名密钥硬编码到应用程序代码中，应该存放在环境变量或.properties文件中。
+     * JWT签名密钥从环境变量 JWT_SECRET_KEY 读取（值为 Base64 编码的密钥），禁止硬编码。
      */
-    public static final String JWT_SECRET_KEY = "C*F-JaNdRgUkXn2r5u8x/A?D(G+KbPeShVmYq3s6v9y$B&E)H@McQfTjWnZr4u7w";
+    public static final String JWT_SECRET_KEY = getRequiredEnv("JWT_SECRET_KEY");
+
+    private static String getRequiredEnv(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalStateException("请先配置环境变量: " + name);
+        }
+        return value;
+    }
 
     // JWT token defaults
     public static final String TOKEN_HEADER = "Authorization";

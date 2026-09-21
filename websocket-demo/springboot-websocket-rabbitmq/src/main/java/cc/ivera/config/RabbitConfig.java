@@ -9,6 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import cc.ivera.service.ChatService;
@@ -22,6 +23,17 @@ public class RabbitConfig {
     @Autowired
     ChatService chatService;
 
+    @Value("${RABBITMQ_HOST:127.0.0.1}")
+    private String rabbitHost;
+
+    @Value("${RABBITMQ_PORT:5672}")
+    private int rabbitPort;
+
+    @Value("${RABBITMQ_USERNAME:guest}")
+    private String rabbitUsername;
+
+    @Value("${RABBITMQ_PASSWORD:guest}")
+    private String rabbitPassword;
 
     //绑定键
     public final static String msgTopicKey = "topic.mine";
@@ -40,9 +52,9 @@ public class RabbitConfig {
 
     @Bean
     public ConnectionFactory connectionFactory() {
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory("192.168.1.200", 5672);
-        connectionFactory.setUsername("guest");
-        connectionFactory.setPassword("guest");
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(rabbitHost, rabbitPort);
+        connectionFactory.setUsername(rabbitUsername);
+        connectionFactory.setPassword(rabbitPassword);
         connectionFactory.setVirtualHost("/");
         connectionFactory.setPublisherConfirms(true); // 必须要设置
         connectionFactory.setPublisherReturns(true);

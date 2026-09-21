@@ -6,7 +6,7 @@ spring:
     driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
     url: jdbc:clickhouse://myhost:8123/demo
     username: demo
-    password: demo123
+    password: ${CLICKHOUSE_PASSWORD:}
     hikari:
       maximum-pool-size: 5
       minimum-idle: 1

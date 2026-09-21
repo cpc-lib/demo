@@ -2,8 +2,8 @@ spring:
   application:
     name: springboot-rabbitmq-producer
   rabbitmq:
-    host: 114.132.210.77
+    host: ${RABBITMQ_HOST:127.0.0.1}
     port: 5672
     virtual-host: /root
     username: root
-    password: root
+    password: ${RABBITMQ_PASSWORD:}

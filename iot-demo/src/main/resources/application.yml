@@ -11,8 +11,8 @@ spring:
       write-dates-as-timestamps: false
 
 influxdb:
-  url: ${INFLUXDB_URL:http://192.168.1.200:8086}
-  token: ${INFLUXDB_TOKEN:iot-super-secret-token}
+  url: ${INFLUXDB_URL:http://127.0.0.1:8086}
+  token: ${INFLUXDB_TOKEN:}
   org: ${INFLUXDB_ORG:iot-org}
   bucket: ${INFLUXDB_BUCKET:iot-temperature}
 

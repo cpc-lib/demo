@@ -3,14 +3,14 @@ server:
 
 spring:
   redis:
-    host: 192.168.220.102
+    host: ${REDIS_HOST:127.0.0.1}
     port: 6379
     timeout: 200ms
   application:
     name: hbase-user-10b-demo
 
   kafka:
-    bootstrap-servers: 192.168.220.102:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
     consumer:
       group-id: user-es-indexer
       auto-offset-reset: earliest
@@ -29,7 +29,7 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://192.168.220.102:27017/user_demo
+      uri: ${MONGODB_URI:mongodb://127.0.0.1:27017/user_demo}
 
 app:
   kafka:
@@ -42,12 +42,12 @@ app:
     ttl-minutes: 30
     warm-lock-seconds: 10
   hbase:
-    zookeeper-quorum: 192.168.220.102,192.168.220.103,192.168.220.104
+    zookeeper-quorum: ${HBASE_ZOOKEEPER_QUORUM:127.0.0.1}
     zookeeper-port: 2181
     znode-parent: /hbase
     init: true
   es:
-    hosts: 192.168.220.102:9200
+    hosts: ${ELASTICSEARCH_HOSTS:127.0.0.1:9200}
     index: user_profile
     init: true
   retry:

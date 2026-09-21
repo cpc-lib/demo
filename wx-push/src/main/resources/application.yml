@@ -2,7 +2,7 @@
 wx:
   config:
     appId: "wx55f4e77fbd0bda50"
-    appSecret: "5342cbd2274199c8947613b8f520dec3"
+    appSecret: ${WX_APP_SECRET:}
     #模板Id，这是你新增模板后的ID
     templateId: "y3ub5Du12o9oDfD0tHSyia7WzQIt7k_n3NqYlu0iRy4"
     # 这是OpenId，也就是你扫码关注的微信号的id，在微信后台看
@@ -25,7 +25,7 @@ weather:
   config:
     # 这两个值来自提供天气服务的网站页面上的
     appid: "61166159"
-    appSecret: "4HR86jrQ"
+    appSecret: ${WEATHER_APP_SECRET:}
     # 广州就广州，不要画蛇添足追加个“市”变成广州市
     # 天河√，天河区×  北京√，北京市×
     city: "衡阳"
@@ -34,12 +34,12 @@ weather:
 ApiSpace:
   enableDaily: true #【新增功能】  true：开启每日一句，false：则不开启
   # token来自名言警句的网站，直接复制即可
-  token: "l9h6wlxm87tsrb9rb98lzywtny9hsi9z"
+  token: ${APISPACE_TOKEN:}
 
 # 9月6号有道翻译取消免费接口，因此需申请有道翻译服务 https://ai.youdao.com/product-fanyi-text.s
 youdao:
-  appKey_YouDao: "1313dd1f2f10abc4" #即 应用ID
-  appSecret_YouDao: "kDH51BNQPTm3leicGteza5BxLras3wvT" # 即 应用秘钥
+  appKey_YouDao: ${YOUDAO_APP_KEY:} #即 应用ID
+  appSecret_YouDao: ${YOUDAO_APP_SECRET:} # 即 应用秘钥
 
 
 # 服务器端口号，遇到端口冲突时修改

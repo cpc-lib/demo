@@ -30,9 +30,9 @@ class Dm8MigrationContractTest {
         String application = read("src/main/resources/application.yml");
 
         assertThat(application).contains("driver-class-name: dm.jdbc.driver.DmDriver");
-        assertThat(application).contains("url: jdbc:dm://${DM_HOST:192.168.1.200}:${DM_PORT:5236}?schema=${DM_SCHEMA:SYSDBA}&connectTimeout=30000");
+        assertThat(application).contains("url: jdbc:dm://${DM_HOST:127.0.0.1}:${DM_PORT:5236}?schema=${DM_SCHEMA:SYSDBA}&connectTimeout=30000");
         assertThat(application).contains("username: ${DM_USERNAME:SYSDBA}");
-        assertThat(application).contains("password: ${DM_PASSWORD:Cpc2026#@Dm}");
+        assertThat(application).contains("password: ${DM_PASSWORD:}");
         assertThat(application).doesNotContain("jdbc:mysql://");
         assertThat(application).doesNotContain("com.mysql.jdbc.Driver");
     }

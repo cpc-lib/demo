@@ -3,10 +3,10 @@ server:
 
 spring:
   redis:
-    host: 192.168.1.200
+    host: ${REDIS_HOST:127.0.0.1}
     port: 6379
     timeout: 2s
-    password: cpc!23#@
+    password: ${REDIS_PASSWORD:}
 
 management:
   endpoints:

@@ -6,14 +6,14 @@ spring:
     name: order-demo-basic
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.1.200:3306/order_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/order_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
-    password: cpc!23#@
+    password: ${MYSQL_PASSWORD:}
   redis:
-    host: 192.168.1.200
+    host: ${REDIS_HOST:127.0.0.1}
     port: 6379
     database: 0
-    password: cpc!23#@
+    password: ${REDIS_PASSWORD:}
     timeout: 2s
     lettuce:
       pool:
@@ -53,8 +53,3 @@ logging:
   level:
     com.example.orderdemo: INFO
     com.baomidou.mybatisplus: WARN
-
-
-
-
-
