@@ -1,0 +1,121 @@
+.panel {
+  min-width: 0; padding: 32px 34px; background: white;
+  border: 1px solid #e5eaf3; border-radius: 20px;
+  box-shadow: 0 18px 50px rgba(25, 57, 105, .06);
+}
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 29px; }
+.panel h2 { font-size: 20px; letter-spacing: -.4px; margin: 0; }
+.tag {
+  font-size: 10px; font-weight: 800; letter-spacing: 1px;
+  color: #245bea; background: #eaf0ff; padding: 8px 10px; border-radius: 7px;
+}
+.qr-holder {
+  max-width: 280px; height: 250px; margin: 0 auto;
+  border: 1px dashed #e0e8f3; border-radius: 13px;
+  background: #fff; display: grid; place-items: center;
+}
+.empty-qr { color: #8a99ae; font-size: 13px; }
+.code { text-align: center; color: #728198; margin: 18px 0 7px; font-size: 13px; }
+.code b { font-size: 20px; color: #1d314e; letter-spacing: 4px; margin-left: 8px; }
+.status { margin: 17px auto 26px; text-align: center; font-size: 13px; color: #6a7890; }
+.dot { display: inline-block; width: 8px; height: 8px; margin-right: 9px; border-radius: 50%; background: #26b894; }
+.dot.bad { background: #ed6868; }
+.action-button { display: block; width: 100%; }
+.sample-link { display: block; text-align: center; margin-top: 16px; font-size: 12px; }
+.note { font-size: 11px; color: #8b99ae; line-height: 1.65; margin: 24px 0 0; }
+.success { text-align: center; }
+.success-icon {
+  display: inline-grid; place-items: center; background: #e9fbf1;
+  color: #1aa773; width: 68px; height: 68px; border-radius: 50%;
+  font-size: 38px; margin: 8px 0;
+}
+.success h3 { margin: 10px 0; font-size: 23px; }
+.success p { color: #7b8ca4; font-size: 14px; }
+.success button { width: 100%; margin-top: 25px; }
+.form { display: grid; gap: 15px; }
+.form label { color: #54647a; font-weight: 700; font-size: 12px; }
+.form input {
+  display: block; width: 100%; margin-top: 8px; padding: 13px 12px;
+  border: 1px solid #dce4f0; border-radius: 9px;
+  color: #263c59; background: #fcfdff;
+}
+.form input:focus { border-color: #4e79ed; box-shadow: 0 0 0 3px #e6edff; }
+.form button { width: 100%; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.secondary { color: #245bea; background: #eef3fe; }
+.secondary:hover { background: #dfe9ff; }
+.error {
+  background: #fff0f1; color: #bb303d; border-radius: 8px;
+  padding: 12px 14px; font-size: 12px; line-height: 1.7;
+}
+.good { background: #ecfbf2; color: #168459; border-radius: 8px; padding: 11px 13px; font-size: 13px; }
+.login-pill { color: #168459; font-weight: 700; font-size: 13px; }
+.verify { text-align: center; background: #f5f8ff; border: 1px solid #e8effc; border-radius: 12px; padding: 18px; }
+.verify p { color: #5f7188; font-size: 13px; }
+.verify-code { color: #1d3460; font-size: 33px; font-weight: 900; letter-spacing: 7px; margin: 13px auto 20px; }
+@media (max-width: 800px) { .panel { padding: 24px; } }
+@media (max-width: 360px) { .actions { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }
+
+/* Password login with image captcha. */
+.password-box { position: relative; display: block; }
+.password-box input { padding-right: 46px; }
+/* Specificity must beat `.login-dialog .form button { width: 100% }` from dashboard.css. */
+.form .password-box .eye-toggle {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  width: auto; border: none; background: transparent; cursor: pointer;
+  font-size: 16px; padding: 4px 7px; border-radius: 7px; line-height: 1.2;
+}
+.eye-toggle:hover { background: #eef3fe; }
+.captcha-row { display: flex; gap: 9px; align-items: stretch; }
+.captcha-row input { margin-top: 0; flex: 1; min-width: 0; letter-spacing: 3px; }
+.form .captcha-row button.captcha-image { width: auto; flex: none; }
+.captcha-image {
+  width: 124px; height: 47px; border-radius: 9px; border: 1px solid #dce4f0;
+  cursor: pointer; background: #f3f6fd; object-fit: cover; display: block;
+}
+.captcha-placeholder { color: #8a99ae; font-size: 12px; font-weight: 700; }
+.mode-switch {
+  display: block; margin: 15px auto 0; border: none; background: none;
+  cursor: pointer; color: #245bea; font-size: 13px; font-weight: 700;
+}
+.mode-switch:hover { text-decoration: underline; }
+
+/* Mobile camera-based QR reader. It displays the device's own local video stream. */
+.camera-scanner { display: grid; gap: 10px; }
+.camera-scanner > button { width: 100%; }
+.camera-preview { position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: #111b2d; }
+.camera-preview[hidden] { display: none; }
+.camera-preview video { display: block; width: 100%; max-height: 340px; min-height: 180px; object-fit: cover; }
+.camera-guide {
+  position: absolute; pointer-events: none; width: 56%; max-width: 220px; aspect-ratio: 1;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  border: 3px solid rgba(255,255,255,.88); border-radius: 12px;
+  box-shadow: 0 0 0 999px rgba(0,0,0,.16), 0 0 18px rgba(36,91,234,.6);
+}
+.camera-loading {
+  position: absolute; bottom: 8px; left: 8px; right: 8px; padding: 6px 10px;
+  background: rgba(9,16,32,.8); color: #fff; border-radius: 8px;
+  font-size: 12px; margin: 0; text-align: center;
+}
+.camera-alternative { margin: -5px 0 0; font-size: 11px; color: #7b8ca4; text-align: center; }
+
+.camera-photo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.camera-file-trigger {
+  display: grid; place-items: center; position: relative; padding: 11px 8px;
+  border-radius: 9px; border: 1px solid #cedafa; color: #245bea;
+  background: #eef3fe; cursor: pointer; font-size: 12px; font-weight: 700; text-align: center;
+}
+.camera-file-trigger:hover { background: #e1ebff; }
+.camera-file-trigger.disabled { opacity: .5; cursor: not-allowed; }
+.camera-file-trigger input {
+  position: absolute; width: 1px; height: 1px; opacity: 0;
+  overflow: hidden; clip-path: inset(50%); pointer-events: none;
+}
+.camera-file-trigger:focus-within { outline: 3px solid #7396ff; outline-offset: 2px; }
+@media (max-width: 360px) { .camera-photo-actions { grid-template-columns: 1fr; } }
+
+/* --- Dedicated scan page (/scan) --- */
+.scan-page { width: min(480px, 100%); margin-inline: auto; display: grid; gap: 14px; padding: 12px 4px 28px; }
+.scan-page-title { margin: 0; font-size: 22px; }
+.scan-page-desc { margin: 4px 0 0; color: #7e8ba2; font-size: 13px; line-height: 1.8; }
