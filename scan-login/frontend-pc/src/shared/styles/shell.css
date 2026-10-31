@@ -1,0 +1,51 @@
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 6vw;
+  background: white;
+  border-bottom: 1px solid #e8edf5;
+}
+.brand { display: flex; align-items: center; font-size: 19px; font-weight: 800; gap: 12px; }
+.brand small {
+  display: block; font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; color: #8a99ae; margin-top: 3px;
+}
+.brand-icon {
+  width: 38px; height: 38px; background: #245bea; color: white;
+  border-radius: 10px; font-size: 31px; display: grid; place-items: center;
+}
+.topbar nav { display: flex; gap: 12px; }
+.topbar nav a, .topbar nav span { color: #697993; padding: 9px 13px; font-size: 14px; font-weight: 600; border-radius: 8px; }
+.topbar nav .active { background: #eaf0ff; color: #245bea; }
+.main {
+  width: 100%; flex: 1; display: flex; align-items: center;
+  justify-content: center; padding: 55px 24px;
+}
+.page-grid {
+  width: min(1030px, 100%); display: grid;
+  grid-template-columns: 1.1fr .9fr; align-items: center; gap: 70px;
+}
+.hero .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: 3px; color: #245bea; }
+.hero h1 { font-size: clamp(37px, 4.5vw, 58px); letter-spacing: -1.8px; line-height: 1.2; margin: 25px 0; }
+.hero h1 em { font-style: normal; color: #245bea; }
+.hero p { font-size: 15px; color: #6d7f97; line-height: 1.9; max-width: 440px; margin-bottom: 36px; }
+.feature { padding: 13px 0; font-size: 14px; color: #35475e; font-weight: 600; }
+.feature span { font-size: 12px; margin-right: 16px; color: #245bea; font-weight: 800; }
+footer {
+  border-top: 1px solid #e9edf4; text-align: center;
+  font-size: 12px; color: #93a1b7; padding: 22px;
+}
+@media (max-width: 800px) {
+  .page-grid { grid-template-columns: 1fr; gap: 30px; max-width: 490px; }
+  .main { padding: 35px 15px; }
+  .hero h1 { font-size: 39px; }
+  .hero p { margin-bottom: 16px; }
+  .feature { display: none; }
+  .topbar { padding: 15px 16px; }
+  .brand { font-size: 16px; }
+  .topbar nav { gap: 0; }
+  .topbar nav a, .topbar nav span { padding: 8px; font-size: 12px; }
+}

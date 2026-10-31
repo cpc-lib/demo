@@ -1,0 +1,45 @@
+server:
+  port: 8080
+spring:
+  config:
+    # Load ignored .env in both project-root and backend working directories (IDE/Maven).
+    # OS environment variables still take precedence over these local file values.
+    import: "optional:file:./.env[.properties],optional:file:../.env[.properties]"
+  application:
+    name: scan-login
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3307/scan_login?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: scan
+    password: scan_dev_password
+  sql:
+    init:
+      # schema.sql is idempotent (CREATE TABLE IF NOT EXISTS) and safe on every boot;
+      # the ALTER for token_version re-raises a duplicate-column error on migrated
+      # databases, which continue-on-error absorbs.
+      mode: always
+      continue-on-error: true
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6380
+      timeout: 3s
+  jackson:
+    default-property-inclusion: non_null
+app:
+  jwt:
+    secret-base64: ${JWT_SECRET_BASE64:}
+    issuer: scan-login
+  qr:
+    ttl-seconds: 120
+    scan-url: ${SCAN_URL:http://localhost:5173/}
+    secure-cookie: ${SECURE_COOKIE:false}
+  rate-limit:
+    login:
+      max-requests: 5
+      window-seconds: 60
+  admin:
+    # Shared key for the admin console (X-Admin-Key header). Change before deploying.
+    key: ${APP_ADMIN_KEY:dev-admin-key}
+logging:
+  level:
+    root: INFO
