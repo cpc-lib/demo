@@ -1,0 +1,62 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: redis-mysql-fencing
+  config:
+    # 从项目根目录加载 .env，key 与 .env 一一对应
+    import: optional:file:./.env[.properties]
+  datasource:
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/fencing_demo?useUnicode=true&characterEncoding=utf8&connectionTimeZone=UTC}
+    username: ${DB_USER:fencing_app}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 16
+      connection-timeout: 5000
+  flyway:
+    enabled: true
+  mvc:
+    problemdetails:
+      enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+app:
+  redis:
+    mode: ${APP_REDIS_MODE:cluster}
+    nodes: ${APP_REDIS_NODES:redis://127.0.0.1:7000,redis://127.0.0.1:7001,redis://127.0.0.1:7002}
+    password: ${REDIS_PASSWORD}
+    watchdog-timeout-millis: ${REDIS_LOCK_WATCHDOG_MS:30000}
+  lock:
+    wait-seconds: ${REDIS_LOCK_WAIT_SECONDS:2}
+  seckill:
+    cache:
+      # 商品缓存 TTL 基础值（秒），实际 TTL = base + random(0..jitterSeconds)  —— 防雪崩
+      ttl-seconds: ${SECKILL_CACHE_TTL_SECONDS:1800}
+      ttl-jitter-seconds: ${SECKILL_CACHE_JITTER_SECONDS:60}
+      # 逻辑过期时间比物理 TTL 短多少秒 —— 击穿时留时间给互斥重建
+      logical-expire-before-seconds: ${SECKILL_LOGICAL_EXPIRE_BEFORE:30}
+      # 空值缓存 TTL（秒），防穿透 —— 不存在的商品缓存短 TTL
+      null-ttl-seconds: ${SECKILL_NULL_TTL_SECONDS:60}
+    ratelimit:
+      # 商品整体 QPS 上限
+      product-qps: ${SECKILL_PRODUCT_QPS:200}
+      # 用户对单个商品的 QPS 上限
+      user-qps: ${SECKILL_USER_QPS:10}
+    bloom:
+      # 布隆过滤器 key 名
+      filter-name: ${SECKILL_BLOOM_NAME:seckill:bloom:product}
+      # 预估商品数量（决定数组大小）
+      expected-count: ${SECKILL_BLOOM_EXPECTED_COUNT:1000}
+      # 可接受的 false positive rate
+      false-positive-rate: ${SECKILL_BLOOM_FPR:0.01}
+  jwt:
+    # HS256 secret（base64-encoded，至少 32 bytes）。生产环境必须通过 JWT_SECRET 环境变量覆盖。
+    secret: ${JWT_SECRET:dGVzdC1zZWNyZXQtZG9ub3QtdXNlLWluLXByb2R1Y3Rpb24tZm9yLXNlY29uZC1tYXR0ZXJz}
+    # Token 有效期（毫秒）
+    expiration-ms: ${JWT_EXPIRATION_MS:7200000}

@@ -1,0 +1,182 @@
+# Windows Docker Desktop: Redis Cluster + MySQL infrastructure only.
+# Linux Docker host: also works (host.docker.internal resolves to the host IP).
+# Redis binds 0.0.0.0 inside containers; host ports are mapped for Windows telnet.
+
+name: redis-fencing-single-host
+
+x-redis-base: &redis-base
+  image: redis:7.4
+  restart: unless-stopped
+  command:
+    - /bin/sh
+    - -ec
+    - |
+      # Resolve this container's bridge IP via Docker DNS for node-to-node Gossip.
+      # Redisson on Windows sees bridge IPs via CLUSTER NODES and maps them back to
+      # 127.0.0.1:port through a custom addressResolver (see RedisConfiguration).
+      ANNOUNCE_IP="$$(getent hosts "$$(hostname)" | awk '{print $$1; exit}')"
+      echo "Redis $$REDIS_PORT announcing $$ANNOUNCE_IP"
+      exec redis-server \
+        --bind 0.0.0.0 \
+        --port "$$REDIS_PORT" \
+        --protected-mode yes \
+        --requirepass "$$REDIS_PASSWORD" \
+        --masterauth "$$REDIS_PASSWORD" \
+        --cluster-enabled yes \
+        --cluster-config-file /data/nodes.conf \
+        --cluster-node-timeout 5000 \
+        --cluster-announce-ip "$$ANNOUNCE_IP" \
+        --cluster-announce-port "$$REDIS_PORT" \
+        --cluster-announce-bus-port "$$REDIS_BUS_PORT" \
+        --dir /data \
+        --appendonly yes \
+        --appendfsync everysec
+  healthcheck:
+    test:
+      - CMD-SHELL
+      - 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli -h 127.0.0.1 -p "$$REDIS_PORT" ping | grep -q PONG'
+    interval: 3s
+    timeout: 2s
+    retries: 30
+    start_period: 3s
+  networks:
+    - redis-cluster
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: fencing_demo
+      MYSQL_USER: fencing_app
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:?Set MYSQL_APP_PASSWORD in .env}
+      TZ: Asia/Shanghai
+    ports:
+      - '${MYSQL_HOST_PORT:-3306}:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", 'mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    networks:
+      - redis-cluster
+
+  redis-7000:
+    <<: *redis-base
+    environment:
+      REDIS_PORT: '7000'
+      REDIS_BUS_PORT: '17000'
+      REDIS_ANNOUNCE_IP: ${REDIS_ANNOUNCE_IP:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    ports:
+      - '7000:7000'
+      - '17000:17000'
+    volumes:
+      - redis7000_data:/data
+
+  redis-7001:
+    <<: *redis-base
+    environment:
+      REDIS_PORT: '7001'
+      REDIS_BUS_PORT: '17001'
+      REDIS_ANNOUNCE_IP: ${REDIS_ANNOUNCE_IP:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    ports:
+      - '7001:7001'
+      - '17001:17001'
+    volumes:
+      - redis7001_data:/data
+
+  redis-7002:
+    <<: *redis-base
+    environment:
+      REDIS_PORT: '7002'
+      REDIS_BUS_PORT: '17002'
+      REDIS_ANNOUNCE_IP: ${REDIS_ANNOUNCE_IP:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    ports:
+      - '7002:7002'
+      - '17002:17002'
+    volumes:
+      - redis7002_data:/data
+
+  redis-7003:
+    <<: *redis-base
+    environment:
+      REDIS_PORT: '7003'
+      REDIS_BUS_PORT: '17003'
+      REDIS_ANNOUNCE_IP: ${REDIS_ANNOUNCE_IP:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    ports:
+      - '7003:7003'
+      - '17003:17003'
+    volumes:
+      - redis7003_data:/data
+
+  redis-7004:
+    <<: *redis-base
+    environment:
+      REDIS_PORT: '7004'
+      REDIS_BUS_PORT: '17004'
+      REDIS_ANNOUNCE_IP: ${REDIS_ANNOUNCE_IP:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    ports:
+      - '7004:7004'
+      - '17004:17004'
+    volumes:
+      - redis7004_data:/data
+
+  redis-7005:
+    <<: *redis-base
+    environment:
+      REDIS_PORT: '7005'
+      REDIS_BUS_PORT: '17005'
+      REDIS_ANNOUNCE_IP: ${REDIS_ANNOUNCE_IP:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    ports:
+      - '7005:7005'
+      - '17005:17005'
+    volumes:
+      - redis7005_data:/data
+
+  redis-cluster-init:
+    image: redis:7.4
+    restart: 'no'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDIS_ANNOUNCE_IP: ${REDIS_ANNOUNCE_IP:-}
+    depends_on:
+      redis-7000:
+        condition: service_healthy
+      redis-7001:
+        condition: service_healthy
+      redis-7002:
+        condition: service_healthy
+      redis-7003:
+        condition: service_healthy
+      redis-7004:
+        condition: service_healthy
+      redis-7005:
+        condition: service_healthy
+    volumes:
+      - ./scripts/init-cluster.sh:/usr/local/bin/init-cluster.sh:ro
+    entrypoint: ['/bin/sh', '/usr/local/bin/init-cluster.sh']
+    networks:
+      - redis-cluster
+
+volumes:
+  mysql_data:
+  redis7000_data:
+  redis7001_data:
+  redis7002_data:
+  redis7003_data:
+  redis7004_data:
+  redis7005_data:
+
+networks:
+  redis-cluster:
+    driver: bridge
