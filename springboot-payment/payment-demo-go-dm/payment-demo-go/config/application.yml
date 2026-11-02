@@ -10,23 +10,23 @@ spring:
     time-zone: GMT+8
 
   rabbitmq:
-    host: 192.168.1.200
+    host: ${RABBITMQ_HOST:127.0.0.1}
     port: 5672
     username: guest
-    password: guest
+    password: ${RABBITMQ_PASSWORD:}
 
   redis:
-    host: 192.168.1.200
+    host: ${REDIS_HOST:127.0.0.1}
     port: 6379
     database: 0
     timeout: 3000ms
-    password: cpc!23#@
+    password: ${REDIS_PASSWORD:}
 
   datasource:
     driver-class-name: dm.jdbc.driver.DmDriver
-    url: jdbc:dm://192.168.1.200:5236?schema=PAYMENT_DEMO&connectTimeout=30000
+    url: jdbc:dm://${DM_HOST:127.0.0.1}:${DM_PORT:5236}?schema=PAYMENT_DEMO&connectTimeout=30000
     username: SYSDBA
-    password: Cpc2026#@Dm
+    password: ${DM_PASSWORD:}
 
 mybatis-plus:
   configuration: #sql日志

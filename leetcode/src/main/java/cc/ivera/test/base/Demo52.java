@@ -15,8 +15,17 @@ import java.util.Map;
  */
 public class Demo52 {
 
-    private static final String APP_KEY = "1313dd1f2f10abc4";// 您的应用ID
-    private static final String APP_SECRET = "kDH51BNQPTm3leicGteza5BxLras3wvT";// 您的应用密钥
+    // 从环境变量读取，禁止在代码中写死应用ID与密钥
+    private static final String APP_KEY = getRequiredEnv("YOUDAO_APP_KEY");
+    private static final String APP_SECRET = getRequiredEnv("YOUDAO_APP_SECRET");
+
+    private static String getRequiredEnv(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalStateException("请先配置环境变量: " + name);
+        }
+        return value;
+    }
 
     public static void main(String[] args) throws NoSuchAlgorithmException {
         // 添加请求参数

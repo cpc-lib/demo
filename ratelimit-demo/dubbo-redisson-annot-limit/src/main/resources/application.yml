@@ -4,16 +4,16 @@ server:
 spring:
   data:
     redis:
-      host: 192.168.1.200
+      host: ${REDIS_HOST:127.0.0.1}
       port: 6379
-      password: cpc!23#@
+      password: ${REDIS_PASSWORD:}
       database: 0
 
 redisson:
   config: |
     singleServerConfig:
-      address: "redis://192.168.1.200:6379"
-      password: "cpc!23#@"
+      address: "redis://${REDIS_HOST:127.0.0.1}:${REDIS_PORT:6379}"
+      password: ${REDIS_PASSWORD:}
       database: 0
 
 dubbo:
@@ -27,4 +27,4 @@ dubbo:
     #address: N/A
     address: nacos://127.0.0.1:8848
     username: nacos
-    password: nacos
+    password: ${NACOS_PASSWORD:}

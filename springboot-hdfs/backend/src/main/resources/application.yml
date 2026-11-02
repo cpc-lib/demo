@@ -9,7 +9,7 @@ spring:
       max-request-size: 2048MB
 
 hadoop:
-  fs-uri: "hdfs://192.168.220.102:8020"
+  fs-uri: "${HDFS_FS_URI:hdfs://127.0.0.1:8020}"
   user: "atguigu"
 
 upload:

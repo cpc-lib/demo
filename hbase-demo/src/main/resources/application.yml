@@ -8,7 +8,7 @@ spring:
 
 app:
   hbase:
-    quorum: 192.168.220.102
+    quorum: ${HBASE_QUORUM:127.0.0.1}
     # docker-compose maps host 2182 -> container 2181
     port: 2181
     # znodeParent: /hbase

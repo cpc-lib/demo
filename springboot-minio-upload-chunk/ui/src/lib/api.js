@@ -1,6 +1,6 @@
 import axios from 'axios'
 import axiosExtra from 'axios-extra'
-const baseUrl = 'http://localhost:3080'
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3080'
 
 const http = axios.create({
     baseURL: baseUrl

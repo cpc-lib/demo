@@ -10,10 +10,10 @@ spring:
 # MinIO对象存储相关配置
 minio:
   #MinIO服务所在地址
-  endpoint: http://114.132.210.77:9000
+  endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
   #存储桶名称
   bucketName: ruoyi
   #访问的key
-  accessKey: minioadmin
+  accessKey: ${MINIO_ACCESS_KEY:}
   #访问的秘钥
-  secretKey: minioadmin
+  secretKey: ${MINIO_SECRET_KEY:}

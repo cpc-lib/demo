@@ -6,7 +6,7 @@ spring:
         name: localtx
     datasource:
         driver-class-name: com.mysql.cj.jdbc.Driver
-        password: root
+        password: ${MYSQL_PASSWORD:}
         url: jdbc:mysql://localhost:3306/bank0?serverTimezone=UTC
         username: root
 server:

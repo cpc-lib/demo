@@ -109,10 +109,24 @@ public class EmailUtil {
                 Collections.singletonList(fileName));
     }
 
-    private static final String senderSmtpHost = "smtp.163.com";
-    private static final String senderEmail = "e2607439502@163.com";
-    private static final String senderPassword = "MHIMOBJWZFMUKYSC";
-    private static final String senderSmtpPort = "25";
+    // 从环境变量读取，禁止在代码中写死发件账号与授权码
+    private static final String senderSmtpHost = getEnvOrDefault("MAIL_SMTP_HOST", "smtp.163.com");
+    private static final String senderEmail = getRequiredEnv("MAIL_SENDER_EMAIL");
+    private static final String senderPassword = getRequiredEnv("MAIL_SENDER_PASSWORD");
+    private static final String senderSmtpPort = getEnvOrDefault("MAIL_SMTP_PORT", "25");
+
+    private static String getRequiredEnv(String name) {
+        String value = System.getenv(name);
+        if (!StringUtils.hasText(value)) {
+            throw new IllegalStateException("请先配置环境变量: " + name);
+        }
+        return value;
+    }
+
+    private static String getEnvOrDefault(String name, String defaultValue) {
+        String value = System.getenv(name);
+        return StringUtils.hasText(value) ? value : defaultValue;
+    }
 
     /**
      * 邮件发送

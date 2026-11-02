@@ -1,8 +1,8 @@
 spring:
   redis:
-    host: 114.132.210.77
+    host: ${REDIS_HOST:127.0.0.1}
     port: 6380
-    password: cpc!23#@
+    password: ${REDIS_PASSWORD:}
     database: 0
     # 连接池配置
     jedis:
@@ -13,17 +13,20 @@ spring:
         min-idle: 0         #连接池中的最小空闲连接
         timeout: 1000      #连接超时时间（毫秒）。我设置的是1秒
   rabbitmq:
-    host: 114.132.210.77
+    host: ${RABBITMQ_HOST:127.0.0.1}
     port: 5672
     virtual-host: /
     username: admin
-    password: hjm029796
+    password: ${RABBITMQ_PASSWORD:}
   activemq:
-    broker-url: tcp://114.132.210.77:61616
+    broker-url: ${ACTIVEMQ_BROKER_URL:tcp://127.0.0.1:61616}
     user: admin
-    password: admin
+    password: ${ACTIVEMQ_PASSWORD:}
     close-timeout: 15s
 rocketmq:
-  name-server: 114.132.210.77:9876 #服务器ip
+  name-server: ${ROCKETMQ_NAME_SERVER:127.0.0.1:9876}
   producer:
     group: sanyouProducer
+redisson:
+  address: ${REDIS_ADDRESS:redis://127.0.0.1:6380}
+  password: ${REDIS_PASSWORD:}

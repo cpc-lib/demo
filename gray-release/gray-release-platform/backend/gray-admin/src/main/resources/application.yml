@@ -6,9 +6,9 @@ spring:
     name: gray-admin
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.1.200:3306/gray_release?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/gray_release?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: gray
-    password: gray123456
+    password: ${MYSQL_PASSWORD:}
   data:
     redis:
       host: localhost
@@ -20,9 +20,9 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 192.168.1.200:8848
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
       config:
-        server-addr: 192.168.1.200:8848
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
         import-check:
           enabled: false
 
@@ -41,7 +41,7 @@ management:
 
 gray:
   security:
-    jwt-secret: ${GRAY_JWT_SECRET:gray-release-platform-change-me-32bytes}
+    jwt-secret: ${GRAY_JWT_SECRET:}
     expire-seconds: 86400
   alert:
     webhook-url: ${GRAY_ALERT_WEBHOOK_URL:}

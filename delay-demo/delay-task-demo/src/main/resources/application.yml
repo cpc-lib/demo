@@ -4,13 +4,13 @@ spring:
   redis:
     host: 127.0.0.1
     port: 6380
-    password: root
+    password: ${REDIS_PASSWORD:}
   rabbitmq:
     host: 127.0.0.1
     port: 5672
     virtual-host: /
     username: guest
-    password: guest
+    password: ${RABBITMQ_PASSWORD:}
 rocketmq:
   name-server: 127.0.0.1:9876 #服务器ip
   producer:

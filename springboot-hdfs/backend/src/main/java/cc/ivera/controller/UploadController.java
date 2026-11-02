@@ -4,6 +4,7 @@ package cc.ivera.controller;
 import cc.ivera.service.ChunkUploadService;
 import cc.ivera.service.HdfsService;
 import com.example.hdfsbackend.service.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +20,12 @@ public class UploadController {
 
     private final ChunkUploadService chunk;
     private final HdfsService hdfs;
+
+    @Value("${HDFS_HTTP_HOST:127.0.0.1}")
+    private String hdfsHttpHost;
+
+    @Value("${HDFS_HTTP_PORT:9870}")
+    private String hdfsHttpPort;
 
     public UploadController(ChunkUploadService c,HdfsService h){
         this.chunk=c; this.hdfs=h;
@@ -45,8 +52,8 @@ public class UploadController {
         hdfs.upload(new FileInputStream(m),hdfsPath);
         chunk.clean(uploadId);
 
-        // HDFS 访问地址（替换成你的 NameNode 地址）
-        String hdfsViewUrl = "http://192.168.220.102:9870/webhdfs/v1" + hdfsPath + "?op=OPEN";
+        // HDFS 访问地址从环境变量读取
+        String hdfsViewUrl = "http://" + hdfsHttpHost + ":" + hdfsHttpPort + "/webhdfs/v1" + hdfsPath + "?op=OPEN";
 
         Map<String, Object> result = new HashMap<>();
         result.put("code", 200);

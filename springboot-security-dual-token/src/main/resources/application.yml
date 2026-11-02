@@ -6,7 +6,7 @@ logging:
     org.springframework.security: debug
 spring:
   redis:
-    host: 114.132.210.77
-    password: cpc!23#@
+    host: ${REDIS_HOST:127.0.0.1}
+    password: ${REDIS_PASSWORD:}
     port: 6380
     database: 11

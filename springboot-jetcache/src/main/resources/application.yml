@@ -23,7 +23,7 @@ spring:
     name: springboot-cache
   datasource:
     druid:
-      password: root
+      password: ${MYSQL_PASSWORD:}
       driver-class-name: com.mysql.jdbc.Driver
       username: root
       url: jdbc:mysql://127.0.0.1:3306/mp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true&useSSL=false

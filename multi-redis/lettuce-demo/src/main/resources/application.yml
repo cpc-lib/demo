@@ -11,7 +11,7 @@ knife4j:
     # 是否采用json序列化方式，若不采用jackson序列化
     jsonSerialType: 'Fastjson'
     host: localhost
-    password: cpc!23#@
+    password: ${REDIS_PASSWORD:}
     port: 6379
     databases: [0,1,2,3,4,5,6] # 要使用的库，会根据此处填写的库生成redisTemplate
     timeout: 60s
@@ -21,4 +21,3 @@ knife4j:
         max-wait: -1ms
         max-idle: 8
         min-idle: 0
-

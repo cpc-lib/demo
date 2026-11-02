@@ -5,12 +5,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "sha256.storage")
 public class StorageProperties {
     private String provider = "minio";
-    private String endpoint = "http://192.168.1.200:9000";
+    private String endpoint = "http://127.0.0.1:9000";
     /** Browser reachable endpoint used to sign direct-upload URLs. Blank means endpoint. */
     private String publicEndpoint = "";
     private String region = "us-east-1";
-    private String accessKey = "sha256minio";
-    private String secretKey = "sha256-minio-secret";
+    private String accessKey = "";
+    private String secretKey = "";
     private String bucket = "sha256-files";
     private boolean pathStyleAccess = true;
     private boolean chunkedEncoding = true;

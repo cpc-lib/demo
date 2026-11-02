@@ -7,9 +7,9 @@ spring:
       max-file-size: 20480MB
       max-request-size: 20480MB
   datasource:
-    url: jdbc:mysql://192.168.1.200:3306/minio_chunk?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/minio_chunk?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
     username: root
-    password: cpc!23#@
+    password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jackson:
@@ -25,9 +25,9 @@ mybatis-plus:
       id-type: auto
 
 minio:
-  endpoint: http://192.168.1.200:39000
-  access-key: admin
-  secret-key: hjm029796
+  endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:39000}
+  access-key: ${MINIO_ACCESS_KEY:}
+  secret-key: ${MINIO_SECRET_KEY:}
   bucket: chunk-bucket
   chunk-prefix: chunk-temp/
   file-prefix: ""

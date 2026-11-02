@@ -27,7 +27,7 @@ spring:
       url: jdbc:mysql://localhost:3306/bank1?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=false&useSSL=false&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai
       jdbc-url: jdbc:mysql://localhost:3306/bank1?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=false&useSSL=false&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai
       username: root
-      password: root
+      password: ${MYSQL_PASSWORD:}
       #      password: root
       poolPingEnabled: true
       poolPingQuery: select 1
@@ -47,4 +47,4 @@ spring:
       url: jdbc:mysql://localhost:3306/bank2?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=false&useSSL=false&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai
       jdbc-url: jdbc:mysql://localhost:3306/bank2?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=false&useSSL=false&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai
       username: root
-      password: root
+      password: ${MYSQL_PASSWORD:}

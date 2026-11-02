@@ -8,10 +8,10 @@ logging:
 
 canal:
   mode: simple
-  server: 192.168.1.200:11111
+  server: ${CANAL_SERVER:127.0.0.1:11111}
   destination: example
   user-name: canal
-  password: canal123456
+  password: ${CANAL_PASSWORD:}
   batch-size: 1
   timeout: 1
   filter: "testdb\\.t_user"   # 可选：只订阅某张表

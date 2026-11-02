@@ -3,7 +3,7 @@ spring:
     driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
     url: jdbc:clickhouse://localhost:8123/demo
     username: demo
-    password: demo123
+    password: ${CLICKHOUSE_PASSWORD:}
 
 logging:
   level:

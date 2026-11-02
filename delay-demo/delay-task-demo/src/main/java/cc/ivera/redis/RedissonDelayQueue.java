@@ -7,10 +7,11 @@ import org.redisson.api.RDelayedQueue;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.redisson.config.SingleServerConfig;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
 
@@ -23,6 +24,12 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Slf4j
 public class RedissonDelayQueue {
+
+    @Value("${redisson.address}")
+    private String address;
+
+    @Value("${redisson.password:}")
+    private String password;
 
     private RedissonClient redissonClient;
 
@@ -38,8 +45,10 @@ public class RedissonDelayQueue {
     private void initDelayQueue() {
         Config config = new Config();
         SingleServerConfig serverConfig = config.useSingleServer();
-        serverConfig.setAddress("redis://114.132.210.77:6380");
-        serverConfig.setPassword("cpc!23#@");
+        serverConfig.setAddress(address);
+        if (StringUtils.hasText(password)) {
+            serverConfig.setPassword(password);
+        }
         serverConfig.setDatabase(0);
         serverConfig.setConnectionPoolSize(64);
         serverConfig.setConnectionMinimumIdleSize(24);

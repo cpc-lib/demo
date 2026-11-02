@@ -2,6 +2,7 @@ package cc.ivera.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -17,6 +18,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     WebSocketAuthInterceptor channelInterceptor;
 
+    @Value("${RABBITMQ_HOST:127.0.0.1}")
+    private String relayHost;
+
+    @Value("${RABBITMQ_USERNAME:guest}")
+    private String relayLogin;
+
+    @Value("${RABBITMQ_PASSWORD:guest}")
+    private String relayPasscode;
 
     @Override
     public void registerStompEndpoints(final StompEndpointRegistry registry) {
@@ -28,9 +37,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setUserDestinationPrefix("/user");
         registry.setApplicationDestinationPrefixes("/app");
         registry.enableStompBrokerRelay("/exchange", "/topic", "/queue", "/amq/queue")
-                .setVirtualHost("/").setRelayHost("192.168.1.200")
-                .setClientLogin("guest").setClientPasscode("guest")
-                .setSystemLogin("guest").setSystemPasscode("guest")
+                .setVirtualHost("/").setRelayHost(relayHost)
+                .setClientLogin(relayLogin).setClientPasscode(relayPasscode)
+                .setSystemLogin(relayLogin).setSystemPasscode(relayPasscode)
                 .setSystemHeartbeatSendInterval(5000)
                 .setSystemHeartbeatReceiveInterval(4000);
     }

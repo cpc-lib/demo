@@ -5,8 +5,7 @@ spring:
   activemq:
     broker-url: tcp://127.0.0.1:61616
     user: admin
-    password: admin
+    password: ${ACTIVEMQ_PASSWORD:}
     close-timeout: 15s
 
 #参考链接:https://blog.csdn.net/zsj777/article/details/108367504
-

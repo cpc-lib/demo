@@ -10,21 +10,21 @@ spring:
     time-zone: GMT+8
 
   rabbitmq:
-    host: 192.168.1.200
+    host: ${RABBITMQ_HOST:127.0.0.1}
     port: 5672
     username: guest
-    password: guest
+    password: ${RABBITMQ_PASSWORD:}
     publisher-confirm-type: correlated
     publisher-returns: true
     template:
       mandatory: true
 
   redis:
-    host: 192.168.1.200
+    host: ${REDIS_HOST:127.0.0.1}
     port: 6379
     database: 0
     timeout: 3000ms
-    password: cpc!23#@
+    password: ${REDIS_PASSWORD:}
 
   servlet:
     multipart: #手动上传渠道账单文件大小限制
@@ -34,9 +34,9 @@ spring:
   datasource:
     #    driver-class-name: com.mysql.cj.jdbc.Driver
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://192.168.1.200:3308/payment_demo_v1?serverTimezone=GMT%2B8&characterEncoding=utf-8&useSSL=false
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3308}/payment_demo_v1?serverTimezone=GMT%2B8&characterEncoding=utf-8&useSSL=false
     username: root
-    password: cpc!23#@
+    password: ${MYSQL_PASSWORD:}
 
 mybatis-plus:
   configuration: #sql日志
@@ -51,7 +51,7 @@ logging:
 payment:
   auth:
     # 生产环境必须通过 PAYMENT_AUTH_JWT_SECRET 覆盖，长度至少32字节
-    jwt-secret: ${PAYMENT_AUTH_JWT_SECRET:payment-demo-change-this-secret-32-bytes}
+    jwt-secret: ${PAYMENT_AUTH_JWT_SECRET:}
     access-token-seconds: 900
     refresh-token-seconds: 604800
     secure-cookie: false

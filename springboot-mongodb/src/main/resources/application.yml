@@ -3,4 +3,4 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://admin:hjm029796@67.215.249.182:27017/test?authSource=admin
+      uri: ${MONGODB_URI:mongodb://127.0.0.1:27017/test?authSource=admin}

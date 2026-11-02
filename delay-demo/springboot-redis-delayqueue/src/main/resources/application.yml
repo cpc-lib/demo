@@ -2,9 +2,9 @@
 Spring:
   redis:
     database: 0    #Redis数据库索引（默认为0）
-    host: 114.132.210.77  #redis服务器ip，由于我是搭建在本地，固指向本地ip
+    host: ${REDIS_HOST:127.0.0.1}
     port: 6379  #redis服务器连接端口
-    password: cpc!23   #redis服务器连接密码（默认为空）
+    password: ${REDIS_PASSWORD:}   #redis服务器连接密码（默认为空）
     # 连接池配置
     jedis:
       pool:
