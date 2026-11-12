@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.seata.order.mapper.OrderInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.demo.seata.order.entity.OrderInfo">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="user_id" property="userId"/>
+        <result column="commodity_code" property="commodityCode"/>
+        <result column="count" property="count"/>
+        <result column="money" property="money"/>
+        <result column="status" property="status"/>
+        <result column="mode" property="mode"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, order_no, user_id, commodity_code, count, money, status, mode, create_time, update_time
+    </sql>
+
+</mapper>

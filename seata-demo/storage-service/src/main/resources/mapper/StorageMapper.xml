@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.seata.storage.mapper.StorageMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.demo.seata.storage.entity.Storage">
+        <id column="id" property="id"/>
+        <result column="commodity_code" property="commodityCode"/>
+        <result column="name" property="name"/>
+        <result column="total_count" property="totalCount"/>
+        <result column="available_count" property="availableCount"/>
+        <result column="frozen_count" property="frozenCount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, commodity_code, name, total_count, available_count, frozen_count, create_time, update_time
+    </sql>
+
+    <!-- AT / XA 模式: 扣减可用库存 (通过数据库原子 update + 乐观行级排他锁保证安全) -->
+    <update id="deductStock">
+        UPDATE storage_tbl
+        SET available_count = available_count - #{count}
+        WHERE commodity_code = #{commodityCode}
+          AND available_count &gt;= #{count}
+    </update>
+
+    <!-- TCC 模式 Try 阶段: 预留库存 (扣减可用库存，增加冻结库存) -->
+    <update id="freezeStock">
+        UPDATE storage_tbl
+        SET available_count = available_count - #{count},
+            frozen_count = frozen_count + #{count}
+        WHERE commodity_code = #{commodityCode}
+          AND available_count &gt;= #{count}
+    </update>
+
+    <!-- TCC 模式 Confirm 阶段: 真正扣减 (扣减冻结库存) -->
+    <update id="deductFrozenStock">
+        UPDATE storage_tbl
+        SET frozen_count = frozen_count - #{count}
+        WHERE commodity_code = #{commodityCode}
+          AND frozen_count &gt;= #{count}
+    </update>
+
+    <!-- TCC 模式 Cancel 阶段: 释放预留库存 (减少冻结库存，增加可用库存) -->
+    <update id="unfreezeStock">
+        UPDATE storage_tbl
+        SET available_count = available_count + #{count},
+            frozen_count = frozen_count - #{count}
+        WHERE commodity_code = #{commodityCode}
+          AND frozen_count &gt;= #{count}
+    </update>
+
+    <!-- SAGA 模式补偿: 增加可用库存 -->
+    <update id="compensateStock">
+        UPDATE storage_tbl
+        SET available_count = available_count + #{count}
+        WHERE commodity_code = #{commodityCode}
+    </update>
+
+</mapper>

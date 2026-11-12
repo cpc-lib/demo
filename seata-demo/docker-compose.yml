@@ -1,0 +1,163 @@
+networks:
+  seata-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+
+services:
+  # =====================================================================
+  # 1. MySQL 8.0 关系型数据库 (自动初始化 seata_server 库表)
+  # =====================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: seata-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Shanghai
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - seata-net
+
+  # =====================================================================
+  # 2. Nacos 2.3.0 注册中心与配置中心 (单机模式)
+  # =====================================================================
+  nacos:
+    image: nacos/nacos-server:v2.3.0
+    container_name: seata-nacos
+    restart: always
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+      NACOS_AUTH_ENABLE: "false"
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      TZ: Asia/Shanghai
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - seata-net
+
+  # =====================================================================
+  # 3. Apache Seata Server 2.0.0 分布式事务协调器 (TC)
+  # =====================================================================
+  seata-server:
+    image: seataio/seata-server:2.0.0
+    container_name: seata-server
+    restart: always
+    environment:
+      SEATA_IP: seata-server
+      SEATA_PORT: 8091
+      STORE_MODE: db
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+      TZ: Asia/Shanghai
+    ports:
+      - "8091:8091"
+      - "7091:7091"
+    volumes:
+      - ./docker/seata/application.yml:/seata-server/resources/application.yml
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    networks:
+      - seata-net
+
+  # =====================================================================
+  # 4. 微服务容器 (可选: 使用 `docker compose --profile apps up -d` 启动)
+  # =====================================================================
+  storage-service:
+    build:
+      context: ./storage-service
+      dockerfile: Dockerfile
+    container_name: storage-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seata_storage?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&createDatabaseIfNotExist=true
+      DUBBO_REGISTRY_ADDRESS: nacos://nacos:8848
+      SEATA_REGISTRY_NACOS_SERVER_ADDR: nacos:8848
+      SEATA_CONFIG_NACOS_SERVER_ADDR: nacos:8848
+      SEATA_SERVICE_GROUPLIST_DEFAULT: seata-server:8091
+    ports:
+      - "8082:8082"
+      - "20882:20882"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+      seata-server:
+        condition: service_started
+    networks:
+      - seata-net
+    profiles: ["apps"]
+
+  account-service:
+    build:
+      context: ./account-service
+      dockerfile: Dockerfile
+    container_name: account-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seata_account?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&createDatabaseIfNotExist=true
+      DUBBO_REGISTRY_ADDRESS: nacos://nacos:8848
+      SEATA_REGISTRY_NACOS_SERVER_ADDR: nacos:8848
+      SEATA_CONFIG_NACOS_SERVER_ADDR: nacos:8848
+      SEATA_SERVICE_GROUPLIST_DEFAULT: seata-server:8091
+    ports:
+      - "8083:8083"
+      - "20883:20883"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+      seata-server:
+        condition: service_started
+    networks:
+      - seata-net
+    profiles: ["apps"]
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seata_order?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&createDatabaseIfNotExist=true
+      DUBBO_REGISTRY_ADDRESS: nacos://nacos:8848
+      SEATA_REGISTRY_NACOS_SERVER_ADDR: nacos:8848
+      SEATA_CONFIG_NACOS_SERVER_ADDR: nacos:8848
+      SEATA_SERVICE_GROUPLIST_DEFAULT: seata-server:8091
+    ports:
+      - "8081:8081"
+      - "20881:20881"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+      seata-server:
+        condition: service_started
+    networks:
+      - seata-net
+    profiles: ["apps"]

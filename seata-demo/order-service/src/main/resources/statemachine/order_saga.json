@@ -1,0 +1,80 @@
+{
+    "Name": "orderSagaStateMachine",
+    "Comment": "电商下单全链路 SAGA 长事务状态机",
+    "StartState": "ReduceStock",
+    "Version": "1.0.0",
+    "States": {
+        "ReduceStock": {
+            "Type": "ServiceTask",
+            "ServiceName": "storageSagaService",
+            "ServiceMethod": "reduceStock",
+            "CompensateState": "CompensateStock",
+            "Input": [
+                "$.[orderNo]",
+                "$.[commodityCode]",
+                "$.[count]"
+            ],
+            "Next": "ReduceBalance",
+            "Catch": [
+                {
+                    "Exceptions": [
+                        "java.lang.Throwable"
+                    ],
+                    "Next": "CompensationTrigger"
+                }
+            ]
+        },
+        "CompensateStock": {
+            "Type": "ServiceTask",
+            "ServiceName": "storageSagaService",
+            "ServiceMethod": "compensateStock",
+            "Input": [
+                "$.[orderNo]",
+                "$.[commodityCode]",
+                "$.[count]"
+            ]
+        },
+        "ReduceBalance": {
+            "Type": "ServiceTask",
+            "ServiceName": "accountSagaService",
+            "ServiceMethod": "reduceBalance",
+            "CompensateState": "CompensateBalance",
+            "Input": [
+                "$.[orderNo]",
+                "$.[userId]",
+                "$.[money]"
+            ],
+            "Next": "Succeed",
+            "Catch": [
+                {
+                    "Exceptions": [
+                        "java.lang.Throwable"
+                    ],
+                    "Next": "CompensationTrigger"
+                }
+            ]
+        },
+        "CompensateBalance": {
+            "Type": "ServiceTask",
+            "ServiceName": "accountSagaService",
+            "ServiceMethod": "compensateBalance",
+            "Input": [
+                "$.[orderNo]",
+                "$.[userId]",
+                "$.[money]"
+            ]
+        },
+        "CompensationTrigger": {
+            "Type": "Compensation",
+            "Next": "Fail"
+        },
+        "Succeed": {
+            "Type": "Succeed"
+        },
+        "Fail": {
+            "Type": "Fail",
+            "ErrorCode": "ORDER_SAGA_FAILED",
+            "Message": "订单SAGA长事务处理失败，已触发全链路逆向补偿"
+        }
+    }
+}

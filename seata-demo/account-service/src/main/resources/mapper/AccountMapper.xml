@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.seata.account.mapper.AccountMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.demo.seata.account.entity.Account">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="balance" property="balance"/>
+        <result column="frozen_amount" property="frozenAmount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, user_id, total_amount, balance, frozen_amount, create_time, update_time
+    </sql>
+
+    <!-- AT / XA 模式扣减余额 (基于数据库原子更新排他锁，防止并发超扣) -->
+    <update id="debitBalance">
+        UPDATE account_tbl
+        SET balance = balance - #{money}
+        WHERE user_id = #{userId}
+          AND balance &gt;= #{money}
+    </update>
+
+    <!-- TCC 模式 Try 阶段: 预留/冻结余额 -->
+    <update id="freezeBalance">
+        UPDATE account_tbl
+        SET balance = balance - #{money},
+            frozen_amount = frozen_amount + #{money}
+        WHERE user_id = #{userId}
+          AND balance &gt;= #{money}
+    </update>
+
+    <!-- TCC 模式 Confirm 阶段: 真正扣减 (扣减冻结金额) -->
+    <update id="deductFrozenBalance">
+        UPDATE account_tbl
+        SET frozen_amount = frozen_amount - #{money}
+        WHERE user_id = #{userId}
+          AND frozen_amount &gt;= #{money}
+    </update>
+
+    <!-- TCC 模式 Cancel 阶段: 释放预留金额 (减少冻结金额，恢复可用余额) -->
+    <update id="unfreezeBalance">
+        UPDATE account_tbl
+        SET balance = balance + #{money},
+            frozen_amount = frozen_amount - #{money}
+        WHERE user_id = #{userId}
+          AND frozen_amount &gt;= #{money}
+    </update>
+
+    <!-- SAGA 模式补偿: 返还余额 -->
+    <update id="compensateBalance">
+        UPDATE account_tbl
+        SET balance = balance + #{money}
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>

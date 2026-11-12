@@ -1,0 +1,443 @@
+{
+  "info": {
+    "_postman_id": "6af48af9-f6db-4356-9c88-6f0000000001",
+    "name": "Seata Demo 分布式事务接口文档",
+    "description": "# Seata Demo 接口文档\n\n本 Collection 覆盖 order-service 暴露的全部 HTTP 接口：AT、TCC、SAGA、XA 四种事务模式下单。每种模式包含正常提交和模拟异常回滚两个请求。\n\n## 使用前准备\n\n1. 启动 MySQL、Nacos、Seata Server。\n2. 启动 order-service、storage-service、account-service。\n3. 在 Postman 中选择 **Import**，导入本 JSON 文件。\n4. 默认地址为 `http://localhost:8081`，可在 Collection 的 **Variables** 中修改 `baseUrl`。\n\n初始测试数据：用户 `U10001` 可用余额 10000.00；商品 `C10001` 可用库存 100。请求示例通过 `{{$guid}}` 自动生成唯一订单号，避免重复请求触发幂等返回。\n\n## 通用请求体\n\n| 字段 | 类型 | 说明 |\n| --- | --- | --- |\n| orderNo | String | 业务订单号，全链路防重与幂等键；建议使用唯一值 |\n| userId | String | 用户 ID，初始测试用户为 `U10001` |\n| commodityCode | String | 商品编码，初始测试商品为 `C10001` |\n| count | Integer | 购买数量，必须大于 0 且不能超过可用库存 |\n| money | Number | 扣款金额，不能超过账户可用余额 |\n| mockException | Boolean | 可选；`true` 模拟异常并测试回滚，缺省或 `false` 正常提交 |\n\n## 通用响应体\n\n| 字段 | 类型 | 说明 |\n| --- | --- | --- |\n| code | Integer | 业务状态码：200 成功，500 失败 |\n| message | String | 响应消息，成功时为 `success` |\n| data | Object/Null | 成功时为订单信息；失败时通常为 null |\n| timestamp | Long | 服务端响应时间戳（毫秒） |\n\n订单 `data` 字段：`id`、`orderNo`、`userId`、`commodityCode`、`count`、`money`、`status`、`mode`、`createTime`、`updateTime`。\n\n**注意：全局异常处理器会将业务异常转换为 JSON 响应，因此业务失败时 HTTP 状态码仍可能是 200，请同时检查响应体中的 `code`。**\n\n## 回滚验证说明\n\n- AT：模拟异常后，订单、库存和账户的本地事务均回滚。\n- TCC：模拟异常后，TC 调用各资源 Cancel，释放冻结库存和冻结金额。\n- SAGA：模拟异常后执行逆向补偿；订单记录保留，状态更新为 `CANCELLED`。\n- XA：模拟异常后，通过 XA 2PC 回滚各分支事务。\n\n账户服务和库存服务没有独立 HTTP Controller，仅通过 Dubbo 被 order-service 调用。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081",
+      "description": "order-service 服务地址"
+    },
+    {
+      "key": "userId",
+      "value": "U10001",
+      "description": "初始测试用户 ID"
+    },
+    {
+      "key": "commodityCode",
+      "value": "C10001",
+      "description": "初始测试商品编码"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. AT 模式",
+      "description": "AT 自动补偿事务：正常请求依次扣减库存、扣减余额并创建订单；模拟异常用于验证全局回滚。",
+      "item": [
+        {
+          "name": "AT 下单 - 正常提交",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orderNo\":\"AT-{{$guid}}\",\"userId\":\"{{userId}}\",\"commodityCode\":\"{{commodityCode}}\",\"count\":1,\"money\":100.00,\"mockException\":false}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/at/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order",
+                "at",
+                "create"
+              ]
+            },
+            "description": "创建 AT 模式订单。成功时响应体 `code=200`，`data.mode=AT`、`data.status=SUCCESS`，库存和余额相应扣减。"
+          },
+          "response": [
+            {
+              "name": "成功响应示例",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"code\":200,\"message\":\"success\",\"data\":{\"id\":1,\"orderNo\":\"AT-7cf27948-3bb3-4f24-a9a3-e37a74d57001\",\"userId\":\"U10001\",\"commodityCode\":\"C10001\",\"count\":1,\"money\":100.00,\"status\":\"SUCCESS\",\"mode\":\"AT\",\"createTime\":\"2026-11-11T15:50:00\",\"updateTime\":\"2026-11-11T15:50:00\"},\"timestamp\":1794412200000}"
+            }
+          ]
+        },
+        {
+          "name": "AT 下单 - 模拟异常回滚",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orderNo\":\"AT-{{$guid}}\",\"userId\":\"{{userId}}\",\"commodityCode\":\"{{commodityCode}}\",\"count\":1,\"money\":100.00,\"mockException\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/at/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order",
+                "at",
+                "create"
+              ]
+            },
+            "description": "设置 `mockException=true`，在库存扣减、账户扣款和订单保存后主动抛出异常。预期响应体 `code=500`，并验证订单未保留、库存和余额未发生变化。"
+          },
+          "response": [
+            {
+              "name": "业务异常响应示例（HTTP 状态仍为 200）",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"code\":500,\"message\":\"AT模式模拟测试异常，触发全部微服务回滚！\",\"data\":null,\"timestamp\":1794412200000}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. TCC 模式",
+      "description": "TCC Try-Confirm-Cancel 事务：Try 阶段冻结库存和金额；成功时 Confirm，模拟异常时 Cancel。",
+      "item": [
+        {
+          "name": "TCC 下单 - 正常提交",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orderNo\":\"TCC-{{$guid}}\",\"userId\":\"{{userId}}\",\"commodityCode\":\"{{commodityCode}}\",\"count\":1,\"money\":100.00,\"mockException\":false}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/tcc/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order",
+                "tcc",
+                "create"
+              ]
+            },
+            "description": "创建 TCC 模式订单。Try 阶段预留库存和余额，随后由 TC 调用 Confirm。成功时响应体 `code=200`，`data.mode=TCC`、`data.status=SUCCESS`。"
+          },
+          "response": [
+            {
+              "name": "成功响应示例",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"code\":200,\"message\":\"success\",\"data\":{\"id\":2,\"orderNo\":\"TCC-7cf27948-3bb3-4f24-a9a3-e37a74d57002\",\"userId\":\"U10001\",\"commodityCode\":\"C10001\",\"count\":1,\"money\":100.00,\"status\":\"SUCCESS\",\"mode\":\"TCC\",\"createTime\":\"2026-11-11T15:50:00\",\"updateTime\":\"2026-11-11T15:50:00\"},\"timestamp\":1794412200000}"
+            }
+          ]
+        },
+        {
+          "name": "TCC 下单 - 模拟异常 Cancel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orderNo\":\"TCC-{{$guid}}\",\"userId\":\"{{userId}}\",\"commodityCode\":\"{{commodityCode}}\",\"count\":1,\"money\":100.00,\"mockException\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/tcc/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order",
+                "tcc",
+                "create"
+              ]
+            },
+            "description": "设置 `mockException=true`，在本地订单保存后触发全局回滚。预期响应体 `code=500`，TC 调用库存和账户的 Cancel 方法释放预留资源，本地订单插入回滚。"
+          },
+          "response": [
+            {
+              "name": "业务异常响应示例（HTTP 状态仍为 200）",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"code\":500,\"message\":\"TCC模式模拟测试异常，触发全部微服务 Cancel 回滚！\",\"data\":null,\"timestamp\":1794412200000}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. SAGA 模式",
+      "description": "SAGA 长事务：依次执行库存扣减、余额扣减和订单创建；失败时执行逆向幂等补偿。",
+      "item": [
+        {
+          "name": "SAGA 下单 - 正常提交",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orderNo\":\"SAGA-{{$guid}}\",\"userId\":\"{{userId}}\",\"commodityCode\":\"{{commodityCode}}\",\"count\":1,\"money\":100.00,\"mockException\":false}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/saga/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order",
+                "saga",
+                "create"
+              ]
+            },
+            "description": "创建 SAGA 模式订单。成功时响应体 `code=200`，`data.mode=SAGA`、`data.status=SUCCESS`，库存和余额相应扣减。"
+          },
+          "response": [
+            {
+              "name": "成功响应示例",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"code\":200,\"message\":\"success\",\"data\":{\"id\":3,\"orderNo\":\"SAGA-7cf27948-3bb3-4f24-a9a3-e37a74d57003\",\"userId\":\"U10001\",\"commodityCode\":\"C10001\",\"count\":1,\"money\":100.00,\"status\":\"SUCCESS\",\"mode\":\"SAGA\",\"createTime\":\"2026-11-11T15:50:00\",\"updateTime\":\"2026-11-11T15:50:00\"},\"timestamp\":1794412200000}"
+            }
+          ]
+        },
+        {
+          "name": "SAGA 下单 - 模拟异常逆向补偿",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orderNo\":\"SAGA-{{$guid}}\",\"userId\":\"{{userId}}\",\"commodityCode\":\"{{commodityCode}}\",\"count\":1,\"money\":100.00,\"mockException\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/saga/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order",
+                "saga",
+                "create"
+              ]
+            },
+            "description": "设置 `mockException=true`，触发账户余额和库存的逆向补偿。预期响应体 `code=500`；与 AT/TCC/XA 不同，SAGA 的订单记录会保留，但状态更新为 `CANCELLED`。"
+          },
+          "response": [
+            {
+              "name": "业务异常响应示例（HTTP 状态仍为 200）",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"code\":500,\"message\":\"SAGA执行失败并已完成全链路逆向幂等补偿: SAGA模式模拟测试异常，进入全链路逆向补偿流程！\",\"data\":null,\"timestamp\":1794412200000}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. XA 模式",
+      "description": "XA 强一致性两阶段提交事务：各分支处于同一全局事务，成功时提交，模拟异常时执行 2PC 回滚。",
+      "item": [
+        {
+          "name": "XA 下单 - 正常提交",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orderNo\":\"XA-{{$guid}}\",\"userId\":\"{{userId}}\",\"commodityCode\":\"{{commodityCode}}\",\"count\":1,\"money\":100.00,\"mockException\":false}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/xa/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order",
+                "xa",
+                "create"
+              ]
+            },
+            "description": "创建 XA 模式订单。成功时响应体 `code=200`，`data.mode=XA`、`data.status=SUCCESS`，库存和余额相应扣减。"
+          },
+          "response": [
+            {
+              "name": "成功响应示例",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"code\":200,\"message\":\"success\",\"data\":{\"id\":4,\"orderNo\":\"XA-7cf27948-3bb3-4f24-a9a3-e37a74d57004\",\"userId\":\"U10001\",\"commodityCode\":\"C10001\",\"count\":1,\"money\":100.00,\"status\":\"SUCCESS\",\"mode\":\"XA\",\"createTime\":\"2026-11-11T15:50:00\",\"updateTime\":\"2026-11-11T15:50:00\"},\"timestamp\":1794412200000}"
+            }
+          ]
+        },
+        {
+          "name": "XA 下单 - 模拟异常 2PC 回滚",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orderNo\":\"XA-{{$guid}}\",\"userId\":\"{{userId}}\",\"commodityCode\":\"{{commodityCode}}\",\"count\":1,\"money\":100.00,\"mockException\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/xa/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order",
+                "xa",
+                "create"
+              ]
+            },
+            "description": "设置 `mockException=true`，在本地订单保存后主动抛出异常。预期响应体 `code=500`，通过 XA 2PC 回滚订单、库存和账户分支，验证数据未发生变化。"
+          },
+          "response": [
+            {
+              "name": "业务异常响应示例（HTTP 状态仍为 200）",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\"code\":500,\"message\":\"XA模式模拟测试异常，触发全部微服务 2PC 回滚！\",\"data\":null,\"timestamp\":1794412200000}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
